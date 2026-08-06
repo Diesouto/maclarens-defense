@@ -16,6 +16,7 @@ public class PlayerInputHandler : MonoBehaviour
     public bool AimPressed => input.Player.Aim.WasPressedThisFrame();
     public bool FireHeld => input.Player.Fire.IsPressed();
     public bool FirePressed => input.Player.Fire.WasPressedThisFrame();
+    public bool ReloadPressed => input.Player.Reload.WasPressedThisFrame();
     public bool InteractPressed => input.Player.Interact.WasPressedThisFrame();
     public bool CrouchHeld => input.Player.Crouch.IsPressed();
     public bool CrouchPressed => input.Player.Crouch.WasPressedThisFrame();
