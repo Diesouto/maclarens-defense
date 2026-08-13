@@ -89,6 +89,7 @@ public class EnemyController : MonoBehaviour
         if (agent != null)
             agent.enabled = false;
 
+        Destroy(gameObject, 30f);
         enabled = false;
     }
 }

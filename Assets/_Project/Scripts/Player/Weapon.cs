@@ -36,7 +36,7 @@ public class Weapon : MonoBehaviour
         }
 
         if (interactUI == null)
-            interactUI = FindObjectOfType<InteractUI>();
+            interactUI = FindFirstObjectByType<InteractUI>();
     }
 
     private void Update()
@@ -99,7 +99,7 @@ public class Weapon : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, weaponData.range, hitMask, QueryTriggerInteraction.Ignore))
         {
-          Debug.Log($"Hit: {hit.collider.name} at {hit.point}");
+            Debug.Log($"Hit: {hit.collider.name} at {hit.point}");
 
             IDamageable damageable = null;
             if (hit.collider.TryGetComponent<IDamageable>(out var d))
@@ -107,8 +107,11 @@ public class Weapon : MonoBehaviour
             else
                 damageable = hit.collider.GetComponentInParent<IDamageable>();
 
+            Vector3 hitDirection = ray.direction.sqrMagnitude > 0f ? ray.direction.normalized : hit.normal;
+            float hitForce = weaponData.damage * 12f;
+
             if (damageable != null)
-                damageable.TakeDamage(weaponData.damage);
+                damageable.TakeDamage(weaponData.damage, hitDirection, hitForce);
 
             SpawnHitEffect(hit);
         }

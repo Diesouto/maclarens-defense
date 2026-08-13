@@ -10,21 +10,42 @@ public class Health : MonoBehaviour, IDamageable
     public bool IsDead => CurrentHealth <= 0f;
 
     public float MaxHealth => maxHealth;
+    public Vector3 LastHitDirection { get; private set; }
+    public float LastHitForce { get; private set; }
+
     public event Action<float> OnHealthChanged;
     public event Action OnDeath;
+
+    private CharacterRagdollController ragdollController;
 
     private void Awake()
     {
         CurrentHealth = maxHealth;
+
+        ragdollController = GetComponent<CharacterRagdollController>();
+        if (ragdollController == null)
+            ragdollController = gameObject.AddComponent<CharacterRagdollController>();
     }
 
     public void TakeDamage(float damage)
+    {
+        TakeDamage(damage, Vector3.zero, 0f);
+    }
+
+    public void TakeDamage(float damage, Vector3 hitDirection, float forceAmount)
     {
         if (IsDead)
             return;
 
         CurrentHealth -= damage;
         CurrentHealth = Mathf.Max(CurrentHealth, 0f);
+
+        if (hitDirection.sqrMagnitude > 0f)
+            LastHitDirection = hitDirection.normalized;
+        else
+            LastHitDirection = Vector3.zero;
+
+        LastHitForce = Mathf.Max(forceAmount, 0f);
 
         OnHealthChanged?.Invoke(CurrentHealth);
         Debug.Log($"{gameObject.name} took {damage} damage. Current health: {CurrentHealth}/{maxHealth}");
@@ -48,6 +69,9 @@ public class Health : MonoBehaviour, IDamageable
 
     private void Die()
     {
+        if (ragdollController != null)
+            ragdollController.EnableRagdoll(LastHitDirection, LastHitForce);
+
         OnDeath?.Invoke();
     }
 }

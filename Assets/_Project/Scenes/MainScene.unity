@@ -50477,11 +50477,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4517892917420314, guid: 085e53ee40ad24b40a83bd90705ad460, type: 3}
   m_PrefabInstance: {fileID: 1310342175}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &1310342177 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 95918252503098470, guid: 085e53ee40ad24b40a83bd90705ad460, type: 3}
-  m_PrefabInstance: {fileID: 1310342175}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1310427555
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -81710,7 +81705,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2040889366}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a3478724d6287694497234dbd25651c3, type: 3}
   m_Name: 
@@ -81746,19 +81741,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2040889366}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c0c95b22017e08b488686c10a2b093bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterRagdollController
-  animator: {fileID: 1310342177}
-  rootCollider: {fileID: 0}
-  rootRigidbody: {fileID: 0}
-  rootCharacterController: {fileID: 2040889371}
-  ragdollColliders: []
-  ragdollRigidbodies: []
-  health: {fileID: 0}
-  isRagdollActive: 0
+  enableOnStart: 0
+  disableAnimatorDelay: 0.05
+  destroyAfterDeath: 0
+  destroyDelay: 30
 --- !u!1001 &2040956845
 PrefabInstance:
   m_ObjectHideFlags: 0
