@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
 
     private PlayerInputHandler input;
     private PlayerMotor motor;
+    private Health health;
     private float yaw;
     private float pitch;
     private float smoothedYaw;
@@ -25,6 +26,10 @@ public class PlayerController : MonoBehaviour
     {
         input = GetComponent<PlayerInputHandler>();
         motor = GetComponent<PlayerMotor>();
+        health = GetComponent<Health>();
+
+        if (health != null)
+            health.OnDeath += OnDeath;
 
         if (cameraTransform == null)
             cameraTransform = Camera.main != null ? Camera.main.transform : null;
@@ -102,6 +107,23 @@ public class PlayerController : MonoBehaviour
             direction.Normalize();
 
         motor.Move(direction, input.SprintHeld);
+    }
+
+    private void OnDestroy()
+    {
+        if (health != null)
+            health.OnDeath -= OnDeath;
+    }
+
+    private void OnDeath()
+    {
+        if (input != null)
+            input.enabled = false;
+
+        if (motor != null)
+            motor.enabled = false;
+
+        enabled = false;
     }
 
     private static float NormalizeAngle(float angle)

@@ -7,8 +7,9 @@ public class Weapon : MonoBehaviour
     public event Action<int, int> OnAmmoChanged;
 
     [Header("Weapon Settings")]
-    [SerializeField] private WeaponData weaponData;
+    [SerializeField] private WeaponDataSO weaponData;
     [SerializeField] private PlayerInputHandler inputHandler;
+    [SerializeField] private InteractUI interactUI;
     [SerializeField] private Camera playerCamera;
     [SerializeField] private Transform muzzleTransform;
     [SerializeField] private LayerMask hitMask = ~0;
@@ -33,6 +34,9 @@ public class Weapon : MonoBehaviour
             currentReserveAmmo = Mathf.Max(weaponData.maxAmmo, 0);
             OnAmmoChanged?.Invoke(currentAmmo, currentReserveAmmo);
         }
+
+        if (interactUI == null)
+            interactUI = FindObjectOfType<InteractUI>();
     }
 
     private void Update()
@@ -97,10 +101,14 @@ public class Weapon : MonoBehaviour
         {
           Debug.Log($"Hit: {hit.collider.name} at {hit.point}");
 
-            if (hit.collider.TryGetComponent<IDamageable>(out var damageable))
-            {
+            IDamageable damageable = null;
+            if (hit.collider.TryGetComponent<IDamageable>(out var d))
+                damageable = d;
+            else
+                damageable = hit.collider.GetComponentInParent<IDamageable>();
+
+            if (damageable != null)
                 damageable.TakeDamage(weaponData.damage);
-            }
 
             SpawnHitEffect(hit);
         }
@@ -132,6 +140,7 @@ public class Weapon : MonoBehaviour
 
         isReloading = true;
         reloadTimer = Mathf.Max(weaponData.reloadTime, 0f);
+        interactUI?.StartProgress(reloadTimer, "Reloading...");
     }
 
     private void FinishReload()
