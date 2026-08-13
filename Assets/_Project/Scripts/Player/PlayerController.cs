@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     private PlayerInputHandler input;
     private PlayerMotor motor;
     private Health health;
+    private Animator animator;
     private float yaw;
     private float pitch;
     private float smoothedYaw;
@@ -27,6 +28,7 @@ public class PlayerController : MonoBehaviour
         input = GetComponent<PlayerInputHandler>();
         motor = GetComponent<PlayerMotor>();
         health = GetComponent<Health>();
+        animator = GetComponentInChildren<Animator>();
 
         if (health != null)
             health.OnDeath += OnDeath;
@@ -106,7 +108,15 @@ public class PlayerController : MonoBehaviour
         if (direction.sqrMagnitude > 1f)
             direction.Normalize();
 
-        motor.Move(direction, input.SprintHeld);
+        bool sprinting = input.SprintHeld;
+        motor.Move(direction, sprinting);
+
+        if (animator != null)
+        {
+            float moveMagnitude = move.magnitude;
+            float speedValue = moveMagnitude <= 0.01f ? 0f : sprinting ? 1f : 0.25f;
+            animator.SetFloat("Speed", speedValue);
+        }
     }
 
     private void OnDestroy()

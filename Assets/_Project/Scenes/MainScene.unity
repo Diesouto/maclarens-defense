@@ -25631,7 +25631,7 @@ MonoBehaviour:
   Lens:
     FieldOfView: 60.000004
     OrthographicSize: 10
-    NearClipPlane: 0.1
+    NearClipPlane: 0.15
     FarClipPlane: 5000
     Dutch: 0
     ModeOverride: 0
@@ -25657,7 +25657,7 @@ Transform:
   m_GameObject: {fileID: 698497695}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.7119999, z: 0.19}
+  m_LocalPosition: {x: 0, y: 1.7119999, z: 0.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -36315,7 +36315,7 @@ Transform:
   m_GameObject: {fileID: 957163806}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.7119999, z: 0.19}
+  m_LocalPosition: {x: 0, y: 1.7119999, z: 0.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -36396,7 +36396,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.1
+  near clip plane: 0.15
   far clip plane: 5000
   field of view: 60.000004
   orthographic: 0
@@ -38421,7 +38421,7 @@ Animator:
   m_GameObject: {fileID: 1006712532}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 4837235d67e136e4b883adb2bafc73e8, type: 3}
-  m_Controller: {fileID: 9100000, guid: 4f08a56db592fa24a998b9baf8aac6ac, type: 2}
+  m_Controller: {fileID: 9100000, guid: aa5fe7eb87d172b4f9f957e75ee9d41a, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
@@ -80256,7 +80256,7 @@ Transform:
   m_GameObject: {fileID: 1994401854}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.106, y: 1.58, z: 0.387}
+  m_LocalPosition: {x: 0.106, y: 1.58, z: 0.513}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -81712,6 +81712,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   searchInterval: 1
   stealDistance: 1.5
+  runSpeed: 4.5
 --- !u!195 &2040889373
 NavMeshAgent:
   m_ObjectHideFlags: 0

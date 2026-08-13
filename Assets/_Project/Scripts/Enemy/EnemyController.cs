@@ -8,8 +8,11 @@ public class EnemyController : MonoBehaviour
     public float searchInterval = 1f;
     public float stealDistance = 1.5f;
 
+    [SerializeField] private float runSpeed = 4.5f;
+
     private NavMeshAgent agent;
     private Health health;
+    private Animator animator;
     private Transform target;
     private bool isDead;
 
@@ -17,6 +20,10 @@ public class EnemyController : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         health = GetComponent<Health>();
+        animator = GetComponentInChildren<Animator>();
+
+        if (agent != null)
+            agent.speed = runSpeed;
 
         if (health != null)
             health.OnDeath += OnDeath;
@@ -81,6 +88,15 @@ public class EnemyController : MonoBehaviour
             health.OnDeath -= OnDeath;
     }
 
+    private void Update()
+    {
+        if (isDead || animator == null)
+            return;
+
+        float speedValue = agent != null && agent.velocity.sqrMagnitude > 0.01f ? 1f : 0f;
+        animator.SetFloat("Speed", speedValue);
+    }
+
     private void OnDeath()
     {
         isDead = true;
@@ -88,6 +104,9 @@ public class EnemyController : MonoBehaviour
 
         if (agent != null)
             agent.enabled = false;
+
+        if (animator != null)
+            animator.SetFloat("Speed", 0f);
 
         Destroy(gameObject, 30f);
         enabled = false;
