@@ -13,6 +13,7 @@ public class Weapon : MonoBehaviour
     [SerializeField] private Camera playerCamera;
     [SerializeField] private Transform muzzleTransform;
     [SerializeField] private LayerMask hitMask = ~0;
+    [SerializeField] private GameObject gunshotParticleReference;
 
     private float nextTimeToFire;
     private int currentAmmo;
@@ -86,6 +87,7 @@ public class Weapon : MonoBehaviour
         nextTimeToFire = Time.time + 1f / fireRate;
         currentAmmo--;
         OnAmmoChanged?.Invoke(currentAmmo, currentReserveAmmo);
+        gunshotParticleReference?.GetComponent<ParticleSystem>().Play();
 
         ShootRaycast();
     }
