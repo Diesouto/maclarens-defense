@@ -126,6 +126,11 @@ Bloquear direccion, reglas de alcance y la infraestructura minima de interaccion
 - La UI ya puede mostrar un prompt de interaccion generico
 - No hay dudas abiertas sobre si el tren sera una escena aparte o una zona segura
 
+### Estado actual
+
+- Fase cerrada. `IInteractable`, `PlayerInteractor` e `InteractUI` estan implementados y documentados.
+- La estructura de carpetas por dominio ya existe y la decision de tren como zona segura dentro de la misma escena sigue vigente.
+
 ### Si hay retraso
 
 - No se abre ninguna feature de contenido
@@ -152,6 +157,12 @@ Demostrar que recoger, transportar, soltar y recuperar loot ya es divertido por 
 - El jugador llena inventario, suelta objetos y puede volver a recogerlos
 - El valor total transportado es visible y correcto
 - No hay casos frecuentes de perder un objeto por colisiones o referencias rotas
+
+### Estado actual
+
+- Los sistemas base de P1 estan implementados: `LootDataSO`, `LootItem`, `PlayerInventory`, `InventoryUI`, `ItemHolder`, `PlayerPoseController`, drop y throw cargado con fisicas.
+- El item soltado o lanzado vuelve al mismo `LootItem` del mundo mediante `ItemInstance`, de forma que mantiene referencias y datos runtime como la municion.
+- La fase esta implementada a nivel de sistemas y escena de prueba: existen 6 assets de loot authoring con valores distintos. No se marca cerrada al 100% hasta mostrar el valor total transportado en HUD y completar el playtest final de pickup, drop y recuperacion.
 
 ### Si hay retraso
 

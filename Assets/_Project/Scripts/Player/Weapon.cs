@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Weapon : MonoBehaviour
 {
@@ -15,16 +14,20 @@ public class Weapon : MonoBehaviour
     [SerializeField] private LayerMask hitMask = ~0;
     [SerializeField] private GameObject gunshotParticleReference;
 
+    private PlayerInventory inventory;
     private float nextTimeToFire;
     private int currentAmmo;
     private int currentReserveAmmo;
     private bool isReloading;
     private float reloadTimer;
+    private ItemInstance equippedInstance;
 
     private void Awake()
     {
         if (inputHandler == null)
             inputHandler = GetComponentInParent<PlayerInputHandler>();
+
+        inventory = GetComponentInParent<PlayerInventory>();
 
         if (playerCamera == null)
             playerCamera = Camera.main;
@@ -42,43 +45,102 @@ public class Weapon : MonoBehaviour
 
     private void Update()
     {
-        if (weaponData == null)
+        if (!SyncWithActiveItemInternal())
             return;
+
+        if (weaponData == null)
+        {
+            return;
+        }
 
         if (isReloading)
         {
             reloadTimer -= Time.deltaTime;
             if (reloadTimer <= 0f)
                 FinishReload();
+        }
+    }
+
+    public void Equip(WeaponDataSO newWeaponData)
+    {
+        weaponData = newWeaponData;
+
+        if (weaponData == null)
             return;
+
+        currentAmmo = Mathf.Max(weaponData.magazineSize, 0);
+        currentReserveAmmo = Mathf.Max(weaponData.maxAmmo, 0);
+
+        if (inventory != null && inventory.ActiveItemInstance != null && inventory.ActiveItemInstance.Data.WeaponData == weaponData && inventory.TryGetWeaponAmmo(inventory.ActiveItemInstance, out int savedAmmo, out int savedReserveAmmo))
+        {
+            currentAmmo = savedAmmo;
+            currentReserveAmmo = savedReserveAmmo;
         }
 
-        if (IsReloadPressed())
+        SaveAmmoState();
+        OnAmmoChanged?.Invoke(currentAmmo, currentReserveAmmo);
+    }
+
+    public void SyncWithActiveItem()
+    {
+        SyncWithActiveItemInternal();
+    }
+
+    // Called by ItemHolder to fix references when instantiated as a held visual.
+    public void Initialize(PlayerInputHandler handler, PlayerInventory inv, Camera cam)
+    {
+        if (handler != null) inputHandler = handler;
+        if (inv != null) inventory = inv;
+        if (cam != null) playerCamera = cam;
+    }
+
+    public bool TryFire()
+    {
+        if (!SyncWithActiveItemInternal() || !CanFire())
+            return false;
+
+        Fire();
+        return true;
+    }
+
+    public void HandleInput(bool firePressed, bool fireHeld, bool reloadPressed)
+    {
+        if (!SyncWithActiveItemInternal())
+            return;
+
+        if (isReloading)
+            return;
+
+        if (reloadPressed)
         {
             TryStartReload();
             return;
         }
 
-        if (CanFire() && IsFirePressed())
-            Fire();
+        bool shouldFire = weaponData != null && (weaponData.automatic ? fireHeld : firePressed);
+        if (shouldFire)
+            TryFire();
     }
 
     private bool IsReloadPressed()
     {
-        return inputHandler.ReloadPressed;
+        return inputHandler != null && inputHandler.ReloadPressed;
     }
 
     private bool IsFirePressed()
     {
-        if (weaponData.automatic)
-            return inputHandler.FireHeld;
+        if (weaponData == null)
+            return false;
 
-        return inputHandler.FirePressed;
+        if (weaponData.automatic)
+            return inputHandler != null && inputHandler.FireHeld;
+
+        return inputHandler != null && inputHandler.FirePressed;
     }
 
     private bool CanFire()
     {
-        return !isReloading && currentAmmo > 0 && Time.time >= nextTimeToFire;
+        return weaponData != null && !isReloading && currentAmmo > 0 && Time.time >= nextTimeToFire;
     }
 
     private void Fire()
@@ -86,6 +148,7 @@ public class Weapon : MonoBehaviour
         float fireRate = Mathf.Max(weaponData.fireRate, 0.01f);
         nextTimeToFire = Time.time + 1f / fireRate;
         currentAmmo--;
+        SaveAmmoState();
         OnAmmoChanged?.Invoke(currentAmmo, currentReserveAmmo);
         gunshotParticleReference?.GetComponent<ParticleSystem>().Play();
 
@@ -94,15 +157,13 @@ public class Weapon : MonoBehaviour
 
     private void ShootRaycast()
     {
-        if (playerCamera == null)
+        if (playerCamera == null || weaponData == null)
             return;
 
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
 
         if (Physics.Raycast(ray, out RaycastHit hit, weaponData.range, hitMask, QueryTriggerInteraction.Ignore))
         {
-            Debug.Log($"Hit: {hit.collider.name} at {hit.point}");
-
             IDamageable damageable = null;
             if (hit.collider.TryGetComponent<IDamageable>(out var d))
                 damageable = d;
@@ -123,7 +184,7 @@ public class Weapon : MonoBehaviour
 
     private void SpawnMuzzleFlash()
     {
-        if (weaponData.muzzleFlash == null)
+        if (weaponData == null || weaponData.muzzleFlash == null)
             return;
 
         Vector3 spawnPosition = muzzleTransform != null ? muzzleTransform.position : transform.position;
@@ -132,7 +193,7 @@ public class Weapon : MonoBehaviour
 
     private void SpawnHitEffect(RaycastHit hit)
     {
-        if (weaponData.hitEffect == null)
+        if (weaponData == null || weaponData.hitEffect == null)
             return;
 
         Instantiate(weaponData.hitEffect, hit.point, Quaternion.LookRotation(hit.normal));
@@ -140,7 +201,7 @@ public class Weapon : MonoBehaviour
 
     private void TryStartReload()
     {
-        if (isReloading || currentAmmo >= weaponData.magazineSize || currentReserveAmmo <= 0)
+        if (weaponData == null || isReloading || currentAmmo >= weaponData.magazineSize || currentReserveAmmo <= 0)
             return;
 
         isReloading = true;
@@ -150,6 +211,9 @@ public class Weapon : MonoBehaviour
 
     private void FinishReload()
     {
+        if (weaponData == null)
+            return;
+
         isReloading = false;
 
         int ammoNeeded = weaponData.magazineSize - currentAmmo;
@@ -157,7 +221,31 @@ public class Weapon : MonoBehaviour
 
         currentAmmo += ammoToLoad;
         currentReserveAmmo -= ammoToLoad;
+        SaveAmmoState();
         OnAmmoChanged?.Invoke(currentAmmo, currentReserveAmmo);
+    }
+
+    private void SaveAmmoState()
+    {
+        if (inventory != null && inventory.ActiveItemInstance != null && inventory.ActiveItemInstance.Data.IsWeapon)
+            inventory.SetWeaponAmmo(inventory.ActiveItemInstance, currentAmmo, currentReserveAmmo);
+    }
+
+    private bool SyncWithActiveItemInternal()
+    {
+        if (inventory == null || inventory.ActiveItemInstance == null || !inventory.ActiveItemInstance.Data.IsWeapon)
+        {
+            equippedInstance = null;
+            return false;
+        }
+
+        if (equippedInstance != inventory.ActiveItemInstance || weaponData != inventory.ActiveItemInstance.Data.WeaponData)
+        {
+            equippedInstance = inventory.ActiveItemInstance;
+            Equip(inventory.ActiveItemInstance.Data.WeaponData);
+        }
+
+        return weaponData != null;
     }
 
     public int CurrentAmmo => currentAmmo;
@@ -165,4 +253,5 @@ public class Weapon : MonoBehaviour
     public int MagazineSize => weaponData != null ? weaponData.magazineSize : 0;
     public int MaxReserveAmmo => weaponData != null ? weaponData.maxAmmo : 0;
     public bool IsReloading => isReloading;
+    public WeaponDataSO WeaponData => weaponData;
 }

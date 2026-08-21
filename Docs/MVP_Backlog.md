@@ -66,29 +66,35 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Loot] Crear LootDataSO`
   Resultado: datos authoring para nombre, valor, icono y prefab.
   Aceptacion: existen al menos 5 assets de loot con valores distintos.
+  Estado: implementado en `Assets/_Project/ScriptableObjects/Loot/LootDataSO.cs`; existen 6 assets con valores distintos (`LiquorSO` 25, `CopperBar` 50, `SilverBar` 100, `RevolverSO` 150, `GoldBarSO` 200 y `VaultSO` 500).
 
 - `[Loot] Crear LootItem interactuable`
   Resultado: representacion en mundo que usa `LootDataSO`.
   Aceptacion: al interactuar intenta entrar en inventario y desaparece del mundo si entra.
   Nota de diseño: los objetos pesados, como la caja fuerte, iniciaran transporte visible en mano y bloquearan sprint y arma; ver [Arquitectura MVP](Arquitectura_MVP.md).
+  Estado: implementado en `Assets/_Project/Scripts/Loot/LootItem.cs`, con reactivacion del mismo objeto del mundo al soltar o lanzar y soporte de `BreakableOnImpact`.
 
 ### Inventario y drop
 
 - `[Inventory] Crear PlayerInventory de 4 slots`
   Resultado: add, remove, has space, total value.
   Aceptacion: no permite sobrellenar, informa valor correcto y expone evento de cambio.
+  Estado: implementado en `Assets/_Project/Scripts/Player/PlayerInventory.cs`, con `ItemInstance` por slot, quinto item en mano cuando la mochila esta llena, municion persistente por instancia y drop/throw al mundo.
 
 - `[Inventory] Implementar drop al mundo`
   Resultado: el jugador puede soltar loot y recuperarlo despues.
   Aceptacion: el item vuelve a existir en escena con su dato correcto y sin duplicarse.
+  Estado: implementado. El drop reactiva el `LootItem` real asociado a la `ItemInstance`; el throw usa carga, crosshair y fisicas sobre ese mismo objeto.
 
 - `[UI] Crear InventoryUI minima`
   Resultado: slots y valor transportado visibles.
   Aceptacion: el HUD se refresca en pickup y drop sin intervencion manual.
+  Estado: implementado como HUD minimo por iconos y highlight de slot activo en `Assets/_Project/UI/InventoryUI.cs`. El valor transportado sigue calculandose en `PlayerInventory`, pero no se muestra ahora mismo por la decision actual de UX.
 
 - `[Scene] Crear Sandbox_Loot`
   Resultado: espacio de prueba para pickup, drop y edge cases.
   Aceptacion: permite validar todo el milestone 1 en menos de 2 minutos.
+  Estado: existe el area de prueba `Assets/_Project/Scenes/Test/InventoryTestScene.unity`, usada para iterar pickup, inventario, throw y UI.
 
 ## P2 - Train, quota y economia
 

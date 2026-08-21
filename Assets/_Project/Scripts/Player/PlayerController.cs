@@ -2,6 +2,8 @@
 
 [RequireComponent(typeof(PlayerInputHandler))]
 [RequireComponent(typeof(PlayerMotor))]
+[RequireComponent(typeof(PlayerPoseController))]
+[RequireComponent(typeof(ItemHolder))]
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private Transform cameraTransform;
@@ -12,9 +14,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float normalFov = 60f;
     [SerializeField] private float aimFov = 45f;
     [SerializeField] private float zoomSpeed = 40f;
+    [SerializeField] private float throwChargeDuration = 5f;
+    [SerializeField] private float minimumThrowForce = 2f;
+    [SerializeField] private float maximumThrowForce = 10f;
+    [SerializeField] private InteractUI interactUI;
 
     private PlayerInputHandler input;
     private PlayerMotor motor;
+    private PlayerInventory inventory;
+    private Weapon weapon;
     private Health health;
     private Animator animator;
     private float yaw;
@@ -22,13 +30,22 @@ public class PlayerController : MonoBehaviour
     private float smoothedYaw;
     private float smoothedPitch;
     private float currentFov;
+    private float throwChargeStartedAt;
+    private bool isChargingThrow;
+    private ItemHolder itemHolder;
 
     private void Awake()
     {
         input = GetComponent<PlayerInputHandler>();
         motor = GetComponent<PlayerMotor>();
+        inventory = GetComponent<PlayerInventory>();
+        itemHolder = GetComponent<ItemHolder>();
+        weapon = itemHolder != null ? itemHolder.RuntimeWeapon : GetComponentInChildren<Weapon>(true);
         health = GetComponent<Health>();
         animator = GetComponentInChildren<Animator>();
+
+        if (interactUI == null)
+            interactUI = FindFirstObjectByType<InteractUI>();
 
         if (health != null)
             health.OnDeath += OnDeath;
@@ -56,6 +73,8 @@ public class PlayerController : MonoBehaviour
         HandleLook();
         HandleMovement();
         HandleAimZoom();
+        HandleInventoryInput();
+        HandleWeaponInput();
 
         if (input.JumpPressed)
             motor.Jump();
@@ -108,7 +127,7 @@ public class PlayerController : MonoBehaviour
         if (direction.sqrMagnitude > 1f)
             direction.Normalize();
 
-        bool sprinting = input.SprintHeld;
+        bool sprinting = input.SprintHeld && (inventory == null || inventory.ActiveItem == null || !inventory.ActiveItem.IsHeavy);
         motor.Move(direction, sprinting);
 
         if (animator != null)
@@ -117,6 +136,99 @@ public class PlayerController : MonoBehaviour
             float speedValue = moveMagnitude <= 0.01f ? 0f : sprinting ? 1f : 0.25f;
             animator.SetFloat("Speed", speedValue);
         }
+    }
+
+    private void HandleInventoryInput()
+    {
+        if (inventory == null)
+            return;
+
+        if (input.DropPressed && inventory.ActiveItem != null)
+        {
+            isChargingThrow = true;
+            throwChargeStartedAt = Time.time;
+            interactUI?.StartHeldProgress(throwChargeDuration, "Throwing...");
+            return;
+        }
+
+        if (isChargingThrow && input.DropReleased)
+        {
+            ReleaseThrow();
+            return;
+        }
+
+        if (isChargingThrow && input.DropHeld)
+            return;
+
+        if (input.InventoryUpPressed)
+        {
+            CancelThrow();
+            inventory.TrySelectNextSlot();
+            return;
+        }
+
+        if (input.InventoryDownPressed)
+        {
+            CancelThrow();
+            inventory.TrySelectPreviousSlot();
+            return;
+        }
+
+        if (input.Number1Pressed)
+        {
+            CancelThrow();
+            inventory.TrySelectSlotByNumber(1);
+        }
+        else if (input.Number2Pressed)
+        {
+            CancelThrow();
+            inventory.TrySelectSlotByNumber(2);
+        }
+        else if (input.Number3Pressed)
+        {
+            CancelThrow();
+            inventory.TrySelectSlotByNumber(3);
+        }
+        else if (input.Number4Pressed)
+        {
+            CancelThrow();
+            inventory.TrySelectSlotByNumber(4);
+        }
+
+    }
+
+    private void HandleWeaponInput()
+    {
+        if (inventory == null || inventory.ActiveItem == null || !inventory.ActiveItem.IsWeapon)
+            return;
+
+        weapon = itemHolder != null ? itemHolder.RuntimeWeapon : weapon;
+        if (!inventory.TryUseActiveItem(weapon) || weapon == null)
+            return;
+
+        weapon.HandleInput(input.FirePressed, input.FireHeld, input.ReloadPressed);
+    }
+
+    private void ReleaseThrow()
+    {
+        float charge = Mathf.Clamp01((Time.time - throwChargeStartedAt) / Mathf.Max(throwChargeDuration, 0.01f));
+        float force = Mathf.Lerp(minimumThrowForce, maximumThrowForce, charge);
+        Transform throwPoint = itemHolder != null ? itemHolder.ThrowPoint : transform;
+        Vector3 position = throwPoint.position + transform.forward * 0.2f;
+        Vector3 throwDirection = mainCamera != null ? mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f)).direction : transform.forward;
+        Vector3 throwForce = throwDirection * force;
+        isChargingThrow = false;
+        interactUI?.FinishProgress();
+        inventory.TryThrowSelected(position, throwForce);
+    }
+
+    private void CancelThrow()
+    {
+        if (!isChargingThrow)
+            return;
+
+        isChargingThrow = false;
+        interactUI?.CancelProgress();
     }
 
     private void OnDestroy()

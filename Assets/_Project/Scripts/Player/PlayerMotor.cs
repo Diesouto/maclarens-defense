@@ -5,12 +5,14 @@ public class PlayerMotor : MonoBehaviour
 {
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float sprintSpeed = 8f;
+    [SerializeField, Range(0.1f, 1f)] private float heavyCarrySpeedMultiplier = 0.5f;
     [SerializeField] private float jumpHeight = 2f;
     [SerializeField] private float gravity = -25f;
     [SerializeField] private LayerMask groundMask = ~0;
     [SerializeField] private float groundCheckDistance = 0.15f;
 
     private CharacterController controller;
+    private PlayerInventory inventory;
 
     private Vector3 velocity;
     private bool grounded;
@@ -18,11 +20,15 @@ public class PlayerMotor : MonoBehaviour
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        inventory = GetComponent<PlayerInventory>();
     }
 
     public void Move(Vector3 direction, bool sprint)
     {
         float speed = sprint ? sprintSpeed : walkSpeed;
+
+        if (inventory != null && inventory.ActiveItem != null && inventory.ActiveItem.IsHeavy)
+            speed *= heavyCarrySpeedMultiplier;
 
         controller.Move(direction * speed * Time.deltaTime);
 

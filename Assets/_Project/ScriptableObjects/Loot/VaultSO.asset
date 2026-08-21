@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74711b29da55cb7428b3ce78dbd34b28, type: 3}
+  m_Name: VaultSO
+  m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
+  itemId: Vault
+  displayName: Caja Fuerte
+  icon: {fileID: 0}
+  value: 500
+  price: 0
+  itemType: 0
+  isHeavy: 1
+  isTwoHanded: 0
+  animationProfile: 0
+  weaponData: {fileID: 0}
+  worldPrefab: {fileID: 1537505870750680, guid: feeb4ccf84d811a42afeb832b1cd8ebf, type: 3}
+  heldPrefab: {fileID: 0}

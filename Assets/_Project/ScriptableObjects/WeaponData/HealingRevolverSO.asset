@@ -12,9 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b23692e28095ab7429e6ff9c4bf2588f, type: 3}
   m_Name: HealingRevolverSO
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: Revolver
-  icon: {fileID: 0}
-  price: 100
   damage: -1
   range: 10000
   fireRate: 3

@@ -3,11 +3,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Weapon", menuName = "MacLarens/Weapon")]
 public class WeaponDataSO : ScriptableObject
 {
-    [Header("General")]
-    public string weaponName;
-    public Sprite icon;
-    public int price;
-
     [Header("Damage")]
     public float damage = 20f;
     public float range = 100f;

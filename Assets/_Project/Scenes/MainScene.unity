@@ -37516,6 +37516,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BulletsUI
   weapon: {fileID: 1994401856}
   currentBulletsText: {fileID: 240794327}
+  dividerLabel: {fileID: 1538014287}
   maxBulletsText: {fileID: 2052758010}
 --- !u!1001 &983132070
 PrefabInstance:

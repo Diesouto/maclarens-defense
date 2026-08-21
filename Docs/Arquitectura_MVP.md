@@ -82,16 +82,19 @@ Assets/_Project/Scripts/
 - `PlayerMotor`: movimiento, gravedad, sprint, salto y crouch si aplica.
 - `PlayerHealth`: vida, daño, muerte, eventos y posible estado spectator mas adelante.
 - `PlayerInteractor`: raycast, prompt, validacion simple y llamada a `Interact`.
-- `PlayerInventory`: slots, add, remove, drop, query de valor total transportado.
-- `Weapon`: disparo, recarga, consumo de municion y hit processing.
-- `PlayerCarryState`: estado del objeto llevado en la mano; aplica restricciones de movimiento y combate y controla la representacion visual.
+- `PlayerInventory`: slots, add, remove, drop, throw, query de valor total transportado y estado activo.
+- `ItemInstance`: estado runtime por objeto; hoy conserva al menos referencia al objeto del mundo y municion por arma.
+- `ItemHolder`: representacion visual del item activo en mano y handoff entre mano y mundo.
+- `PlayerPoseController`: decide pose, hold points y parametros de animator segun el item activo.
+- `Weapon`: disparo, recarga, consumo de municion y hit processing usando la `ItemInstance` activa.
 
 ### Loot
 
-- `LootDataSO`: catalogo de item, valor, icono, prefab y tuning visual basico.
-- `LootItem`: representacion en mundo, implementa `IInteractable`, conoce su `LootDataSO`.
+- `LootDataSO`: catalogo de item, valor, icono, prefab de mundo, prefab de mano y perfil de pose.
+- `LootItem`: representacion en mundo, implementa `IInteractable`, conoce su `LootDataSO` y se asocia a una `ItemInstance` concreta.
 - `LootSpawnPoint`: punto marcado donde puede aparecer loot.
 - `LootSpawner`: puebla la escena al inicio de la run.
+- `BreakableOnImpact`: opcional en props fragiles; rompe el objeto si recibe un impacto suficientemente fuerte.
 
 ### Transporte de objetos
 
@@ -99,14 +102,16 @@ Algunos objetos de loot tendran transporte especial en mano. Una caja fuerte es 
 
 Reglas del MVP:
 
-- `LootDataSO` define si el objeto se puede llevar en mano y sus restricciones de transporte; no guarda el estado vivo.
-- `PlayerInventory` posee la ocupacion del slot y solicita iniciar o terminar el transporte.
-- `PlayerCarryState` aplica el estado runtime y expone `IsCarrying`, `MovementSpeedMultiplier` y `CanUseWeapon`.
-- `PlayerMotor` consulta la restriccion de velocidad; no decide que objeto se esta llevando.
-- `Weapon` rechaza disparo y recarga mientras `CanUseWeapon` sea falso.
-- La malla visible del objeto se instancia o activa bajo un `CarryAnchor` de manos. El objeto del mundo se desactiva mientras esta en inventario para evitar duplicados.
-- Soltar es una operacion atomica: primero se valida la posicion y despues se libera el slot; si no hay posicion valida, el objeto permanece en la mano.
-- La UI de inventario representa el slot ocupado y el HUD puede mostrar el objeto llevado, pero ninguna UI decide las restricciones.
+- `LootDataSO` define perfil de pose, prefab de mundo y opcionalmente prefab visual de mano; no guarda estado vivo.
+- `ItemInstance` guarda el estado runtime del objeto, incluida la referencia a su `LootItem` del mundo y la municion si es arma.
+- `PlayerInventory` posee la ocupacion del slot y decide si el item esta en mochila o en mano.
+- `PlayerMotor` consulta si el item activo es pesado para aplicar multiplicador de velocidad y bloqueo de sprint.
+- `Weapon` rechaza disparo y recarga si no hay arma activa y sincroniza su municion con la `ItemInstance` activa.
+- `PlayerPoseController` decide la pose de carry, pistol y shotgun y el hold point correspondiente.
+- `ItemHolder` mantiene la representacion visual en mano. Si el item tiene `HeldPrefab`, usa esa visual; si no, cae al prefab de mundo o al arma residente del jugador.
+- El objeto real del mundo se desactiva al recogerlo y se reactiva al soltarlo o lanzarlo; no se duplica para la interaccion fisica.
+- El lanzamiento cargado usa el crosshair, mantiene una barra de progreso hasta soltar o cancelar y reaplica fisicas sobre el mismo objeto del mundo.
+- La UI de inventario representa iconos y slot activo; la UI de municion depende del arma activa, no de la existencia de un `Weapon` visible.
 
 El transporte no se mezcla con el contrato `IInteractable`: interactuar puede iniciar el transporte, pero el estado de llevarlo pertenece al jugador y al inventario. En multiplayer, el host validara pickup, drop, slot y restricciones; la representacion visual sera una consecuencia del estado sincronizado.
 
@@ -158,9 +163,21 @@ Ventajas:
 PlayerInteractor
     -> LootItem.Interact
     -> PlayerInventory.TryAdd
-    -> LootItem se consume o se desactiva
+    -> LootItem real se desactiva y la ItemInstance conserva su referencia
     -> InventoryUI se refresca
     -> ThreatManager.AddLootThreat
+```
+
+### Drop / Throw
+
+```text
+Drop input held
+    -> PlayerController carga fuerza y muestra barra
+    -> Release throw
+    -> PlayerInventory.TryThrowSelected
+    -> LootItem real se reactiva frente al jugador
+    -> Rigidbody recibe impulso dirigido por el crosshair
+    -> InventoryUI y ammo UI se refrescan
 ```
 
 ### Deposit

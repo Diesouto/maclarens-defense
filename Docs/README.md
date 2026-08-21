@@ -42,5 +42,18 @@ El objetivo del proximo mes es llegar a un MVP divertido y funcional en singlepl
 - NavMesh
 - Ragdoll
 - HUD
+- `IInteractable`, `PlayerInteractor` y prompt generico de interaccion
+- `LootDataSO`, `LootItem` y `PlayerInventory` de 4 slots
+- `ItemInstance` para preservar estado runtime por objeto, incluida municion por arma
+- `InventoryUI` minima por iconos y highlight de slot activo
+- `ItemHolder` + `PlayerPoseController` para poses `Carry`, `Pistol` y `Shotgun`
+- Drop y throw cargado con reutilizacion del objeto real del mundo y fisicas al caer
+- `BulletsUI` condicionada a arma activa en mano
+- `BreakableOnImpact` para props fragiles con umbral configurable
+
+## Estado roadmap
+
+- P0: completada.
+- P1: implementada a nivel de sistemas y escena de prueba; existen 6 assets de loot con valores distintos. Sigue pendiente para cerrarla al 100% mostrar el valor total transportado en el HUD y completar el playtest final.
 
 Usa el roadmap para decidir prioridades, la arquitectura para decidir donde vive cada comportamiento y la guia de estilo para mantener consistencia al crecer el proyecto.

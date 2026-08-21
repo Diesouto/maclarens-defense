@@ -60,6 +60,14 @@ public class InteractUI : MonoBehaviour
         progressCoroutine = StartCoroutine(ProgressRoutine(duration, displayText));
     }
 
+    public void StartHeldProgress(float duration, string displayText = null)
+    {
+        if (progressCoroutine != null)
+            StopCoroutine(progressCoroutine);
+
+        progressCoroutine = StartCoroutine(HeldProgressRoutine(duration, displayText));
+    }
+
     /// <summary>
     /// Cancel an ongoing progress and reset UI immediately.
     /// </summary>
@@ -113,6 +121,32 @@ public class InteractUI : MonoBehaviour
             interactProgressBar.fillAmount = 1f;
 
         FinishProgress();
+    }
+
+    private IEnumerator HeldProgressRoutine(float duration, string displayText)
+    {
+        IsInProgress = true;
+        SetVisible(true);
+
+        if (interactText != null)
+            interactText.text = string.IsNullOrEmpty(displayText) ? defaultText : displayText;
+
+        if (interactProgressBar != null)
+            interactProgressBar.fillAmount = 0f;
+
+        float elapsed = 0f;
+        while (elapsed < duration && IsInProgress)
+        {
+            elapsed += Time.deltaTime;
+            if (interactProgressBar != null)
+                interactProgressBar.fillAmount = Mathf.Clamp01(elapsed / duration);
+            yield return null;
+        }
+
+        if (interactProgressBar != null)
+            interactProgressBar.fillAmount = 1f;
+
+        progressCoroutine = null;
     }
 
     private void ResetUI()
