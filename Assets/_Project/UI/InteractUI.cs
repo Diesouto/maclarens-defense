@@ -22,6 +22,26 @@ public class InteractUI : MonoBehaviour
         SetVisible(false);
     }
 
+    public void ShowPrompt(string displayText)
+    {
+        if (IsInProgress)
+            return;
+
+        if (interactText != null)
+            interactText.text = string.IsNullOrEmpty(displayText) ? defaultText : displayText;
+
+        SetPromptVisible(true);
+    }
+
+    public void HidePrompt()
+    {
+        if (IsInProgress)
+            return;
+
+        ResetUI();
+        SetPromptVisible(false);
+    }
+
     /// <summary>
     /// Start a generic progress UI that fills over <paramref name="duration"/> seconds.
     /// Optional <paramref name="displayText"/> overrides the default text while progress runs.
@@ -114,5 +134,17 @@ public class InteractUI : MonoBehaviour
 
         if (interactProgressBarBackground != null)
             interactProgressBarBackground.gameObject.SetActive(visible);
+    }
+
+    private void SetPromptVisible(bool visible)
+    {
+        if (interactText != null)
+            interactText.gameObject.SetActive(visible);
+
+        if (interactProgressBar != null)
+            interactProgressBar.gameObject.SetActive(false);
+
+        if (interactProgressBarBackground != null)
+            interactProgressBarBackground.gameObject.SetActive(false);
     }
 }

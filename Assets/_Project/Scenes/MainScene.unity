@@ -51191,6 +51191,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1511784397513214, guid: 14c7e6be46ece4f45b8e7eb21032c206, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1915165462}
+    - targetCorrespondingSourceObject: {fileID: 1511784397513214, guid: 14c7e6be46ece4f45b8e7eb21032c206, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1915165463}
   m_SourcePrefab: {fileID: 100100000, guid: 14c7e6be46ece4f45b8e7eb21032c206, type: 3}
 --- !u!4 &1325174234 stripped
 Transform:
@@ -77572,6 +77575,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoozeItem
   amount: 1
+--- !u!114 &1915165463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1915165458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d538ffc16ce69b84c922fceafb88efba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionTestInteractable
+  prompt: Interactuar
+  disableAfterInteraction: 0
 --- !u!1001 &1915509121
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -86169,6 +86186,7 @@ GameObject:
   - component: {fileID: 3627500676103240369}
   - component: {fileID: 3627500676103240372}
   - component: {fileID: 3627500676103240371}
+  - component: {fileID: 3627500676103240374}
   - component: {fileID: 3627500676103240370}
   - component: {fileID: 3627500676103240373}
   m_Layer: 0
@@ -86312,6 +86330,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 100
+--- !u!114 &3627500676103240374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3627500676103240366}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af6b9bbda55b5d9488677c07e12fa22d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
+  interactionCamera: {fileID: 957163810}
+  interactUI: {fileID: 406794103}
+  interactionDistance: 3
+  interactionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

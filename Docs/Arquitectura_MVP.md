@@ -84,6 +84,7 @@ Assets/_Project/Scripts/
 - `PlayerInteractor`: raycast, prompt, validacion simple y llamada a `Interact`.
 - `PlayerInventory`: slots, add, remove, drop, query de valor total transportado.
 - `Weapon`: disparo, recarga, consumo de municion y hit processing.
+- `PlayerCarryState`: estado del objeto llevado en la mano; aplica restricciones de movimiento y combate y controla la representacion visual.
 
 ### Loot
 
@@ -91,6 +92,23 @@ Assets/_Project/Scripts/
 - `LootItem`: representacion en mundo, implementa `IInteractable`, conoce su `LootDataSO`.
 - `LootSpawnPoint`: punto marcado donde puede aparecer loot.
 - `LootSpawner`: puebla la escena al inicio de la run.
+
+### Transporte de objetos
+
+Algunos objetos de loot tendran transporte especial en mano. Una caja fuerte es el primer ejemplo: ocupa un slot del inventario, tiene una representacion visible en las manos, reduce la velocidad y bloquea sprint y uso del arma mientras se lleva.
+
+Reglas del MVP:
+
+- `LootDataSO` define si el objeto se puede llevar en mano y sus restricciones de transporte; no guarda el estado vivo.
+- `PlayerInventory` posee la ocupacion del slot y solicita iniciar o terminar el transporte.
+- `PlayerCarryState` aplica el estado runtime y expone `IsCarrying`, `MovementSpeedMultiplier` y `CanUseWeapon`.
+- `PlayerMotor` consulta la restriccion de velocidad; no decide que objeto se esta llevando.
+- `Weapon` rechaza disparo y recarga mientras `CanUseWeapon` sea falso.
+- La malla visible del objeto se instancia o activa bajo un `CarryAnchor` de manos. El objeto del mundo se desactiva mientras esta en inventario para evitar duplicados.
+- Soltar es una operacion atomica: primero se valida la posicion y despues se libera el slot; si no hay posicion valida, el objeto permanece en la mano.
+- La UI de inventario representa el slot ocupado y el HUD puede mostrar el objeto llevado, pero ninguna UI decide las restricciones.
+
+El transporte no se mezcla con el contrato `IInteractable`: interactuar puede iniciar el transporte, pero el estado de llevarlo pertenece al jugador y al inventario. En multiplayer, el host validara pickup, drop, slot y restricciones; la representacion visual sera una consecuencia del estado sincronizado.
 
 ### Train
 

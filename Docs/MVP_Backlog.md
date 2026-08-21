@@ -32,26 +32,32 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Content] Auditar POLYGON Western Pack para props MVP`
   Resultado: lista cerrada de objetos que serviran como loot, decorado y tren.
   Aceptacion: existe una shortlist de 5-8 props de loot y 1 composicion inicial de pueblo sin necesidad de buscar mas packs.
+  Estado: cerrada. Ver [Auditoria de contenido western](Auditorias/Auditoria_Contenido_Western.md).
 
 - `[Animation] Bloquear set Mixamo de placeholder`
   Resultado: locomotion, hit, death y recovery definidos para no cambiar animator cada semana.
   Aceptacion: existe un set minimo elegido para jugador y un set base para enemigo humanoide.
+  Estado: cerrada como decision de contenido. Clips importados y familias base, armada y carry decididas; `Getting Up` corregido a no-loop. La validacion de avatares, root motion y conexion de capas se difiere hasta que P1/P4 necesiten esos estados. Ver [Set de animaciones placeholder](Set_Animaciones_Placeholder.md).
 
 - `[Interaction] Crear IInteractable`
   Resultado: un contrato comun para loot, tren, puertas y extraccion.
   Aceptacion: un objeto de prueba puede ser interactuado sin tocar `PlayerController`.
+  Estado: implementado en `Assets/_Project/Scripts/Interaction/IInteractable.cs`; prueba reproducible documentada en [Prueba de interaccion base](Auditorias/Prueba_Interaccion_Base.md).
 
 - `[Player] Crear PlayerInteractor`
   Resultado: raycast de interaccion, deteccion de target y prompt generico.
   Aceptacion: el jugador ve prompt, pulsa interact y se ejecuta la accion correcta.
+  Estado: implementado en `Assets/_Project/Scripts/Player/PlayerInteractor.cs`; playtest documentado en [Prueba de interaccion base](Auditorias/Prueba_Interaccion_Base.md).
 
 - `[UI] Conectar prompt de interaccion`
   Resultado: feedback visual minimo para interacciones.
   Aceptacion: el prompt cambia al mirar objetos interactuables y desaparece al salir.
+  Estado: implementado en `Assets/_Project/UI/InteractUI.cs`; playtest documentado en [Prueba de interaccion base](Auditorias/Prueba_Interaccion_Base.md).
 
 - `[Structure] Reorganizar carpetas por dominio`
   Resultado: base de scripts preparada para crecer.
   Aceptacion: los scripts nuevos de loot, train e interaction ya viven en su dominio.
+  Estado: cerrada. Existen `Core`, `Interaction`, `Player`, `Loot`, `Train`, `Enemy`, `World`, `UI` y `Networking` como destinos de dominio.
 
 ## P1 - Loot prototype
 
@@ -64,6 +70,7 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Loot] Crear LootItem interactuable`
   Resultado: representacion en mundo que usa `LootDataSO`.
   Aceptacion: al interactuar intenta entrar en inventario y desaparece del mundo si entra.
+  Nota de diseño: los objetos pesados, como la caja fuerte, iniciaran transporte visible en mano y bloquearan sprint y arma; ver [Arquitectura MVP](Arquitectura_MVP.md).
 
 ### Inventario y drop
 

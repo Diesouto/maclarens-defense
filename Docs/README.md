@@ -17,6 +17,11 @@ El objetivo del proximo mes es llegar a un MVP divertido y funcional en singlepl
 - [Code Style Unity 6](Code_Style_Unity6.md): convenciones de codigo, assets, escenas y validacion.
 - [MVP Backlog](MVP_Backlog.md): lista priorizada de tareas y criterios de aceptacion para ejecucion diaria.
 - [MVP Scope Matrix](MVP_Scope_Matrix.md): corte exacto de alcance, plan de contenido y clasificacion de features por coste/impacto.
+- [Auditoria de contenido western](Auditorias/Auditoria_Contenido_Western.md): shortlist cerrada de props y composicion inicial del pueblo.
+- [Set de animaciones placeholder](Set_Animaciones_Placeholder.md): estados bloqueados y clips pendientes de importar.
+- La interaccion base ya cuenta con `IInteractable`, `PlayerInteractor` y prompt generico; validada en Play Mode con el objeto de prueba.
+- [Prueba de interaccion base](Auditorias/Prueba_Interaccion_Base.md): montaje rapido y criterios para validar el contrato en Play Mode.
+- La estructura de scripts por dominio ya incluye `Loot/` y `Train/`, preparada para el prototipo de inventario.
 
 ## Working Agreements
 
