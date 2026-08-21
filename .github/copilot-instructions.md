@@ -1,0 +1,21 @@
+# Copilot Instructions for MacLarens Defense
+
+- Product goal: build a funny and tense heist loop, not a feature-maximal shooter.
+- Core loop first: `loot -> risk -> escape -> cash in`.
+- Target online architecture: host-authoritative listen server via NGO + Relay + Authentication, not full mesh P2P.
+- If a requested feature does not directly strengthen that loop, challenge the scope before implementing it.
+- Singleplayer validates the game. Multiplayer scales the validated loop.
+- Train departure acceleration is MVP-worthy; whimsical hazards and special enemies are not unless the base loop is already stable.
+- Keep code identifiers in English. Keep production docs in Spanish unless asked otherwise.
+- Follow the current project style: small MonoBehaviours, `SerializeField private` fields, early returns, minimal hidden magic.
+- Do not turn `PlayerController` into a god class. New interactions should go through `IInteractable` and `PlayerInteractor`.
+- Use ScriptableObjects for static data and tuning, not for live run state.
+- UI reads state and raises intents; it must not own gameplay rules.
+- New gameplay systems should define: owner, state, events, validation path, and likely multiplayer authority.
+- Keep networked physics scoped and intentional; do not build gameplay around uncontrolled rigidbody chaos.
+- Prefer request/validate/apply flows so the code can move to server authority later with less churn.
+- Avoid `FindObjectOfType`, `FindFirstObjectByType`, and `FindGameObjectsWithTag` in recurring gameplay code.
+- Keep `Update` methods thin and cache references in `Awake`.
+- Do not introduce large refactors unless they clearly unlock the next milestone.
+- Before adding extra content, make the current loop playable in a sandbox or main scene.
+- Reaching quota should unlock departure, not auto-end the run.
