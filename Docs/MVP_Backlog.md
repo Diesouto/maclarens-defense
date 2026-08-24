@@ -96,29 +96,65 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Aceptacion: permite validar todo el milestone 1 en menos de 2 minutos.
   Estado: existe el area de prueba `Assets/_Project/Scenes/Test/InventoryTestScene.unity`, usada para iterar pickup, inventario, throw y UI.
 
-## P2 - Train, quota y economia
+## P2 - Train jugable, quota y economia
+
+### Economia (implementado)
 
 - `[Train] Crear TrainCargo`
-  Resultado: punto de deposito conectado al inventario.
+  Resultado: punto de deposito fisico conectado a la quota.
   Aceptacion: transfiere valor desde el jugador a quota sin contar doble.
+  Estado: implementado en `Assets/_Project/Scripts/Train/TrainCargo.cs`. Trigger BoxCollider; `LootItem` fisicos en escena se reparentan al `cargoRoot` al entrar y se desparentan al salir.
 
 - `[Core] Crear QuotaManager`
   Resultado: quota actual, cargo actual y evento de cambio.
   Aceptacion: puede responder si la cuota ya fue alcanzada.
+  Estado: implementado en `Assets/_Project/Scripts/Core/QuotaManager.cs`.
 
 - `[Core] Crear RunManager`
   Resultado: dia actual, resultado de run y reset de flujo.
   Aceptacion: Day 1, Day 2 y Day 3 se configuran sin hardcode disperso.
-
-- `[UI] Crear QuotaUI`
-  Resultado: mostrar cuota, cargo y estado de salida.
-  Aceptacion: el jugador sabe cuanto falta y si ya puede irse.
+  Estado: implementado en `Assets/_Project/Scripts/Core/RunManager.cs`.
 
 - `[Train] Crear accion Return to MacLarens`
-  Resultado: la salida se puede activar solo cuando procede.
-  Aceptacion: cuota alcanzada desbloquea opcion; no fuerza salida automatica.
+  Resultado: la salida puede activarse en cualquier momento con countdown de 5s.
+  Aceptacion: al completarse llama `RunManager.AdvanceDay()` y dispara `OnTrainDeparted`.
+  Estado: implementado en `Assets/_Project/Scripts/Train/TrainDeparture.cs`. Tiene `OnArrived()` publico como hook para el `TrainController`.
 
-## P3 - Pueblo y spawns
+### Tren jugable (pendiente)
+
+- `[Train] Crear composicion visual del tren`
+  Resultado: locomotora + vagon + area de cargo en escena.
+  Aceptacion: el tren existe como objeto fisico navegable, no solo como trigger.
+
+- `[Train] Crear TrainController`
+  Resultado: maquina de estados `AT_STATION / TRAVELLING` que mueve el tren por el spline.
+  Aceptacion: el tren sale de MacLarens, recorre el rail y llega al pueblo de forma automatica al recibir la orden de salida.
+
+- `[Train] Crear rail spline circular`
+  Resultado: recorrido cerrado `MacLarens -> Town -> MacLarens` con Unity Splines.
+  Aceptacion: el `TrainController` puede evaluar posicion y rotacion en cualquier punto del spline.
+
+- `[Train] Crear estaciones MacLarens y Town`
+  Resultado: zonas de docking donde el tren para y se reactiva `TrainDeparture`.
+  Aceptacion: al llegar a una estacion el tren se detiene y `OnArrived()` reactiva la interaccion de salida.
+
+- `[Train] Movimiento automatico del tren`
+  Resultado: el tren sigue el spline sin fisica de rieles; el `TrainRoot` se posiciona y rota por `EvaluatePosition`.
+  Aceptacion: los jugadores reparentados al `TrainRoot` viajan dentro sin codigo adicional.
+
+- `[Train] Animacion de ruedas`
+  Resultado: las ruedas giran a velocidad proporcional al desplazamiento del tren.
+  Aceptacion: la rotacion es convincente visualmente; no bloquea el milestone de P2.
+
+- `[UI] Crear QuotaUI`
+  Resultado: mostrar cuota, cargo y estado del dia.
+  Aceptacion: el jugador sabe cuanto falta y si ya puede activar la salida.
+
+### Milestone P2
+
+> El jugador aparece en MacLarens, entra al tren, viaja fisicamente hasta el pueblo por el rail, puede bajarse, recoger loot, volver al tren y regresar a MacLarens. Sin enemigos todavia.
+
+## P3 - Pueblo y loop singleplayer
 
 - `[World] Montar Town_Western_01`
   Resultado: pueblo pequeno, legible y denso.
@@ -132,9 +168,9 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: reparto aleatorio simple por partida.
   Aceptacion: reiniciar run cambia parte del reparto de loot.
 
-- `[Flow] Integrar tren y pueblo en una misma escena jugable`
-  Resultado: extraccion clara sin complejidad de scene flow.
-  Aceptacion: se puede salir del tren, saquear y volver sin cargar otra escena.
+- `[Loot] Reposicion parcial de loot entre dias`
+  Resultado: el loot sobrante del dia anterior persiste y se suman nuevos spawns hasta un limite.
+  Aceptacion: el jugador nota diferencia de densidad entre dias sin necesitar procedural generation.
 
 ## P4 - Threat y enemigos
 

@@ -101,9 +101,10 @@ Motivo: es una idea buena, pero no es un primer enemigo. Requiere reglas de line
 ## Hitos resumidos
 
 - 2026-08-30: loot prototype jugable
-- 2026-09-13: singleplayer loop completo
-- 2026-09-25: MVP freeze
-- 2026-10-02: co-op funcional 1-4 jugadores
+- 2026-09-13: tren jugable con viaje fisico MacLarens ↔ pueblo y economia de run completa
+- 2026-09-20: singleplayer loop completo con pueblo y loot randomizado
+- 2026-09-27: MVP freeze
+- 2026-10-04: co-op funcional 1-4 jugadores
 - 2026-10-09: build final y entrega
 
 ## Fase 0 - 2026-08-21 a 2026-08-24
@@ -169,58 +170,85 @@ Demostrar que recoger, transportar, soltar y recuperar loot ya es divertido por 
 - Se deposita por valor, no por representacion fisica en el tren
 - Se deja el inventario sin drag and drop; solo pickup y drop
 
-## Fase 2 - 2026-08-31 a 2026-09-06
+## Fase 2 - 2026-08-31 a 2026-09-13
 
 ### Meta
 
-Conectar el loot con la economia de la run.
+Conectar el loot con la economia de la run y hacer que el tren sea una pieza espacial jugable: el jugador viaja fisicamente entre MacLarens y el pueblo en una unica escena con raíl circular.
 
-### Entregables
+### Decision de arquitectura de mundo
 
-- `TrainCargo`
-- `QuotaManager`
-- `RunManager` con Day 1, Day 2 y Day 3
-- UI de cuota, cargo y estado del dia
-- Interaccion de deposito en el tren
-- Opcion de finalizar viaje cuando la cuota ya es alcanzable
+Una unica escena principal con dos zonas y un raíl circular que las une:
+
+- **MacLarens** = zona segura, deposito, arranque del dia.
+- **Tren** = transicion, conversacion, primera presion de salida.
+- **Pueblo** = zona de riesgo, loot, enemigos.
+
+El tren sigue el spline automaticamente; el jugador activa la salida, no conduce. El sistema debe poder extenderse a mas destinos (Town 02, Town 03) sin cambiar el core del spline.
+
+### Entregables — economia (ya implementados)
+
+- `TrainCargo` — trigger de deposito fisico en el vagon
+- `QuotaManager` — cuota actual, cargo acumulado, evento de cambio
+- `RunManager` — Day 1/2/3, avance y reset
+- `TrainDeparture` — interaccion "Return to MacLarens" con countdown de 5s y hook `OnTrainDeparted`/`OnArrived`
+
+### Entregables — tren jugable (pendientes)
+
+- Composicion visual del tren en escena (locomotora + vagon + area de cargo)
+- `TrainController` — maquina de estados `AT_STATION / TRAVELLING`, velocidad y distancia sobre spline
+- Rail spline circular `MacLarens → Town → MacLarens` usando Unity Splines
+- Estacion MacLarens y estacion Town como zonas de docking
+- Movimiento automatico del tren siguiendo el spline (sin fisica de rieles)
+- Jugadores como hijos del `TrainRoot` mientras viajan
+- Spawn/posicion del jugador al subir al tren
+- Animacion de ruedas (rotacion simple en eje local, sin simulacion)
+- UI de cuota, cargo y estado del dia (`QuotaUI`)
+- Activar `TrainDeparture` como `IInteractable` conectado al `TrainController`
 
 ### Criterios de salida
 
-- Se puede completar una run sin enemigos
-- La cuota no se completa por recoger loot; solo por depositarlo
-- Al llegar a cuota, el jugador puede decidir si seguir saqueando o volver
+- El jugador aparece en MacLarens, entra al tren, viaja fisicamente hasta el pueblo, puede bajarse, recoger loot, volver al tren y regresar a MacLarens
+- La cuota solo avanza al depositar fisicamente en el vagon, no al recoger loot
+- Al alcanzar cuota, el jugador puede decidir seguir saqueando o activar la salida
+- Todo ocurre en una sola escena sin cambio de escena
 
 ### Si hay retraso
 
-- Solo se soporta Day 1 real; Day 2 y Day 3 quedan como datos configurables
-- El fin de run usa transicion simple en lugar de secuencia elaborada
+- Solo se soporta Day 1 real; Day 2 y Day 3 quedan como datos configurables sin UI especifica
+- El tren teleporta al jugador entre zonas si el spline no esta listo; el sistema de economia no depende del movimiento fisico
+- La animacion de ruedas queda como entregable post-milestone, no bloquea criterios de salida
 
-## Fase 3 - 2026-09-07 a 2026-09-13
+## Fase 3 - 2026-09-14 a 2026-09-20
 
 ### Meta
 
-Construir el primer pueblo y volver repetible la exploracion.
+Hacer que el pueblo sea divertido de saquear y que el loop completo singleplayer sea jugable de inicio a fin.
+
+En esta fase la conexion tren-pueblo ya existe (resuelta en Fase 2). El foco es exclusivamente la densidad, legibilidad y repetibilidad del pueblo.
 
 ### Entregables
 
-- Un pueblo pequeno y denso con 4-6 puntos de interes claros
-- `LootSpawnPoint`
-- `LootSpawner`
-- Rotacion aleatoria simple de loot por partida
-- Conexion clara tren <-> pueblo dentro del mismo espacio jugable
+- `Town_Western_01` montado con props del POLYGON Western Pack
+- 4-6 puntos de interes claros y navegables
+- `LootSpawnPoint` — authoring para colocar loot en el mundo
+- `LootSpawner` — reparto aleatorio simple al iniciar la run
+- Reposicion parcial de loot entre dias (loot sobrante + nuevos spawns)
+- Primer loop completo singleplayer jugable de inicio a fin sin enemigos
 
 ### Criterios de salida
 
-- La misma escena puede producir partidas ligeramente distintas sin procedural generation real
+- La misma escena produce partidas ligeramente distintas sin procedural generation real
 - El jugador encuentra loot valioso en rutas alternativas, no en una sola linea optima
-- El pueblo se entiende visualmente rapido y se puede recorrer en menos de 60 segundos
+- El pueblo se entiende visualmente y se puede recorrer en menos de 60 segundos
+- Una run completa MacLarens → tren → pueblo → loot → deposito → decision → salida funciona sin errores bloqueantes
 
 ### Si hay retraso
 
 - Se recorta tamano del pueblo antes de recortar legibilidad
-- Se usa una sola escena jugable con el tren como zona segura fija
+- La reposicion de loot entre dias se simplifica a reparto completamente nuevo cada run
 
-## Fase 4 - 2026-09-14 a 2026-09-20
+## Fase 4 - 2026-09-21 a 2026-09-27
 
 ### Meta
 
@@ -246,7 +274,7 @@ Introducir presion dinamica para convertir el transporte de loot en riesgo.
 - Umbrales fijos de amenaza
 - Sin comportamiento avanzado de patrulla
 
-## Fase 5 - 2026-09-21 a 2026-09-25
+## Fase 5 - 2026-09-28 a 2026-10-01
 
 ### Meta
 
