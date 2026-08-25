@@ -65,7 +65,9 @@ public class TrainSpline : MonoBehaviour
     {
         EnsureInitialized();
         Vector3 localPoint = container.transform.InverseTransformPoint(worldPosition);
-        SplineUtility.GetNearestPoint(container.Spline, localPoint, out _, out float t);
+        // Higher resolution/iterations than the default: on a loop that curves back close to itself
+        // (e.g. near the stations) the default search can snap to the wrong branch of the track.
+        SplineUtility.GetNearestPoint(container.Spline, localPoint, out _, out float t, resolution: 24, iterations: 4);
         return t * Length;
     }
 

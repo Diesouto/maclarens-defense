@@ -23,12 +23,15 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
 
     public float CurrentDistance { get; private set; }
     public float CurrentSpeed { get; private set; }
+    public Vector3 CurrentVelocity { get; private set; }
+    public Transform MotionTransform => transform;
     public TrainDestination CurrentDestination { get; private set; }
     public bool IsMoving { get; private set; }
 
     private float townDistance;
     private float macLarensDistance;
     private Coroutine travelRoutine;
+    private Vector3 previousPosition;
 
     private void Awake()
     {
@@ -44,6 +47,7 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
         CurrentDestination = startingDestination;
         CurrentDistance = startingDestination == TrainDestination.Town ? townDistance : macLarensDistance;
         SnapToSpline();
+        previousPosition = transform.position;
     }
 
     private void OnEnable()
@@ -98,16 +102,27 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
             CurrentDistance = spline.WrapDistance(startDistance + traveled);
 
             SnapToSpline();
+            UpdateMotionState();
             yield return null;
         }
 
         CurrentSpeed = 0f;
+        CurrentVelocity = Vector3.zero;
         CurrentDistance = targetDistance;
         CurrentDestination = target;
         IsMoving = false;
         travelRoutine = null;
+        previousPosition = transform.position;
 
         trainDeparture?.OnArrived();
+    }
+
+    private void UpdateMotionState()
+    {
+        float deltaTime = Mathf.Max(Time.deltaTime, 0.0001f);
+        CurrentVelocity = (transform.position - previousPosition) / deltaTime;
+        CurrentSpeed = CurrentVelocity.magnitude;
+        previousPosition = transform.position;
     }
 
     private void SnapToSpline()

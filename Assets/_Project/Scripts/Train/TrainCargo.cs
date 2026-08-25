@@ -19,6 +19,9 @@ public class TrainCargo : MonoBehaviour
 
         if (cargoRoot == null)
             cargoRoot = transform;
+
+        if (GetComponent<TrainSplineFollower>() == null && GetComponent<TrainCarFollower>() == null)
+            Debug.LogWarning($"{name}: TrainCargo's cargoRoot has no TrainSplineFollower/TrainCarFollower, so deposited loot won't move with the train.", this);
     }
 
     private void OnTriggerEnter(Collider other)
