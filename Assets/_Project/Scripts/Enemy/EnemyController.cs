@@ -6,7 +6,7 @@ using System.Collections;
 public class EnemyController : MonoBehaviour
 {
     public float searchInterval = 1f;
-    public float stealDistance = 1.5f;
+    public float attackDistance = 1.5f;
 
     [SerializeField] private float runSpeed = 4.5f;
 
@@ -39,19 +39,20 @@ public class EnemyController : MonoBehaviour
         while (!isDead)
         {
             if (target == null)
-                FindNearestBooze();
+                FindNearestPlayer();
 
             if (target != null && agent != null)
             {
                 agent.SetDestination(target.position);
 
-                if (!agent.pathPending && agent.remainingDistance <= stealDistance)
+                if (!agent.pathPending && agent.remainingDistance <= attackDistance)
                 {
-                    var booze = target.GetComponent<BoozeItem>();
-                    if (booze != null)
-                        booze.OnStolen();
-                    else
-                        Destroy(target.gameObject);
+                    Debug.Log($"{name} is attacking {target.name}!");
+
+                    var player = target.GetComponent<Health>();
+
+                    if (player != null)
+                        player.TakeDamage(10f, (player.transform.position - transform.position).normalized, 5f);
 
                     target = null;
                 }
@@ -61,9 +62,9 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    void FindNearestBooze()
+    void FindNearestPlayer()
     {
-        var items = GameObject.FindGameObjectsWithTag("Booze");
+        var items = GameObject.FindGameObjectsWithTag("Player");
         float bestSqr = Mathf.Infinity;
         Transform best = null;
         Vector3 pos = transform.position;

@@ -30,7 +30,7 @@ public class Weapon : MonoBehaviour
         inventory = GetComponentInParent<PlayerInventory>();
 
         if (playerCamera == null)
-            playerCamera = Camera.main;
+            playerCamera = FindFirstObjectByType<Camera>();
 
         if (weaponData != null)
         {
@@ -145,6 +145,8 @@ public class Weapon : MonoBehaviour
 
     private void Fire()
     {
+        Debug.Log($"{name} fired {weaponData.name}!");
+
         float fireRate = Mathf.Max(weaponData.fireRate, 0.01f);
         nextTimeToFire = Time.time + 1f / fireRate;
         currentAmmo--;
@@ -157,6 +159,8 @@ public class Weapon : MonoBehaviour
 
     private void ShootRaycast()
     {
+        Debug.Log($"{name} is shooting a raycast from the camera!");
+
         if (playerCamera == null || weaponData == null)
             return;
 
@@ -164,6 +168,9 @@ public class Weapon : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, weaponData.range, hitMask, QueryTriggerInteraction.Ignore))
         {
+            Debug.DrawRay(ray.origin, ray.direction * weaponData.range, Color.red, 2f);
+            Debug.Log($"{name} hit {hit.collider.name} at {hit.point} with normal {hit.normal}");
+
             IDamageable damageable = null;
             if (hit.collider.TryGetComponent<IDamageable>(out var d))
                 damageable = d;
