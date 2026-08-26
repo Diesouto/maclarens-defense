@@ -9,9 +9,14 @@ public class QuotaManager : MonoBehaviour
 
     public int CurrentQuota => currentQuota;
     public int CurrentCargoValue { get; private set; }
-    public bool QuotaMet => CurrentCargoValue >= currentQuota;
+    public int DeliveredValue { get; private set; }
+
+    public bool QuotaMet => DeliveredValue >= CurrentQuota;
 
     public event Action OnQuotaProgressChanged;
+    public event Action OnQuotaMet;
+
+    private bool quotaWasMet;
 
     private void Awake()
     {
@@ -33,7 +38,32 @@ public class QuotaManager : MonoBehaviour
     public void SetQuota(int quota)
     {
         currentQuota = Mathf.Max(quota, 0);
+        DeliveredValue = 0;
+        quotaWasMet = false;
+
         OnQuotaProgressChanged?.Invoke();
+
+        if (currentQuota == 0)
+            SetQuotaMet();
+    }
+
+    public void AddDeliveredValue(int value)
+    {
+        if (value <= 0)
+            return;
+
+        DeliveredValue += value;
+
+        OnQuotaProgressChanged?.Invoke();
+
+        if (!quotaWasMet && DeliveredValue >= currentQuota)
+            SetQuotaMet();
+    }
+
+    private void SetQuotaMet()
+    {
+        quotaWasMet = true;
+        OnQuotaMet?.Invoke();
     }
 
     public void SetCargoValue(int value)

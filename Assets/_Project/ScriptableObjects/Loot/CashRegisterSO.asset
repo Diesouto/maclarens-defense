@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74711b29da55cb7428b3ce78dbd34b28, type: 3}
-  m_Name: SilverBar
+  m_Name: CashRegisterSO
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
-  itemId: SilverBar
-  displayName: Lingote plata
-  icon: {fileID: 21300000, guid: 6f2d723d15c85784aabe64d29ed176bb, type: 3}
-  value: 100
+  itemId: CashRegister
+  displayName: Registradora
+  icon: {fileID: 21300000, guid: 62da652ea964900459e13e49da83afbf, type: 3}
+  value: 300
   price: 0
   itemType: 0
-  isHeavy: 0
+  isHeavy: 1
   isTwoHanded: 0
   animationProfile: 0
   weaponData: {fileID: 0}
-  worldPrefab: {fileID: 5475330191657043032, guid: 17479c54072d51e4b9d36f9250049342, type: 3}
+  worldPrefab: {fileID: 1422698500791382, guid: 8436ade1af7215243a097f79db2a91fb, type: 3}
   heldPrefab: {fileID: 0}

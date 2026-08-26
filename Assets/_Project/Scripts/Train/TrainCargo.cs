@@ -8,6 +8,10 @@ public class TrainCargo : MonoBehaviour
     [SerializeField] private BoxCollider cargoTrigger;
     [SerializeField] private Transform cargoRoot;
 
+    public int CargoValue { get; private set; }
+
+    public IReadOnlyCollection<LootItem> ItemsInCargo => itemsInCargo;
+
     private readonly HashSet<LootItem> itemsInCargo = new();
 
     private void Awake()
@@ -20,24 +24,33 @@ public class TrainCargo : MonoBehaviour
         if (cargoRoot == null)
             cargoRoot = transform;
 
-        if (GetComponent<TrainSplineFollower>() == null && GetComponent<TrainCarFollower>() == null)
-            Debug.LogWarning($"{name}: TrainCargo's cargoRoot has no TrainSplineFollower/TrainCarFollower, so deposited loot won't move with the train.", this);
+        if (GetComponent<TrainSplineFollower>() == null &&
+            GetComponent<TrainCarFollower>() == null)
+        {
+            Debug.LogWarning(
+                $"{name}: TrainCargo's cargoRoot has no TrainSplineFollower/TrainCarFollower, " +
+                "so deposited loot won't move with the train.",
+                this
+            );
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
         LootItem lootItem = other.GetComponentInParent<LootItem>();
+
         if (lootItem == null || !itemsInCargo.Add(lootItem))
             return;
 
-        // Keep world position so the item stays put when the train later moves as a whole.
         lootItem.transform.SetParent(cargoRoot, true);
+
         RecalculateCargoValue();
     }
 
     private void OnTriggerExit(Collider other)
     {
         LootItem lootItem = other.GetComponentInParent<LootItem>();
+
         if (lootItem == null || !itemsInCargo.Remove(lootItem))
             return;
 
@@ -47,11 +60,32 @@ public class TrainCargo : MonoBehaviour
         RecalculateCargoValue();
     }
 
+    public bool RemoveItem(LootItem lootItem)
+    {
+        if (lootItem == null)
+            return false;
+
+        if (!itemsInCargo.Remove(lootItem))
+            return false;
+
+        if (lootItem.transform.parent == cargoRoot)
+            lootItem.transform.SetParent(null, true);
+
+        RecalculateCargoValue();
+
+        return true;
+    }
+
     private void RecalculateCargoValue()
     {
-        itemsInCargo.RemoveWhere(item => item == null || item.IsCollected || !item.gameObject.activeInHierarchy);
+        itemsInCargo.RemoveWhere(item =>
+            item == null ||
+            item.IsCollected ||
+            !item.gameObject.activeInHierarchy
+        );
 
-        int totalValue = itemsInCargo.Sum(item => item.Data != null ? item.Data.Value : 0);
-        QuotaManager.Instance?.SetCargoValue(totalValue);
+        CargoValue = itemsInCargo.Sum(item =>
+            item.Data != null ? item.Data.Value : 0
+        );
     }
 }

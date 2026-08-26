@@ -9,6 +9,8 @@ public class LootItem : MonoBehaviour, IInteractable
     public ItemInstance Instance { get; private set; }
     public bool IsCollected { get; private set; }
 
+    private LootSpawnPoint spawnPoint;
+
     private void Awake()
     {
         if (lootData != null && Instance == null)
@@ -31,6 +33,11 @@ public class LootItem : MonoBehaviour, IInteractable
         Instance = itemInstance ?? new ItemInstance(lootData);
         Instance.BindWorldItem(this);
         lootData = Instance.Data;
+    }
+
+    public void SetSpawnPoint(LootSpawnPoint point)
+    {
+        spawnPoint = point;
     }
 
     public bool CanInteract(PlayerInteractor interactor)
@@ -60,6 +67,8 @@ public class LootItem : MonoBehaviour, IInteractable
             return;
 
         IsCollected = true;
+
+        spawnPoint?.SetOccupied(false);
 
         if (hideOnPickup)
             gameObject.SetActive(false);

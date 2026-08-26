@@ -186,14 +186,14 @@ Una unica escena principal con dos zonas y un raíl circular que las une:
 
 El tren sigue el spline automaticamente; el jugador activa la salida, no conduce. El sistema debe poder extenderse a mas destinos (Town 02, Town 03) sin cambiar el core del spline.
 
-### Entregables — economia (ya implementados)
+### Entregables (ya implementados)
 
 - `TrainCargo` — trigger de deposito fisico en el vagon
 - `QuotaManager` — cuota actual, cargo acumulado, evento de cambio
 - `RunManager` — Day 1/2/3, avance y reset
 - `TrainDeparture` — interaccion "Return to MacLarens" con countdown de 5s y hook `OnTrainDeparted`/`OnArrived`
 
-### Entregables — tren jugable (pendientes)
+### Entregables (pendientes)
 
 - Composicion visual del tren en escena (locomotora + vagon + area de cargo)
 - `TrainController` — maquina de estados `AT_STATION / TRAVELLING`, velocidad y distancia sobre spline
@@ -205,11 +205,13 @@ El tren sigue el spline automaticamente; el jugador activa la salida, no conduce
 - Animacion de ruedas (rotacion simple en eje local, sin simulacion)
 - UI de cuota, cargo y estado del dia (`QuotaUI`)
 - Activar `TrainDeparture` como `IInteractable` conectado al `TrainController`
+- `LootRegistry` - manager que se encargue de controlar qué loot existe actualmente en esta partida
+- `LootDeliveryPoint` - punto donde colocar el loot para que cuente como entregado
 
 ### Criterios de salida
 
-- El jugador aparece en MacLarens, entra al tren, viaja fisicamente hasta el pueblo, puede bajarse, recoger loot, volver al tren y regresar a MacLarens
-- La cuota solo avanza al depositar fisicamente en el vagon, no al recoger loot
+- El jugador aparece en MacLarens, entra al tren, viaja fisicamente hasta el pueblo, puede bajarse, recoger loot, volver al tren y regresar a MacLarens a depositar el loot
+- La cuota solo avanza al depositar fisicamente en el vagon, no al recoger loot y solo cuenta como entregado al depositarlo en el LootDeliveryPoint
 - Al alcanzar cuota, el jugador puede decidir seguir saqueando o activar la salida
 - Todo ocurre en una sola escena sin cambio de escena
 

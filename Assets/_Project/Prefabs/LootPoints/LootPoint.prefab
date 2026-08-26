@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3903229880178130117
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 370475276354175899}
+  - component: {fileID: 7139816179400176463}
+  m_Layer: 0
+  m_Name: LootPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &370475276354175899
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3903229880178130117}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -15.97, y: 0, z: -6.41}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7139816179400176463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3903229880178130117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0f85527397284c49bfbf7269342a1a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LootSpawnPoint
+  lootPrefabs:
+  - {fileID: 3196887542869552641, guid: 53dcfbfbd2eccb74291ab117ea3841e2, type: 3}
+  - {fileID: 3005826969662451662, guid: 269e6aa5194b49a48a13f0fec33dcdb4, type: 3}
+  - {fileID: 6876566521717455433, guid: 96deba5583fe21a47b76c85c3cf2bffa, type: 3}
+  - {fileID: 8074069486069697404, guid: a065d2a2964810a41925c1817147d802, type: 3}
+  - {fileID: 6638057679064033363, guid: fa22ad3899f3376499685e42964dc58f, type: 3}
+  - {fileID: 7789438098782912521, guid: 901644cf7e4792440a826fe10db6a38a, type: 3}
+  - {fileID: 2874308887786131536, guid: 83c07f253a328cb4792d1ccfc7f6113c, type: 3}
+  - {fileID: 3594244021774635674, guid: f5d81229acaa29642858f5687302c04b, type: 3}
