@@ -18,8 +18,8 @@ MonoBehaviour:
   value: 150
   price: 0
   itemType: 0
-  isHeavy: 1
-  isTwoHanded: 0
+  isHeavy: 0
+  isTwoHanded: 1
   animationProfile: 0
   weaponData: {fileID: 0}
   worldPrefab: {fileID: 1493000582585652, guid: 02c3b7988f756aa4990d3c18a4ac7a5f, type: 3}

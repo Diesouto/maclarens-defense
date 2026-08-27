@@ -1,12 +1,13 @@
 - Player ragdolls on death
+- Enemy attack stopping distance
 - Add Healing LootItems (booze for example) and think about Ammo LootItems (how would they work with multiple weapons? can only be picked up with a weapon in hand and they get added to that weapon? Should the players only restore their weapons ammo when going back to MacLarens instead??)
 - Train movement is damped (it starts and ends its movement slowly)
 - Train makes a sound (bell hiss) when it begins moving
-- Check added scripts from P3 make sense and are correct
+- Check added scripts from P3 and P4 make sense and are correct
 - Certain LootItems look weird when carrying them (vault is way too big and appears too high, so it obstructs player vision), maybe we can separate between ItemHoldPointHeavy and ItemHoldPointLight
 - Connect FX[] on the train movement (dust on ground, smoke on smokestack, wind?...)
 - Gun is being equipped fine, animations work but won't damage. Raycast not working??
-
+- Train seems to be getting stuck going from town to maclarens
 
 
 - Train correct behaviour (both the loot and players on the train behave as if their gameobjects were children of the train. when the train is moving: they move with the train and the player camera turns automatically with the train so it remains "static")

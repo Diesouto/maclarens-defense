@@ -96,7 +96,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b5259a3ca1c93643a77f561f768a346, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 2
+  maxHealth: 1
 --- !u!114 &9171491796168035478
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -110,7 +110,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   searchInterval: 1
-  attackDistance: 1.5
+  attackDistance: 3
   runSpeed: 4.5
 --- !u!114 &5151449723538997426
 MonoBehaviour:
@@ -126,7 +126,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterRagdollController
   enableOnStart: 0
   disableAnimatorDelay: 0.05
-  destroyAfterDeath: 0
+  destroyAfterDeath: 1
   destroyDelay: 30
 --- !u!1001 &9107840058600077523
 PrefabInstance:
