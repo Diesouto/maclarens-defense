@@ -8,7 +8,6 @@ public class QuotaManager : MonoBehaviour
     [SerializeField] private int currentQuota = 100;
 
     public int CurrentQuota => currentQuota;
-    public int CurrentCargoValue { get; private set; }
     public int DeliveredValue { get; private set; }
 
     public bool QuotaMet => DeliveredValue >= CurrentQuota;
@@ -64,15 +63,5 @@ public class QuotaManager : MonoBehaviour
     {
         quotaWasMet = true;
         OnQuotaMet?.Invoke();
-    }
-
-    public void SetCargoValue(int value)
-    {
-        value = Mathf.Max(value, 0);
-        if (value == CurrentCargoValue)
-            return;
-
-        CurrentCargoValue = value;
-        OnQuotaProgressChanged?.Invoke();
     }
 }

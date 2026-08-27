@@ -1,13 +1,11 @@
 using UnityEngine;
 
-public class QuotaUI : MonoBehaviour
+public class CargoValueUI : MonoBehaviour
 {
     [SerializeField] private QuotaManager quotaManager;
+    [SerializeField] private TrainCargo trainCargo;
     [SerializeField] private TMPro.TextMeshProUGUI quotaText;
-    [SerializeField] private TMPro.TextMeshProUGUI statusText;
     [SerializeField] private string quotaFormat = "{0} / {1}$";
-    [SerializeField] private string quotaMetMessage = "Quota reached";
-    [SerializeField] private string quotaPendingMessage = "Quota pending";
 
     private void Awake()
     {
@@ -35,9 +33,6 @@ public class QuotaUI : MonoBehaviour
             return;
 
         if (quotaText != null)
-            quotaText.text = string.Format(quotaFormat, quotaManager.DeliveredValue, quotaManager.CurrentQuota);
-
-        if (statusText != null)
-            statusText.text = quotaManager.QuotaMet ? quotaMetMessage : quotaPendingMessage;
+            quotaText.text = string.Format(quotaFormat, trainCargo.CargoValue, quotaManager.CurrentQuota);
     }
 }
