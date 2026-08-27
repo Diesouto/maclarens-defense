@@ -8,6 +8,11 @@ public class QuotaManager : MonoBehaviour
     [SerializeField] private int currentQuota = 100;
 
     public int CurrentQuota => currentQuota;
+
+    // Value currently stored across ALL train cargos.
+    public int CurrentCargoValue { get; private set; }
+
+    // Value already delivered to the delivery point.
     public int DeliveredValue { get; private set; }
 
     public bool QuotaMet => DeliveredValue >= CurrentQuota;
@@ -37,13 +42,25 @@ public class QuotaManager : MonoBehaviour
     public void SetQuota(int quota)
     {
         currentQuota = Mathf.Max(quota, 0);
+
         DeliveredValue = 0;
+        CurrentCargoValue = 0;
         quotaWasMet = false;
 
         OnQuotaProgressChanged?.Invoke();
 
         if (currentQuota == 0)
             SetQuotaMet();
+    }
+
+    public void AddCargoValue(int value)
+    {
+        if (value == 0)
+            return;
+
+        CurrentCargoValue = Mathf.Max(CurrentCargoValue + value, 0);
+
+        OnQuotaProgressChanged?.Invoke();
     }
 
     public void AddDeliveredValue(int value)
@@ -55,12 +72,15 @@ public class QuotaManager : MonoBehaviour
 
         OnQuotaProgressChanged?.Invoke();
 
-        if (!quotaWasMet && DeliveredValue >= currentQuota)
+        if (!quotaWasMet && DeliveredValue >= CurrentQuota)
             SetQuotaMet();
     }
 
     private void SetQuotaMet()
     {
+        if (quotaWasMet)
+            return;
+
         quotaWasMet = true;
         OnQuotaMet?.Invoke();
     }

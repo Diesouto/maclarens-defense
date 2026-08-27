@@ -3,9 +3,8 @@ using UnityEngine;
 public class CargoValueUI : MonoBehaviour
 {
     [SerializeField] private QuotaManager quotaManager;
-    [SerializeField] private TrainCargo trainCargo;
     [SerializeField] private TMPro.TextMeshProUGUI quotaText;
-    [SerializeField] private string quotaFormat = "{0} / {1}$";
+    [SerializeField] private string quotaFormat = "Total: {0}$";
 
     private void Awake()
     {
@@ -33,6 +32,11 @@ public class CargoValueUI : MonoBehaviour
             return;
 
         if (quotaText != null)
-            quotaText.text = string.Format(quotaFormat, trainCargo.CargoValue, quotaManager.CurrentQuota);
+        {
+            quotaText.text = string.Format(
+                quotaFormat,
+                quotaManager.CurrentCargoValue
+            );
+        }
     }
 }

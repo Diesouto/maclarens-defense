@@ -1,14 +1,10 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider))]
+[RequireComponent(typeof(Collider))]
 public class TrainCargo : MonoBehaviour
 {
-    [SerializeField] private BoxCollider cargoTrigger;
-    [SerializeField] private Transform cargoRoot;
-
-    public int CargoValue { get; private set; }
+    [SerializeField] private Collider cargoTrigger;
 
     public IReadOnlyCollection<LootItem> ItemsInCargo => itemsInCargo;
 
@@ -17,19 +13,15 @@ public class TrainCargo : MonoBehaviour
     private void Awake()
     {
         if (cargoTrigger == null)
-            cargoTrigger = GetComponent<BoxCollider>();
+            cargoTrigger = GetComponent<Collider>();
 
         cargoTrigger.isTrigger = true;
-
-        if (cargoRoot == null)
-            cargoRoot = transform;
 
         if (GetComponent<TrainSplineFollower>() == null &&
             GetComponent<TrainCarFollower>() == null)
         {
             Debug.LogWarning(
-                $"{name}: TrainCargo's cargoRoot has no TrainSplineFollower/TrainCarFollower, " +
-                "so deposited loot won't move with the train.",
+                $"{name}: TrainCargo has no TrainSplineFollower/TrainCarFollower.",
                 this
             );
         }
@@ -39,25 +31,48 @@ public class TrainCargo : MonoBehaviour
     {
         LootItem lootItem = other.GetComponentInParent<LootItem>();
 
-        if (lootItem == null || !itemsInCargo.Add(lootItem))
+        if (lootItem == null)
             return;
 
-        lootItem.transform.SetParent(cargoRoot, true);
+        if (!itemsInCargo.Add(lootItem))
+            return;
 
-        RecalculateCargoValue();
+        lootItem.SetCargo(this);
+
+        int value = lootItem.Data != null
+            ? lootItem.Data.Value
+            : 0;
+
+        QuotaManager.Instance?.AddCargoValue(value);
+
+        Debug.Log(
+            $"TrainCargo: Added {lootItem.name} worth ${value}.",
+            this
+        );
     }
-
+    
     private void OnTriggerExit(Collider other)
     {
         LootItem lootItem = other.GetComponentInParent<LootItem>();
 
-        if (lootItem == null || !itemsInCargo.Remove(lootItem))
+        if (lootItem == null)
             return;
 
-        if (lootItem.transform.parent == cargoRoot)
-            lootItem.transform.SetParent(null, true);
+        if (!itemsInCargo.Remove(lootItem))
+            return;
 
-        RecalculateCargoValue();
+        lootItem.SetCargo(null);
+
+        int value = lootItem.Data != null
+            ? lootItem.Data.Value
+            : 0;
+
+        QuotaManager.Instance?.AddCargoValue(-value);
+
+        Debug.Log(
+            $"TrainCargo: Removed {lootItem.name} worth ${value}.",
+            this
+        );
     }
 
     public bool RemoveItem(LootItem lootItem)
@@ -68,24 +83,19 @@ public class TrainCargo : MonoBehaviour
         if (!itemsInCargo.Remove(lootItem))
             return false;
 
-        if (lootItem.transform.parent == cargoRoot)
-            lootItem.transform.SetParent(null, true);
+        lootItem.SetCargo(null);
 
-        RecalculateCargoValue();
+        int value = lootItem.Data != null
+            ? lootItem.Data.Value
+            : 0;
+
+        QuotaManager.Instance?.AddCargoValue(-value);
+
+        Debug.Log(
+            $"TrainCargo: Removed {lootItem.name} worth ${value}.",
+            this
+        );
 
         return true;
-    }
-
-    private void RecalculateCargoValue()
-    {
-        itemsInCargo.RemoveWhere(item =>
-            item == null ||
-            item.IsCollected ||
-            !item.gameObject.activeInHierarchy
-        );
-
-        CargoValue = itemsInCargo.Sum(item =>
-            item.Data != null ? item.Data.Value : 0
-        );
     }
 }

@@ -10,6 +10,7 @@ public class LootItem : MonoBehaviour, IInteractable
     public bool IsCollected { get; private set; }
 
     private LootSpawnPoint spawnPoint;
+    private TrainCargo cargo;
 
     private void Awake()
     {
@@ -39,6 +40,12 @@ public class LootItem : MonoBehaviour, IInteractable
     {
         spawnPoint = point;
     }
+    
+
+    public void SetCargo(TrainCargo newCargo)
+    {
+        cargo = newCargo;
+    }
 
     public bool CanInteract(PlayerInteractor interactor)
     {
@@ -63,8 +70,11 @@ public class LootItem : MonoBehaviour, IInteractable
             return;
 
         PlayerInventory inventory = interactor.GetComponent<PlayerInventory>();
+
         if (inventory == null || !inventory.TryAdd(lootData, Instance))
             return;
+
+        cargo?.RemoveItem(this);
 
         IsCollected = true;
 

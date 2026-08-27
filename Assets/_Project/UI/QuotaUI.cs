@@ -5,6 +5,7 @@ public class QuotaUI : MonoBehaviour
     [SerializeField] private QuotaManager quotaManager;
     [SerializeField] private TMPro.TextMeshProUGUI quotaText;
     [SerializeField] private TMPro.TextMeshProUGUI statusText;
+
     [SerializeField] private string quotaFormat = "{0} / {1}$";
     [SerializeField] private string quotaMetMessage = "Quota reached";
     [SerializeField] private string quotaPendingMessage = "Quota pending";
@@ -35,9 +36,19 @@ public class QuotaUI : MonoBehaviour
             return;
 
         if (quotaText != null)
-            quotaText.text = string.Format(quotaFormat, quotaManager.DeliveredValue, quotaManager.CurrentQuota);
+        {
+            quotaText.text = string.Format(
+                quotaFormat,
+                quotaManager.DeliveredValue,
+                quotaManager.CurrentQuota
+            );
+        }
 
         if (statusText != null)
-            statusText.text = quotaManager.QuotaMet ? quotaMetMessage : quotaPendingMessage;
+        {
+            statusText.text = quotaManager.QuotaMet
+                ? quotaMetMessage
+                : quotaPendingMessage;
+        }
     }
 }

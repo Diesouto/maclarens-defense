@@ -160,19 +160,19 @@ public class PlayerController : MonoBehaviour
         if (isChargingThrow && input.DropHeld)
             return;
 
-        if (input.InventoryUpPressed)
-        {
-            CancelThrow();
-            inventory.TrySelectNextSlot();
-            return;
-        }
+        // if (input.InventoryUpPressed)
+        // {
+        //     CancelThrow();
+        //     inventory.TrySelectNextSlot();
+        //     return;
+        // }
 
-        if (input.InventoryDownPressed)
-        {
-            CancelThrow();
-            inventory.TrySelectPreviousSlot();
-            return;
-        }
+        // if (input.InventoryDownPressed)
+        // {
+        //     CancelThrow();
+        //     inventory.TrySelectPreviousSlot();
+        //     return;
+        // }
 
         if (input.Number1Pressed)
         {
