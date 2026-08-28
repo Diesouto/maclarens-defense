@@ -98,8 +98,9 @@ MonoBehaviour:
   muzzleTransform: {fileID: 972479629328408785}
   hitMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 129
   gunshotParticleReference: {fileID: 3146090152744175757}
+  headshotMultiplier: 2
 --- !u!1001 &3146090152744038175
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -18,7 +18,7 @@ public class CharacterRagdollController : MonoBehaviour
     {
         animator = GetChildComponent<Animator>();
         CacheRagdollParts();
-        SetRagdollState(false);
+        // SetRagdollState(false);
     }
 
     private void Start()

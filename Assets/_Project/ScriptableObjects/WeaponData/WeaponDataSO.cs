@@ -6,6 +6,12 @@ public class WeaponDataSO : ScriptableObject
     [Header("Damage")]
     public float damage = 20f;
     public float range = 100f;
+    public float headshotMultiplier = 2f;
+
+    [Header("Ballistics")]
+    public float shotRadius = 0.03f;
+    public bool canPenetrate = false;
+    public int maxPenetrations = 0;
 
     [Header("Fire")]
     public float fireRate = 3f;

@@ -13,6 +13,7 @@ public class Weapon : MonoBehaviour
     [SerializeField] private Transform muzzleTransform;
     [SerializeField] private LayerMask hitMask = ~0;
     [SerializeField] private GameObject gunshotParticleReference;
+    [SerializeField] private float headshotMultiplier = 2f;
 
     private PlayerInventory inventory;
     private float nextTimeToFire;
@@ -159,31 +160,94 @@ public class Weapon : MonoBehaviour
 
     private void ShootRaycast()
     {
-        Debug.Log($"{name} is shooting a raycast from the camera!");
-
         if (playerCamera == null || weaponData == null)
             return;
 
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
 
-        if (Physics.Raycast(ray, out RaycastHit hit, weaponData.range, hitMask, QueryTriggerInteraction.Ignore))
+        int remainingPenetrations = weaponData.canPenetrate
+            ? weaponData.maxPenetrations
+            : 0;
+
+        Vector3 currentOrigin = ray.origin;
+
+        while (true)
         {
-            Debug.DrawRay(ray.origin, ray.direction * weaponData.range, Color.red, 2f);
-            Debug.Log($"{name} hit {hit.collider.name} at {hit.point} with normal {hit.normal}");
+            Ray currentRay = new Ray(currentOrigin, ray.direction);
 
-            IDamageable damageable = null;
-            if (hit.collider.TryGetComponent<IDamageable>(out var d))
-                damageable = d;
-            else
-                damageable = hit.collider.GetComponentInParent<IDamageable>();
+            if (!Physics.SphereCast(
+                    currentRay,
+                    weaponData.shotRadius,
+                    out RaycastHit hit,
+                    weaponData.range,
+                    hitMask,
+                    QueryTriggerInteraction.Collide))
+            {
+                break;
+            }
 
-            Vector3 hitDirection = ray.direction.sqrMagnitude > 0f ? ray.direction.normalized : hit.normal;
-            float hitForce = weaponData.damage * 12f;
+            Debug.DrawRay(
+                currentRay.origin,
+                currentRay.direction * hit.distance,
+                Color.red,
+                2f);
+
+            Debug.Log(
+                $"{name} hit {hit.collider.name} at {hit.point} " +
+                $"with normal {hit.normal}");
+
+            // Find the object that can receive damage.
+            IDamageable damageable =
+                hit.collider.GetComponentInParent<IDamageable>();
+
+            // Base damage.
+            float damage = weaponData.damage;
+
+            // Check which part of the enemy was hit.
+            Hitbox hitbox =
+                hit.collider.GetComponent<Hitbox>();
+
+            bool isHeadshot =
+                hitbox != null &&
+                hitbox.Type == Hitbox.HitboxType.Head;
+
+            if (isHeadshot)
+            {
+                damage *= weaponData.headshotMultiplier;
+
+                Debug.Log(
+                    $"HEADSHOT! {weaponData.damage} -> {damage} damage");
+            }
+
+            // Direction of the shot.
+            Vector3 hitDirection =
+                ray.direction.sqrMagnitude > 0f
+                    ? ray.direction.normalized
+                    : hit.normal;
+
+            // Final damage determines hit force too.
+            float hitForce = damage * 12f;
 
             if (damageable != null)
-                damageable.TakeDamage(weaponData.damage, hitDirection, hitForce);
+            {
+                damageable.TakeDamage(
+                    damage,
+                    hitDirection,
+                    hitForce);
+            }
 
             SpawnHitEffect(hit);
+
+            // No penetration: stop at the first collider.
+            if (remainingPenetrations <= 0)
+                break;
+
+            remainingPenetrations--;
+
+            // Move the ray origin slightly past the surface
+            // so we don't hit the same collider again.
+            currentOrigin =
+                hit.point + ray.direction * 0.01f;
         }
 
         SpawnMuzzleFlash();

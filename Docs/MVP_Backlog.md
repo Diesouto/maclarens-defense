@@ -182,6 +182,10 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: spawns controlados por presupuesto de amenaza.
   Aceptacion: los enemigos aparecen en puntos validos y no saturan el mapa sin control.
 
+- `[Enemy] Crear Hitbox`
+  Resultado: enemigos reciben más daño si son disparados en la cabeza.
+  Aceptacion: los enemigos reciben distinto daño dependiendo del lugar donde se les dispara.
+
 - `[Core] Crear ThreatManager`
   Resultado: scalar de amenaza y thresholds simples.
   Aceptacion: recoger loot aumenta threat y el HUD se actualiza.
