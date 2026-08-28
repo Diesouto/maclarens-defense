@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 46628125032829750}
   - component: {fileID: 7350655356478317977}
+  - component: {fileID: 5990113465914228656}
   m_Layer: 0
   m_Name: TinCan
   m_TagString: Untagged
@@ -47,6 +48,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootItem
   lootData: {fileID: 11400000, guid: 08a4daba433dae648a871f899bd7ed1b, type: 2}
   hideOnPickup: 1
+--- !u!114 &5990113465914228656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2874308887786131536}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5ee6b6b4e5b07e4eb56596974902896, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrainPassenger
 --- !u!1001 &7862658539414462509
 PrefabInstance:
   m_ObjectHideFlags: 0

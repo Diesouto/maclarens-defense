@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7575828402765775672}
   - component: {fileID: 7689246161689928752}
   - component: {fileID: 8552439450580476211}
+  - component: {fileID: 7468489491247814667}
   m_Layer: 0
   m_Name: Liquor
   m_TagString: Untagged
@@ -91,6 +92,18 @@ MonoBehaviour:
   breakVelocity: 1
   brokenPrefab: {fileID: 1036949459721126, guid: f0cd9679d428c3b4c86caa1a7388c17c, type: 3}
   breakSound: {fileID: 0}
+--- !u!114 &7468489491247814667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8074069486069697404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5ee6b6b4e5b07e4eb56596974902896, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrainPassenger
 --- !u!1001 &1074319003101780124
 PrefabInstance:
   m_ObjectHideFlags: 0

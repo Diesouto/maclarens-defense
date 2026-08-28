@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1297901160636136050}
   - component: {fileID: 6941755612222097310}
+  - component: {fileID: 8496885993945315597}
   m_Layer: 0
   m_Name: CashRegister
   m_TagString: Untagged
@@ -47,6 +48,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootItem
   lootData: {fileID: 11400000, guid: ea796e10983796549b2de6e5ff805fb6, type: 2}
   hideOnPickup: 1
+--- !u!114 &8496885993945315597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3196887542869552641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5ee6b6b4e5b07e4eb56596974902896, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrainPassenger
 --- !u!1001 &9103673794069447306
 PrefabInstance:
   m_ObjectHideFlags: 0

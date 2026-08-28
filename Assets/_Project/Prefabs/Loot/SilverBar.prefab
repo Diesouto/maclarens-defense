@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1754416918944181407}
   - component: {fileID: 6724930496539612065}
+  - component: {fileID: 5086993296489769110}
   m_Layer: 0
   m_Name: SilverBar
   m_TagString: Untagged
@@ -47,6 +48,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootItem
   lootData: {fileID: 11400000, guid: 2da6f5db0098cf646b4904dbd2efb67f, type: 2}
   hideOnPickup: 1
+--- !u!114 &5086993296489769110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6638057679064033363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5ee6b6b4e5b07e4eb56596974902896, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrainPassenger
 --- !u!1001 &1916547972277699045
 PrefabInstance:
   m_ObjectHideFlags: 0
