@@ -801,7 +801,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4891207191253534, guid: 7de9d83e7cf93764d841d97ec6bcad60, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.000011444092
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4891207191253534, guid: 7de9d83e7cf93764d841d97ec6bcad60, type: 3}
       propertyPath: m_LocalRotation.w
@@ -932,9 +932,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainCarFollower
   spline: {fileID: 0}
-  followTargetBehaviour: {fileID: 0}
-  leadFollower: {fileID: 397385441959882617}
-  spacingOffset: 0
+  leadTrain: {fileID: 397385441959882617}
+  carIndex: 3
+  spacing: 16.5
   up: {x: 0, y: 1, z: 0}
   invertForward: 0
 --- !u!114 &2188128543844607502
@@ -964,11 +964,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassengerArea
   detectionTrigger: {fileID: 6060017400520344034}
   carriageRoot: {fileID: 1786568598522720361}
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  rayStartHeight: 1
-  rayDistance: 3
 --- !u!1001 &2499615023006138636
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1027,7 +1022,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4331832858961822, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.0000038146973
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4331832858961822, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1255,9 +1250,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TrainSplineFollower
   spline: {fileID: 0}
   trainDeparture: {fileID: 7641699441750223608}
-  townStation: {fileID: 0}
-  macLarensStation: {fileID: 0}
-  startingDestination: 0
+  townPosition: 0
+  macLarensPosition: 0.5
+  startingStation: 0
   maxSpeed: 12
   accelerationTime: 8
   decelerationDistance: 30
@@ -1290,11 +1285,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassengerArea
   detectionTrigger: {fileID: 7080317793058877067}
   carriageRoot: {fileID: 2503730199444203154}
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  rayStartHeight: 1
-  rayDistance: 3
 --- !u!1 &2500695027763989552 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1172621986598204, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
@@ -1576,7 +1566,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4672166700486202, guid: 28e6d559a2b0949419125f40858f77a1, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.0000038146973
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4672166700486202, guid: 28e6d559a2b0949419125f40858f77a1, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1736,9 +1726,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainCarFollower
   spline: {fileID: 0}
-  followTargetBehaviour: {fileID: 0}
-  leadFollower: {fileID: 397385441959882617}
-  spacingOffset: 2
+  leadTrain: {fileID: 397385441959882617}
+  carIndex: 1
+  spacing: 18
   up: {x: 0, y: 1, z: 0}
   invertForward: 0
 --- !u!114 &3282673714380474356
@@ -1768,11 +1758,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassengerArea
   detectionTrigger: {fileID: 7370028364311116842}
   carriageRoot: {fileID: 6945746294097945983}
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  rayStartHeight: 1
-  rayDistance: 3
 --- !u!1001 &8824607927980157636
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1839,7 +1824,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4913178747892426, guid: 0ac283a7cb4d865449b4c6d300dbb84e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.0000076293945
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4913178747892426, guid: 0ac283a7cb4d865449b4c6d300dbb84e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1971,9 +1956,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainCarFollower
   spline: {fileID: 0}
-  followTargetBehaviour: {fileID: 0}
-  leadFollower: {fileID: 397385441959882617}
-  spacingOffset: 0
+  leadTrain: {fileID: 397385441959882617}
+  carIndex: 2
+  spacing: 18
   up: {x: 0, y: 1, z: 0}
   invertForward: 0
 --- !u!114 &1291741582296388430
@@ -2003,8 +1988,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassengerArea
   detectionTrigger: {fileID: 718876438179035958}
   carriageRoot: {fileID: 8819801401881663502}
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  rayStartHeight: 1
-  rayDistance: 3

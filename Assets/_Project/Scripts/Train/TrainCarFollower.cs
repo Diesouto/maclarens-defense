@@ -1,68 +1,142 @@
 using UnityEngine;
 
-// Wagon that trails the lead car at a fixed arc-length offset, so it stays on the rails through curves.
+/// <summary>
+/// Train carriage that follows the lead train at a fixed spacing.
+///
+/// Every carriage references the same TrainSplineFollower.
+/// Position is calculated as:
+///
+/// Lead distance - (spacing × car index)
+/// </summary>
 public class TrainCarFollower : MonoBehaviour, ITrainMotion
 {
+    [Header("References")]
     [SerializeField] private TrainSpline spline;
-    [SerializeField] private MonoBehaviour followTargetBehaviour;
-    [SerializeField] private float spacingOffset;
+    [SerializeField] private TrainSplineFollower leadTrain;
+
+    [Header("Car Spacing")]
+    [Tooltip("First carriage = 1, second = 2, etc.")]
+    [SerializeField, Min(1)] private int carIndex = 1;
+
+    [Tooltip("Distance between train cars.")]
+    [SerializeField, Min(0f)] private float spacing = 6f;
+
+    [Header("Orientation")]
     [SerializeField] private Vector3 up = Vector3.up;
     [SerializeField] private bool invertForward;
 
-    private float followOffset;
-    private bool initialized;
-    private ITrainMotion followTarget;
-    private Vector3 previousPosition;
-
     public float CurrentSpeed { get; private set; }
+
     public float CurrentDistance { get; private set; }
+
     public Vector3 CurrentVelocity { get; private set; }
+
     public Transform MotionTransform => transform;
 
-    private void Awake()
-    {
-        followTarget = followTargetBehaviour as ITrainMotion;
-    }
+    private Vector3 previousPosition;
 
     private void Start()
     {
-        if (spline == null || followTarget == null)
+        if (spline == null || leadTrain == null)
             return;
 
-        // Lock in whatever spacing the wagon was placed at in the editor.
-        CurrentDistance = spline.GetNearestDistance(transform.position);
-        followOffset = spline.WrapDistance(followTarget.CurrentDistance - CurrentDistance + spacingOffset);
-        initialized = true;
-
-        SnapToSpline(CurrentDistance);
         previousPosition = transform.position;
     }
 
     private void LateUpdate()
     {
-        if (!initialized)
+        if (spline == null || leadTrain == null)
             return;
 
-        float distance = spline.WrapDistance(followTarget.CurrentDistance - followOffset);
-        CurrentDistance = distance;
-
-        SnapToSpline(distance);
+        UpdatePosition();
         UpdateMotionState();
+    }
+
+    private void UpdatePosition()
+    {
+        float offset =
+            spacing * carIndex;
+
+        CurrentDistance =
+            spline.WrapDistance(
+                leadTrain.CurrentDistance - offset
+            );
+
+        SnapToSpline();
     }
 
     private void UpdateMotionState()
     {
-        float deltaTime = Mathf.Max(Time.deltaTime, 0.0001f);
-        CurrentVelocity = (transform.position - previousPosition) / deltaTime;
-        CurrentSpeed = CurrentVelocity.magnitude;
-        previousPosition = transform.position;
+        float deltaTime =
+            Mathf.Max(Time.deltaTime, 0.0001f);
+
+        CurrentVelocity =
+            (transform.position - previousPosition) /
+            deltaTime;
+
+        CurrentSpeed =
+            CurrentVelocity.magnitude;
+
+        previousPosition =
+            transform.position;
     }
 
-    private void SnapToSpline(float distance)
+    private void SnapToSpline()
     {
-        transform.position = spline.GetPointAtDistance(distance);
+        transform.position =
+            spline.GetPointAtDistance(
+                CurrentDistance
+            );
 
-        Quaternion rotation = spline.GetRotationAtDistance(distance, up);
-        transform.rotation = invertForward ? rotation * Quaternion.Euler(0f, 180f, 0f) : rotation;
+        Quaternion rotation =
+            spline.GetRotationAtDistance(
+                CurrentDistance,
+                up
+            );
+
+        transform.rotation =
+            invertForward
+                ? rotation *
+                  Quaternion.Euler(0f, 180f, 0f)
+                : rotation;
     }
+
+#if UNITY_EDITOR
+
+    private void OnDrawGizmosSelected()
+    {
+        if (spline == null || leadTrain == null)
+            return;
+
+        float distance =
+            spline.WrapDistance(
+                leadTrain.CurrentDistance -
+                (spacing * carIndex)
+            );
+
+        Vector3 position =
+            spline.GetPointAtDistance(distance);
+
+        Gizmos.color = Color.yellow;
+
+        Gizmos.DrawSphere(
+            position,
+            1.5f
+        );
+
+        Gizmos.DrawWireSphere(
+            position,
+            2f
+        );
+
+        UnityEditor.Handles.color =
+            Color.yellow;
+
+        UnityEditor.Handles.Label(
+            position + Vector3.up * 3f,
+            $"CAR {carIndex}\n{distance:F1}m"
+        );
+    }
+
+#endif
 }
