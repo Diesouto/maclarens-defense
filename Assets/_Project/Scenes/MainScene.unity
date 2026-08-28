@@ -4541,6 +4541,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 957163810}
     - target: {fileID: 1222988525711264778, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1222988525711264778, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 2381151292
       objectReference: {fileID: 0}
@@ -44876,6 +44880,10 @@ PrefabInstance:
       propertyPath: spacingOffset
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3345573206632777912, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+      propertyPath: followTargetBehaviour
+      value: 
+      objectReference: {fileID: 1233171178}
     - target: {fileID: 6945746294097945983, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
       propertyPath: m_LocalPosition.x
       value: -17.22
@@ -44900,6 +44908,10 @@ PrefabInstance:
       propertyPath: spacingOffset
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7747919174857148425, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+      propertyPath: followTargetBehaviour
+      value: 
+      objectReference: {fileID: 1233171179}
     - target: {fileID: 8775288433437303853, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
       propertyPath: spline
       value: 
@@ -44908,6 +44920,10 @@ PrefabInstance:
       propertyPath: spacingOffset
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 8775288433437303853, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+      propertyPath: followTargetBehaviour
+      value: 
+      objectReference: {fileID: 1233171177}
     - target: {fileID: 8819801401881663502, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
       propertyPath: m_LocalPosition.x
       value: -35.370003
@@ -44926,6 +44942,39 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+--- !u!114 &1233171177 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3345573206632777912, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+  m_PrefabInstance: {fileID: 1233171176}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 225bb4ca79a9d9e4f9788dc30a1f2d02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrainCarFollower
+--- !u!114 &1233171178 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7747919174857148425, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+  m_PrefabInstance: {fileID: 1233171176}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 225bb4ca79a9d9e4f9788dc30a1f2d02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrainCarFollower
+--- !u!114 &1233171179 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 397385441959882617, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+  m_PrefabInstance: {fileID: 1233171176}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d55168c3b57c7d48952376ebeb7377f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrainSplineFollower
 --- !u!1001 &1235663146
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -5,7 +5,6 @@ public class TrainCarFollower : MonoBehaviour, ITrainMotion
 {
     [SerializeField] private TrainSpline spline;
     [SerializeField] private MonoBehaviour followTargetBehaviour;
-    [SerializeField] private TrainSplineFollower leadFollower;
     [SerializeField] private float spacingOffset;
     [SerializeField] private Vector3 up = Vector3.up;
     [SerializeField] private bool invertForward;
@@ -23,8 +22,6 @@ public class TrainCarFollower : MonoBehaviour, ITrainMotion
     private void Awake()
     {
         followTarget = followTargetBehaviour as ITrainMotion;
-        if (followTarget == null)
-            followTarget = leadFollower;
     }
 
     private void Start()

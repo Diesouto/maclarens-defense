@@ -14,9 +14,12 @@ public class TrainPassenger : MonoBehaviour
         if (carriage == null)
         {
             transform.SetParent(null, true);
+            Debug.Log($"{name} left the train.");
             return;
         }
 
         transform.SetParent(carriage.CarriageRoot, true);
+
+        Debug.Log($"{name} boarded {carriage.name}.");
     }
 }

@@ -13,7 +13,6 @@ public class Weapon : MonoBehaviour
     [SerializeField] private Transform muzzleTransform;
     [SerializeField] private LayerMask hitMask = ~0;
     [SerializeField] private GameObject gunshotParticleReference;
-    [SerializeField] private float headshotMultiplier = 2f;
 
     private PlayerInventory inventory;
     private float nextTimeToFire;

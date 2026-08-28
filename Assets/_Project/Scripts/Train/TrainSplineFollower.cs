@@ -14,7 +14,7 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
     [SerializeField] private TrainDeparture trainDeparture;
     [SerializeField] private Transform townStation;
     [SerializeField] private Transform macLarensStation;
-    [SerializeField] private TrainDestination startingDestination = TrainDestination.Town;
+    [SerializeField] private TrainDestination startingStation = TrainDestination.Town;
     [SerializeField] private float maxSpeed = 12f;
     [SerializeField] private float accelerationTime = 4f;
     [SerializeField] private float decelerationDistance = 15f;
@@ -25,7 +25,7 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
     public float CurrentSpeed { get; private set; }
     public Vector3 CurrentVelocity { get; private set; }
     public Transform MotionTransform => transform;
-    public TrainDestination CurrentDestination { get; private set; }
+    public TrainDestination CurrentStation { get; private set; }
     public bool IsMoving { get; private set; }
 
     private float townDistance;
@@ -44,8 +44,8 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
             macLarensDistance = macLarensStation != null ? spline.GetNearestDistance(macLarensStation.position) : spline.Length * 0.5f;
         }
 
-        CurrentDestination = startingDestination;
-        CurrentDistance = startingDestination == TrainDestination.Town ? townDistance : macLarensDistance;
+        CurrentStation = startingStation;
+        CurrentDistance = startingStation == TrainDestination.Town ? townDistance : macLarensDistance;
         SnapToSpline();
         previousPosition = transform.position;
     }
@@ -73,9 +73,12 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
     private IEnumerator TravelRoutine()
     {
         if (spline == null || spline.Length <= 0f)
+        {
+            Debug.LogWarning("TrainSplineFollower: No valid spline to follow.");
             yield break;
+        }
 
-        TrainDestination target = CurrentDestination == TrainDestination.Town ? TrainDestination.MacLarens : TrainDestination.Town;
+        TrainDestination target = CurrentStation == TrainDestination.Town ? TrainDestination.MacLarens : TrainDestination.Town;
         float targetDistance = target == TrainDestination.Town ? townDistance : macLarensDistance;
 
         // The loop is only ever travelled forward, wrapping past the end back to the start.
@@ -87,6 +90,8 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
         IsMoving = true;
         float traveled = 0f;
         float speed = 0f;
+
+        Debug.Log($"TrainSplineFollower: Departing from {CurrentStation} to {target}. Total distance: {totalDistance:F2} units.");
 
         while (traveled < totalDistance)
         {
@@ -103,13 +108,16 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
 
             SnapToSpline();
             UpdateMotionState();
+
+            Debug.Log($"TrainSplineFollower: Traveling... CurrentDistance: {CurrentDistance:F2}, Remaining: {remaining:F2}, Speed: {CurrentSpeed:F2}");
+
             yield return null;
         }
 
         CurrentSpeed = 0f;
         CurrentVelocity = Vector3.zero;
         CurrentDistance = targetDistance;
-        CurrentDestination = target;
+        CurrentStation = target;
         IsMoving = false;
         travelRoutine = null;
         previousPosition = transform.position;
