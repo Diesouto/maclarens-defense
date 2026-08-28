@@ -9,7 +9,17 @@ public class LootSpawner : MonoBehaviour
     [SerializeField] private int maxActiveLoot = 15;
     [SerializeField] private bool spawnOnStart = true;
 
+    [Header("Distribution")]
+    [SerializeField, Min(0f)]
+    private float minSpawnDistance = 8f;
+
+    [SerializeField, Range(0f, 1f)]
+    private float distanceWeight = 0.75f;
+
     private readonly List<LootSpawnPoint> spawnPoints = new();
+
+    // Spawn points selected during the current spawning operation.
+    private readonly List<LootSpawnPoint> recentlyUsedPoints = new();
 
     private void Awake()
     {
@@ -68,6 +78,15 @@ public class LootSpawner : MonoBehaviour
 
     public void Restock()
     {
+        if (LootRegistry.Instance == null)
+        {
+            Debug.LogError(
+                "[LootSpawner] No LootRegistry found in the scene."
+            );
+
+            return;
+        }
+
         SpawnUntilLimit();
     }
 
@@ -81,6 +100,8 @@ public class LootSpawner : MonoBehaviour
 
         if (amountToSpawn <= 0)
             return;
+
+        recentlyUsedPoints.Clear();
 
         for (int i = 0; i < amountToSpawn; i++)
         {
@@ -104,27 +125,145 @@ public class LootSpawner : MonoBehaviour
         }
 
         LootSpawnPoint spawnPoint =
-            availablePoints[
-                Random.Range(0, availablePoints.Count)
-            ];
+            ChooseSpawnPoint(availablePoints);
 
-        GameObject lootPrefab =
-            spawnPoint.GetRandomLootPrefab();
+        if (spawnPoint == null)
+            return false;
+
+        LootDataSO lootData =
+            spawnPoint.GetRandomLootData();
+
+        if (lootData == null)
+        {
+            Debug.LogWarning(
+                $"[LootSpawner] Spawn point '{spawnPoint.name}' " +
+                "has no valid loot option."
+            );
+
+            return false;
+        }
+
+        if (lootData.WorldPrefab == null)
+        {
+            Debug.LogWarning(
+                $"[LootSpawner] Loot '{lootData.DisplayName}' " +
+                "has no WorldPrefab assigned."
+            );
+
+            return false;
+        }
 
         GameObject instance = Instantiate(
-            lootPrefab,
+            lootData.WorldPrefab,
             spawnPoint.transform.position,
             spawnPoint.transform.rotation
         );
 
-        LootItem spawnedLoot = instance.GetComponent<LootItem>();
+        LootItem spawnedLoot =
+            instance.GetComponent<LootItem>();
+
+        if (spawnedLoot == null)
+        {
+            Debug.LogError(
+                $"[LootSpawner] Prefab '{lootData.WorldPrefab.name}' " +
+                "does not contain a LootItem component."
+            );
+
+            Destroy(instance);
+            return false;
+        }
 
         spawnedLoot.SetSpawnPoint(spawnPoint);
+
         spawnPoint.SetOccupied(true);
 
         LootRegistry.Instance.Register(spawnedLoot);
 
+        recentlyUsedPoints.Add(spawnPoint);
+
         return true;
+    }
+
+    private LootSpawnPoint ChooseSpawnPoint(
+        List<LootSpawnPoint> availablePoints)
+    {
+        if (availablePoints.Count == 1)
+            return availablePoints[0];
+
+        // Calculate a score for every available point.
+        // Points further away from recently used points get a higher score.
+
+        float totalScore = 0f;
+
+        List<float> scores = new();
+
+        foreach (LootSpawnPoint point in availablePoints)
+        {
+            float score = CalculateSpawnPointScore(point);
+
+            scores.Add(score);
+            totalScore += score;
+        }
+
+        if (totalScore <= 0f)
+        {
+            return availablePoints[
+                Random.Range(0, availablePoints.Count)
+            ];
+        }
+
+        float randomValue = Random.Range(0f, totalScore);
+
+        for (int i = 0; i < availablePoints.Count; i++)
+        {
+            randomValue -= scores[i];
+
+            if (randomValue <= 0f)
+                return availablePoints[i];
+        }
+
+        return availablePoints[availablePoints.Count - 1];
+    }
+
+    private float CalculateSpawnPointScore(
+        LootSpawnPoint point)
+    {
+        if (recentlyUsedPoints.Count == 0)
+            return 1f;
+
+        float closestDistance = float.MaxValue;
+
+        foreach (LootSpawnPoint usedPoint in recentlyUsedPoints)
+        {
+            if (usedPoint == null)
+                continue;
+
+            float distance = Vector3.Distance(
+                point.transform.position,
+                usedPoint.transform.position
+            );
+
+            if (distance < closestDistance)
+                closestDistance = distance;
+        }
+
+        // If there is no valid comparison, treat the point normally.
+        if (closestDistance == float.MaxValue)
+            return 1f;
+
+        if (closestDistance >= minSpawnDistance)
+            return 1f;
+
+        // Points closer than minSpawnDistance become less likely,
+        // but they are NOT forbidden.
+        float distanceRatio =
+            closestDistance / minSpawnDistance;
+
+        return Mathf.Lerp(
+            1f - distanceWeight,
+            1f,
+            distanceRatio
+        );
     }
 
     private List<LootSpawnPoint> GetAvailableSpawnPoints()

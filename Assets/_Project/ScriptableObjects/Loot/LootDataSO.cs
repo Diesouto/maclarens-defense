@@ -25,6 +25,9 @@ public class LootDataSO : ScriptableObject
     [SerializeField] private int value = 25;
     [SerializeField] private int price = 0;
 
+    [Header("Spawn")]
+    [SerializeField, Min(0f)] private float spawnWeight = 100f;
+
     [Header("Inventory")]
     [SerializeField] private InventoryItemType itemType = InventoryItemType.Loot;
     [SerializeField] private bool isHeavy = false;
@@ -43,6 +46,8 @@ public class LootDataSO : ScriptableObject
     public Sprite Icon => icon;
     public int Value => value;
     public int Price => price;
+    public float SpawnWeight => spawnWeight;
+
     public InventoryItemType ItemType => itemType;
     public GameObject WorldPrefab => worldPrefab;
     public GameObject HeldPrefab => heldPrefab;

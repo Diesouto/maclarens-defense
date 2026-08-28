@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74711b29da55cb7428b3ce78dbd34b28, type: 3}
+  m_Name: CrossSO
+  m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
+  itemId: Cross
+  displayName: Cruz
+  icon: {fileID: 21300000, guid: 6f2d723d15c85784aabe64d29ed176bb, type: 3}
+  value: 150
+  price: 0
+  spawnWeight: 80
+  itemType: 0
+  isHeavy: 0
+  isTwoHanded: 0
+  animationProfile: 0
+  weaponData: {fileID: 0}
+  worldPrefab: {fileID: 1637342688967822, guid: 0cfaddce0da54274ab179194b863a7e6, type: 3}
+  heldPrefab: {fileID: 0}
