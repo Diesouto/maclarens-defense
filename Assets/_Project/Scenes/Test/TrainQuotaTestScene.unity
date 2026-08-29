@@ -1073,15 +1073,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0f85527397284c49bfbf7269342a1a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootSpawnPoint
-  lootPrefabs:
-  - {fileID: 3196887542869552641, guid: 53dcfbfbd2eccb74291ab117ea3841e2, type: 3}
-  - {fileID: 3005826969662451662, guid: 269e6aa5194b49a48a13f0fec33dcdb4, type: 3}
-  - {fileID: 6876566521717455433, guid: 96deba5583fe21a47b76c85c3cf2bffa, type: 3}
-  - {fileID: 8074069486069697404, guid: a065d2a2964810a41925c1817147d802, type: 3}
-  - {fileID: 6638057679064033363, guid: fa22ad3899f3376499685e42964dc58f, type: 3}
-  - {fileID: 7789438098782912521, guid: 901644cf7e4792440a826fe10db6a38a, type: 3}
-  - {fileID: 2874308887786131536, guid: 83c07f253a328cb4792d1ccfc7f6113c, type: 3}
-  - {fileID: 3594244021774635674, guid: f5d81229acaa29642858f5687302c04b, type: 3}
+  lootOptions: []
 --- !u!1 &490060792
 GameObject:
   m_ObjectHideFlags: 0
@@ -1494,15 +1486,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0f85527397284c49bfbf7269342a1a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootSpawnPoint
-  lootPrefabs:
-  - {fileID: 3196887542869552641, guid: 53dcfbfbd2eccb74291ab117ea3841e2, type: 3}
-  - {fileID: 3005826969662451662, guid: 269e6aa5194b49a48a13f0fec33dcdb4, type: 3}
-  - {fileID: 6876566521717455433, guid: 96deba5583fe21a47b76c85c3cf2bffa, type: 3}
-  - {fileID: 8074069486069697404, guid: a065d2a2964810a41925c1817147d802, type: 3}
-  - {fileID: 6638057679064033363, guid: fa22ad3899f3376499685e42964dc58f, type: 3}
-  - {fileID: 7789438098782912521, guid: 901644cf7e4792440a826fe10db6a38a, type: 3}
-  - {fileID: 2874308887786131536, guid: 83c07f253a328cb4792d1ccfc7f6113c, type: 3}
-  - {fileID: 3594244021774635674, guid: f5d81229acaa29642858f5687302c04b, type: 3}
+  lootOptions: []
 --- !u!1 &679721298
 GameObject:
   m_ObjectHideFlags: 0
@@ -2323,15 +2307,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0f85527397284c49bfbf7269342a1a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootSpawnPoint
-  lootPrefabs:
-  - {fileID: 3196887542869552641, guid: 53dcfbfbd2eccb74291ab117ea3841e2, type: 3}
-  - {fileID: 3005826969662451662, guid: 269e6aa5194b49a48a13f0fec33dcdb4, type: 3}
-  - {fileID: 6876566521717455433, guid: 96deba5583fe21a47b76c85c3cf2bffa, type: 3}
-  - {fileID: 8074069486069697404, guid: a065d2a2964810a41925c1817147d802, type: 3}
-  - {fileID: 6638057679064033363, guid: fa22ad3899f3376499685e42964dc58f, type: 3}
-  - {fileID: 7789438098782912521, guid: 901644cf7e4792440a826fe10db6a38a, type: 3}
-  - {fileID: 2874308887786131536, guid: 83c07f253a328cb4792d1ccfc7f6113c, type: 3}
-  - {fileID: 3594244021774635674, guid: f5d81229acaa29642858f5687302c04b, type: 3}
+  lootOptions: []
 --- !u!1 &1134273754
 GameObject:
   m_ObjectHideFlags: 0
@@ -2798,7 +2774,7 @@ Transform:
   m_GameObject: {fileID: 1294776462}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 24.42403, y: 1.9979999, z: 9.532991}
+  m_LocalPosition: {x: 14.87, y: 1.9979999, z: 7.57}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3911,15 +3887,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0f85527397284c49bfbf7269342a1a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootSpawnPoint
-  lootPrefabs:
-  - {fileID: 3196887542869552641, guid: 53dcfbfbd2eccb74291ab117ea3841e2, type: 3}
-  - {fileID: 3005826969662451662, guid: 269e6aa5194b49a48a13f0fec33dcdb4, type: 3}
-  - {fileID: 6876566521717455433, guid: 96deba5583fe21a47b76c85c3cf2bffa, type: 3}
-  - {fileID: 8074069486069697404, guid: a065d2a2964810a41925c1817147d802, type: 3}
-  - {fileID: 6638057679064033363, guid: fa22ad3899f3376499685e42964dc58f, type: 3}
-  - {fileID: 7789438098782912521, guid: 901644cf7e4792440a826fe10db6a38a, type: 3}
-  - {fileID: 2874308887786131536, guid: 83c07f253a328cb4792d1ccfc7f6113c, type: 3}
-  - {fileID: 3594244021774635674, guid: f5d81229acaa29642858f5687302c04b, type: 3}
+  lootOptions: []
 --- !u!1 &1795085436
 GameObject:
   m_ObjectHideFlags: 0
@@ -3964,15 +3932,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0f85527397284c49bfbf7269342a1a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootSpawnPoint
-  lootPrefabs:
-  - {fileID: 3196887542869552641, guid: 53dcfbfbd2eccb74291ab117ea3841e2, type: 3}
-  - {fileID: 3005826969662451662, guid: 269e6aa5194b49a48a13f0fec33dcdb4, type: 3}
-  - {fileID: 6876566521717455433, guid: 96deba5583fe21a47b76c85c3cf2bffa, type: 3}
-  - {fileID: 8074069486069697404, guid: a065d2a2964810a41925c1817147d802, type: 3}
-  - {fileID: 6638057679064033363, guid: fa22ad3899f3376499685e42964dc58f, type: 3}
-  - {fileID: 7789438098782912521, guid: 901644cf7e4792440a826fe10db6a38a, type: 3}
-  - {fileID: 2874308887786131536, guid: 83c07f253a328cb4792d1ccfc7f6113c, type: 3}
-  - {fileID: 3594244021774635674, guid: f5d81229acaa29642858f5687302c04b, type: 3}
+  lootOptions: []
 --- !u!1 &1822645925
 GameObject:
   m_ObjectHideFlags: 0
@@ -4092,15 +4052,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0f85527397284c49bfbf7269342a1a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootSpawnPoint
-  lootPrefabs:
-  - {fileID: 3196887542869552641, guid: 53dcfbfbd2eccb74291ab117ea3841e2, type: 3}
-  - {fileID: 3005826969662451662, guid: 269e6aa5194b49a48a13f0fec33dcdb4, type: 3}
-  - {fileID: 6876566521717455433, guid: 96deba5583fe21a47b76c85c3cf2bffa, type: 3}
-  - {fileID: 8074069486069697404, guid: a065d2a2964810a41925c1817147d802, type: 3}
-  - {fileID: 6638057679064033363, guid: fa22ad3899f3376499685e42964dc58f, type: 3}
-  - {fileID: 7789438098782912521, guid: 901644cf7e4792440a826fe10db6a38a, type: 3}
-  - {fileID: 2874308887786131536, guid: 83c07f253a328cb4792d1ccfc7f6113c, type: 3}
-  - {fileID: 3594244021774635674, guid: f5d81229acaa29642858f5687302c04b, type: 3}
+  lootOptions: []
 --- !u!1 &1894992887 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3915104580194426237, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
@@ -4246,15 +4198,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0f85527397284c49bfbf7269342a1a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootSpawnPoint
-  lootPrefabs:
-  - {fileID: 3196887542869552641, guid: 53dcfbfbd2eccb74291ab117ea3841e2, type: 3}
-  - {fileID: 3005826969662451662, guid: 269e6aa5194b49a48a13f0fec33dcdb4, type: 3}
-  - {fileID: 6876566521717455433, guid: 96deba5583fe21a47b76c85c3cf2bffa, type: 3}
-  - {fileID: 8074069486069697404, guid: a065d2a2964810a41925c1817147d802, type: 3}
-  - {fileID: 6638057679064033363, guid: fa22ad3899f3376499685e42964dc58f, type: 3}
-  - {fileID: 7789438098782912521, guid: 901644cf7e4792440a826fe10db6a38a, type: 3}
-  - {fileID: 2874308887786131536, guid: 83c07f253a328cb4792d1ccfc7f6113c, type: 3}
-  - {fileID: 3594244021774635674, guid: f5d81229acaa29642858f5687302c04b, type: 3}
+  lootOptions: []
 --- !u!1 &1974862852
 GameObject:
   m_ObjectHideFlags: 0
@@ -4862,6 +4806,22 @@ PrefabInstance:
       propertyPath: quotaManager
       value: 
       objectReference: {fileID: 320171384}
+    - target: {fileID: 7013859427405887628, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+      propertyPath: InitialModule.maxNumParticles
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7171255944306045306, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.547
+      objectReference: {fileID: 0}
+    - target: {fileID: 7171255944306045306, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.02
+      objectReference: {fileID: 0}
+    - target: {fileID: 7171255944306045306, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -3.76
+      objectReference: {fileID: 0}
     - target: {fileID: 7641699441750223608, guid: 41f923ec799f6dc498202e35562b693a, type: 3}
       propertyPath: interactUI
       value: 
@@ -5143,7 +5103,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4691649494528451186, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 24.42403
+      value: 14.87
       objectReference: {fileID: 0}
     - target: {fileID: 4691649494528451186, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
       propertyPath: m_LocalPosition.y
@@ -5151,7 +5111,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4691649494528451186, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 9.152991
+      value: 7.19
       objectReference: {fileID: 0}
     - target: {fileID: 4691649494528451186, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
       propertyPath: m_LocalRotation.w
