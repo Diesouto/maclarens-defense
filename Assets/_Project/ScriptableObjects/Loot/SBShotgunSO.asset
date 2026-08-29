@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74711b29da55cb7428b3ce78dbd34b28, type: 3}
-  m_Name: RifleSO
+  m_Name: SBShotgunSO
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
-  itemId: Rifle
-  displayName: Rifle
+  itemId: Shotgun
+  displayName: Recortada
   icon: {fileID: 21300000, guid: f1ed20bd1d4f649488356228271d0d1a, type: 3}
-  value: 200
-  price: 300
-  spawnWeight: 5
+  value: 150
+  price: 200
+  spawnWeight: 40
   itemType: 1
   isHeavy: 0
   isTwoHanded: 0
-  animationProfile: 2
-  weaponData: {fileID: 11400000, guid: 0f84f1aa020d1b14f9bf36fff648c6ac, type: 2}
-  worldPrefab: {fileID: 1191095969629160, guid: f8179cff3ce8de647b569f1f9f134767, type: 3}
-  heldPrefab: {fileID: 9084204960076058926, guid: 74ad896033f7ca342be5e6d28269a30e, type: 3}
+  animationProfile: 1
+  weaponData: {fileID: 11400000, guid: 895d6b006834a914f906e5ff8f3383da, type: 2}
+  worldPrefab: {fileID: 1457091908272982, guid: 5fb00c8822a8e7f43a78ba89a7971e2f, type: 3}
+  heldPrefab: {fileID: 1109314308428447980, guid: b174d3d674ba4ed41b381441bab0eb46, type: 3}

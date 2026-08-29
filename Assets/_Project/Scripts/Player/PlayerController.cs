@@ -48,6 +48,7 @@ public class PlayerController : MonoBehaviour
             interactUI = FindFirstObjectByType<InteractUI>();
 
         if (health != null)
+            health.OnHit += OnHit;
             health.OnDeath += OnDeath;
 
         if (cameraTransform == null)
@@ -160,20 +161,6 @@ public class PlayerController : MonoBehaviour
         if (isChargingThrow && input.DropHeld)
             return;
 
-        // if (input.InventoryUpPressed)
-        // {
-        //     CancelThrow();
-        //     inventory.TrySelectNextSlot();
-        //     return;
-        // }
-
-        // if (input.InventoryDownPressed)
-        // {
-        //     CancelThrow();
-        //     inventory.TrySelectPreviousSlot();
-        //     return;
-        // }
-
         if (input.Number1Pressed)
         {
             CancelThrow();
@@ -234,7 +221,16 @@ public class PlayerController : MonoBehaviour
     private void OnDestroy()
     {
         if (health != null)
+        {
+            health.OnHit -= OnHit;
             health.OnDeath -= OnDeath;
+        }
+    }
+
+    private void OnHit()
+    {
+        if (animator != null)
+            animator.SetTrigger("HasBeenHit");
     }
 
     private void OnDeath()

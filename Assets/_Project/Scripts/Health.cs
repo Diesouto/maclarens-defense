@@ -14,6 +14,7 @@ public class Health : MonoBehaviour, IDamageable
     public float LastHitForce { get; private set; }
 
     public event Action<float> OnHealthChanged;
+    public event Action OnHit;
     public event Action OnDeath;
 
     private CharacterRagdollController ragdollController;
@@ -48,6 +49,10 @@ public class Health : MonoBehaviour, IDamageable
         LastHitForce = Mathf.Max(forceAmount, 0f);
 
         OnHealthChanged?.Invoke(CurrentHealth);
+
+        if (damage > 0f)
+            OnHit?.Invoke();
+            
         Debug.Log($"{gameObject.name} took {damage} damage. Current health: {CurrentHealth}/{maxHealth}");
 
         if (CurrentHealth <= 0f)
