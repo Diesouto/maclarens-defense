@@ -52,6 +52,9 @@ Conclusión practica:
 - Sistema de shop
 - Progression permanente
 - Voice chat
+- Deuda total de partida y modos Story / Infinity separados (ver `Roadmap_MVP.md` > Vision extendida del loop)
+- Fog que despawnea el pueblo al salir el tren y logica de jugador abandonado
+- Recuperacion y revivir cuerpos de jugador muerto
 
 ## Clasificacion de ideas por impacto
 

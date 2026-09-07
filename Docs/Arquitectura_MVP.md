@@ -76,6 +76,8 @@ Assets/_Project/Scripts/
 - `QuotaManager`: controla cuota actual, valor depositado y si ya se desbloqueo la opcion de escapar.
 - `ThreatManager`: controla amenaza actual, thresholds y eventos de escalado.
 
+> Vision post-MVP (ver `Roadmap_MVP.md` > "Vision extendida del loop"): a largo plazo estos tres sistemas deberian alimentar un unico `RunState` autoritativo (`AtMacLarens / TravelingToTown / InTown / LeavingTown / ReturningToMacLarens / ResolvingDay / QuotaCompleted / RunFailed`) en vez de decidir transiciones cada uno por su cuenta. No se refactoriza ahora; es la direccion a seguir la proxima vez que se toque `RunManager` a fondo, cuando tambien entren el modo Story/Infinity, el fog de pueblo y la recuperacion de cuerpos.
+
 ### Player
 
 - `PlayerInputHandler`: solo lectura de input. No decide reglas de gameplay.

@@ -38,6 +38,7 @@ public class TrainCargo : MonoBehaviour
             return;
 
         lootItem.SetCargo(this);
+        AttachToCargo(lootItem);
 
         int value = lootItem.Data != null
             ? lootItem.Data.Value
@@ -50,7 +51,7 @@ public class TrainCargo : MonoBehaviour
             this
         );
     }
-    
+
     private void OnTriggerExit(Collider other)
     {
         LootItem lootItem = other.GetComponentInParent<LootItem>();
@@ -62,6 +63,7 @@ public class TrainCargo : MonoBehaviour
             return;
 
         lootItem.SetCargo(null);
+        DetachFromCargo(lootItem);
 
         int value = lootItem.Data != null
             ? lootItem.Data.Value
@@ -84,6 +86,7 @@ public class TrainCargo : MonoBehaviour
             return false;
 
         lootItem.SetCargo(null);
+        DetachFromCargo(lootItem);
 
         int value = lootItem.Data != null
             ? lootItem.Data.Value
@@ -97,5 +100,17 @@ public class TrainCargo : MonoBehaviour
         );
 
         return true;
+    }
+
+    // Loot must ride along with the train, mirroring how TrainPassenger attaches players to a carriage.
+    private void AttachToCargo(LootItem lootItem)
+    {
+        lootItem.transform.SetParent(transform, true);
+    }
+
+    private void DetachFromCargo(LootItem lootItem)
+    {
+        if (lootItem.transform.parent == transform)
+            lootItem.transform.SetParent(null, true);
     }
 }

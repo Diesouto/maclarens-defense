@@ -7,6 +7,7 @@ public class TrainDeparture : MonoBehaviour, IInteractable
     [SerializeField] private float departurePrepDuration = 5f;
     [SerializeField] private InteractUI interactUI;
     [SerializeField] private RunManager runManager;
+    [SerializeField] private TrainSplineFollower trainSplineFollower;
 
     public bool IsDeparting { get; private set; }
     public bool HasDeparted { get; private set; }
@@ -21,6 +22,9 @@ public class TrainDeparture : MonoBehaviour, IInteractable
 
         if (runManager == null)
             runManager = RunManager.Instance;
+
+        if (trainSplineFollower == null)
+            trainSplineFollower = FindFirstObjectByType<TrainSplineFollower>();
     }
 
     public bool CanInteract(PlayerInteractor interactor)
@@ -30,7 +34,12 @@ public class TrainDeparture : MonoBehaviour, IInteractable
 
     public string GetPrompt(PlayerInteractor interactor)
     {
-        return "Return to MacLarens";
+        if (trainSplineFollower == null)
+            return "Return to MacLarens";
+
+        return trainSplineFollower.CurrentStation == TrainDestination.Town
+            ? "Return to MacLarens"
+            : "Depart to Town";
     }
 
     public void Interact(PlayerInteractor interactor)

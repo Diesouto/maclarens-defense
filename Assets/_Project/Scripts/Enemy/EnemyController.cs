@@ -5,9 +5,10 @@ using System.Collections;
 [RequireComponent(typeof(NavMeshAgent))]
 public class EnemyController : MonoBehaviour
 {
-    public float searchInterval = 1f;
-    public float attackDistance = 1.5f;
-
+    [SerializeField] private float searchInterval = 1f;
+    [SerializeField] private float attackDistance = 1.5f;
+    [SerializeField] private float attackDamage = 10f;
+    [SerializeField] private float attackForce = 5f;
     [SerializeField] private float runSpeed = 4.5f;
     [SerializeField] private float attackCooldown = 2f;
 
@@ -28,8 +29,10 @@ public class EnemyController : MonoBehaviour
             agent.speed = runSpeed;
 
         if (health != null)
+        {
             health.OnHit += OnHit;
             health.OnDeath += OnDeath;
+        }
     }
 
     void Start()
@@ -41,7 +44,10 @@ public class EnemyController : MonoBehaviour
     IEnumerator AwaitSpawnAnimation()
     {
         agent.isStopped = true;
-        yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
+
+        if (animator != null)
+            yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
+
         agent.isStopped = false;
     }
 
@@ -79,7 +85,7 @@ public class EnemyController : MonoBehaviour
         var player = attackTarget.GetComponent<Health>();
 
         if (player != null)
-            player.TakeDamage(10f, (player.transform.position - transform.position).normalized, 5f);
+            player.TakeDamage(attackDamage, (player.transform.position - transform.position).normalized, attackForce);
 
         StartCoroutine(ResetAttack());
     }
@@ -93,19 +99,20 @@ public class EnemyController : MonoBehaviour
 
     void FindNearestPlayer()
     {
-        var items = GameObject.FindGameObjectsWithTag("Player");
         float bestSqr = Mathf.Infinity;
         Transform best = null;
         Vector3 pos = transform.position;
 
-        foreach (var go in items)
+        foreach (PlayerController player in PlayerController.ActivePlayers)
         {
-            if (go == null) continue;
-            float d = (go.transform.position - pos).sqrMagnitude;
+            if (player == null)
+                continue;
+
+            float d = (player.transform.position - pos).sqrMagnitude;
             if (d < bestSqr)
             {
                 bestSqr = d;
-                best = go.transform;
+                best = player.transform;
             }
         }
 
@@ -115,8 +122,10 @@ public class EnemyController : MonoBehaviour
     private void OnDestroy()
     {
         if (health != null)
+        {
             health.OnHit -= OnHit;
             health.OnDeath -= OnDeath;
+        }
     }
 
     private void Update()
@@ -132,8 +141,9 @@ public class EnemyController : MonoBehaviour
     {
         if (animator != null)
             animator.SetTrigger("HasBeenHit");
-            agent.isStopped = true;
-            StartCoroutine(ResetAttack());
+
+        agent.isStopped = true;
+        StartCoroutine(ResetAttack());
     }
 
     private void OnDeath()

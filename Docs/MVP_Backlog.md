@@ -103,7 +103,7 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Train] Crear TrainCargo`
   Resultado: punto de deposito fisico conectado a la quota.
   Aceptacion: transfiere valor desde el jugador a quota sin contar doble.
-  Estado: implementado en `Assets/_Project/Scripts/Train/TrainCargo.cs`. Trigger BoxCollider; `LootItem` fisicos en escena se reparentan al `cargoRoot` al entrar y se desparentan al salir.
+  Estado: implementado en `Assets/_Project/Scripts/Train/TrainCargo.cs`. Trigger generico (`Collider`); `LootItem` fisicos en escena se reparentan al propio transform del vagon al entrar y se desparentan al salir (regresion detectada y corregida: el refactor de "single source of truth" habia eliminado el reparentado).
 
 - `[Core] Crear QuotaManager`
   Resultado: quota actual, cargo actual y evento de cambio.
@@ -120,83 +120,101 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Aceptacion: al completarse llama `RunManager.AdvanceDay()` y dispara `OnTrainDeparted`.
   Estado: implementado en `Assets/_Project/Scripts/Train/TrainDeparture.cs`. Tiene `OnArrived()` publico como hook para el `TrainController`.
 
-### Tren jugable (pendiente)
+### Tren jugable (implementado)
 
 - `[Train] Crear composicion visual del tren`
   Resultado: locomotora + vagon + area de cargo en escena.
   Aceptacion: el tren existe como objeto fisico navegable, no solo como trigger.
+  Estado: implementado y colocado en `MainScene`.
 
 - `[Train] Crear TrainController`
   Resultado: maquina de estados `AT_STATION / TRAVELLING` que mueve el tren por el spline.
   Aceptacion: el tren sale de MacLarens, recorre el rail y llega al pueblo de forma automatica al recibir la orden de salida.
+  Estado: cubierto funcionalmente por `TrainSplineFollower` (`IsMoving`, `CurrentStation`) en vez de una clase `TrainController` dedicada.
 
 - `[Train] Crear rail spline circular`
   Resultado: recorrido cerrado `MacLarens -> Town -> MacLarens` con Unity Splines.
   Aceptacion: el `TrainController` puede evaluar posicion y rotacion en cualquier punto del spline.
+  Estado: implementado en `Assets/_Project/Scripts/Train/TrainSpline.cs`.
 
 - `[Train] Crear estaciones MacLarens y Town`
   Resultado: zonas de docking donde el tren para y se reactiva `TrainDeparture`.
   Aceptacion: al llegar a una estacion el tren se detiene y `OnArrived()` reactiva la interaccion de salida.
+  Estado: implementado como marcadores de distancia (`townPosition`/`macLarensPosition`) en `TrainSplineFollower`; `TrainDeparture.GetPrompt()` ahora tambien refleja la estacion actual.
 
 - `[Train] Movimiento automatico del tren`
   Resultado: el tren sigue el spline sin fisica de rieles; el `TrainRoot` se posiciona y rota por `EvaluatePosition`.
   Aceptacion: los jugadores reparentados al `TrainRoot` viajan dentro sin codigo adicional.
+  Estado: implementado; el reparentado de jugadores se resolvio con `TrainPassenger`/`TrainPassengerArea` (reemplaza el enfoque anterior de inyeccion de velocidad en `PlayerMotor`, descartado por drift).
 
 - `[Train] Animacion de ruedas`
   Resultado: las ruedas giran a velocidad proporcional al desplazamiento del tren.
   Aceptacion: la rotacion es convincente visualmente; no bloquea el milestone de P2.
+  Estado: implementado en `Assets/_Project/Scripts/Train/TrainWheelSpin.cs`.
 
 - `[UI] Crear QuotaUI`
   Resultado: mostrar cuota, cargo y estado del dia.
   Aceptacion: el jugador sabe cuanto falta y si ya puede activar la salida.
+  Estado: implementado, separado en `QuotaUI` (cuota/estado) y `CargoValueUI` (valor en transito).
 
-### Milestone P2
+## Milestone P2
 
 > El jugador aparece en MacLarens, entra al tren, viaja fisicamente hasta el pueblo por el rail, puede bajarse, recoger loot, volver al tren y regresar a MacLarens. Sin enemigos todavia.
+> Estado: todas las piezas de sistema existen; falta playtest end-to-end documentado para cerrar el milestone.
 
 ## P3 - Pueblo y loop singleplayer
 
 - `[World] Montar Town_Western_01`
   Resultado: pueblo pequeno, legible y denso.
   Aceptacion: el jugador encuentra 4-6 puntos de interes claros en una vuelta corta.
+  Estado: contenido de escena, no verificable desde el codigo.
 
 - `[Loot] Crear LootSpawnPoint`
   Resultado: puntos authoring para colocar botin.
   Aceptacion: el spawner puede rellenar la escena sin referencias manuales una a una.
+  Estado: implementado en `Assets/_Project/Scripts/Loot/LootSpawnPoint.cs`.
 
 - `[Loot] Crear LootSpawner`
   Resultado: reparto aleatorio simple por partida.
   Aceptacion: reiniciar run cambia parte del reparto de loot.
+  Estado: implementado en `Assets/_Project/Scripts/Loot/LootSpawner.cs`, con distribucion ponderada por distancia a puntos usados recientemente.
 
 - `[Loot] Reposicion parcial de loot entre dias`
   Resultado: el loot sobrante del dia anterior persiste y se suman nuevos spawns hasta un limite.
   Aceptacion: el jugador nota diferencia de densidad entre dias sin necesitar procedural generation.
+  Estado: implementado. `LootSpawner.Restock()` existia pero no se llamaba desde ningun sitio; ahora se suscribe a `RunManager.OnDayChanged`.
 
 ## P4 - Threat y enemigos
 
 - `[Enemy] Redirigir EnemyController hacia jugador`
   Resultado: el enemigo persigue jugador en vez de booze.
   Aceptacion: detecta al jugador y aplica presion funcional.
+  Estado: implementado en `Assets/_Project/Scripts/Enemy/EnemyController.cs` (persigue al jugador activo mas cercano vía `PlayerController.ActivePlayers`, ataca con cooldown).
 
 - `[Enemy] Crear EnemySpawner`
   Resultado: spawns controlados por presupuesto de amenaza.
   Aceptacion: los enemigos aparecen en puntos validos y no saturan el mapa sin control.
+  Estado: implementado en `Assets/_Project/Scripts/Enemy/EnemySpawner.cs`, pero el limite es fijo (`maxAliveEnemies`), no ligado a un presupuesto de amenaza real.
 
 - `[Enemy] Crear Hitbox`
   Resultado: enemigos reciben más daño si son disparados en la cabeza.
   Aceptacion: los enemigos reciben distinto daño dependiendo del lugar donde se les dispara.
+  Estado: implementado en `Assets/_Project/Scripts/Enemy/Hitbox.cs` + multiplicador de headshot en `Weapon.cs`.
 
 - `[Core] Crear ThreatManager`
   Resultado: scalar de amenaza y thresholds simples.
   Aceptacion: recoger loot aumenta threat y el HUD se actualiza.
+  Estado: pendiente, no existe todavia en el codigo.
 
 - `[UI] Crear ThreatUI`
   Resultado: lectura clara del nivel de peligro.
   Aceptacion: el jugador entiende cuando se esta sobreexponiendo.
+  Estado: pendiente (depende de `ThreatManager`).
 
 - `[Train] Implementar Board Train y countdown`
   Resultado: extraccion legible y con tension.
   Aceptacion: volver al tren no finaliza al instante; hay una ventana de riesgo corta.
+  Estado: el countdown de salida ya existe en `TrainDeparture` (Fase 2); falta la aceleracion progresiva del tren al partir.
 
 - `[Train] Implementar aceleracion progresiva de salida`
   Resultado: el tren ofrece una ultima oportunidad corta para subirse.
@@ -260,6 +278,22 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Audio] Sonidos de armas, loot, enemigos y tren`
 - `[VFX] Muzzle flash, hit, blood y warning de threat`
 - `[UI] Refinar HUD final`
+
+## P8 - Vision extendida (registrada, no priorizada)
+
+> Diseno completo documentado en `Roadmap_MVP.md` > "Vision extendida del loop". No se abre trabajo aqui hasta que P0-P6 esten cerrados.
+
+- `[Core] Deuda total de partida y modos Story / Infinity`
+  Resultado: capa de progresion sobre la cuota (deuda total con deadline en Story, cuotas encadenadas sin limite en Infinity).
+  Aceptacion: N/A todavia — requiere decidir si `DeliveredValue` persiste entre dias antes de disenar la UI.
+
+- `[World] Fog que sella el pueblo al salir el tren`
+  Resultado: loot no entregado, cuerpos y enemigos se destruyen al partir.
+  Aceptacion: N/A todavia — version minima candidata pre-freeze: solo despawnear loot no entregado, sin logica de jugador/cuerpo.
+
+- `[Player] Recuperacion y revivir cuerpos de jugador`
+  Resultado: cuerpo persistente, transportable al tren, revive en MacLarens; penalizacion de cuota si se abandona.
+  Aceptacion: N/A todavia — depende de coop (Fase 6); no aplica de forma significativa en singleplayer.
 
 ## Reglas de prioridad
 

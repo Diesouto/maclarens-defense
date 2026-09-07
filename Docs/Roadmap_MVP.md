@@ -18,6 +18,51 @@ Eso fuerza el tipo de decisiones que queremos: codicia, discusion, panico, perdi
 - El pueblo debe ser pequeno, denso y facil de leer en menos de un minuto.
 - El juego debe producir decisiones estupidas pero comprensibles entre amigos.
 
+## Vision extendida del loop (post-MVP)
+
+Esta seccion registra la direccion final del juego (deuda, modos de juego, fog y recuperacion de cuerpos) tal y como se ha discutido. **No forma parte del freeze de MVP singleplayer** (Fase 0-5); se retoma cuando el loop base ya este validado y estable, mayormente en o despues de la Fase 6 (coop). El proposito de documentarla ahora es no perder la idea y no bloquear el trabajo diario con decisiones de diseno a largo plazo.
+
+### Story Mode (modo principal)
+
+- Los jugadores parten con una deuda total con MacLarens (ej. $10.000) y un numero de dias limite para pagarla.
+- Cada expedicion resuelve una cuota parcial; completarla genera una cuota nueva y mayor.
+- Si se agotan los dias sin pagar la deuda completa, la run termina y se reinicia desde el Day 1.
+- Si la cuota de una expedicion no se completa pero quedan dias, la cuota **persiste** en vez de resetearse. Esto difiere de como se comporta hoy `RunManager.AdvanceDay()` (sustituye la cuota entera por la siguiente de una tabla fija `dayQuotas`, sin arrastrar `DeliveredValue`). Decision pendiente para cuando se aborde esta fase: si `DeliveredValue` debe acumularse entre dias no completados y como se refleja en `RunManager`/`QuotaManager`.
+
+### Infinity Mode (modo secundario)
+
+- Sin deuda total ni fecha limite: el juego encadena cuotas cada vez mayores hasta que el equipo falla una cuota o el equipo entero muere.
+- Requiere tracking de record (dinero total, cuotas completadas, dias sobrevividos): un sistema de meta-progresion nuevo que no existe hoy.
+- Se construye despues de que Story Mode este completo y estable; no se reparte esfuerzo entre ambos modos antes del freeze.
+
+### El fog y la extraccion forzada
+
+- Al salir el tren del pueblo, este queda sellado por niebla: todo lo que quede dentro (jugadores que no llegaron al tren, cuerpos, enemigos, loot no entregado) se destruye.
+- Hoy no existe ninguna consecuencia si un jugador se queda atras al partir el tren; es una laguna real frente al pilar "la extraccion importa", pero el fog completo (VFX + despawn + logica de jugador abandonado) es contenido de Fase 6 (coop): en singleplayer con 1 jugador "quedarse atras" no tiene la misma lectura (no hay equipo que decida abandonarlo).
+- Version minima que si podria entrar antes del freeze si sobra tiempo: limpiar/despawnear el loot no entregado del pueblo al salir el tren. Refuerza "solo cuenta lo entregado" sin necesitar logica de jugadores ni cuerpos.
+
+### Recuperacion de cuerpos y penalizacion por abandono
+
+- Si un jugador muere en el pueblo, su cuerpo queda fisicamente en el mundo; el equipo puede cargarlo hasta el tren para revivirlo al llegar a MacLarens, o abandonarlo (revive igualmente en MacLarens, pero con penalizacion de cuota).
+- Es un sistema intrinsecamente cooperativo (recuperar a un companero); no aplica de forma significativa en singleplayer. Se implementa en Fase 6 junto al resto de sistemas de coop, no antes.
+- Punto de partida cuando se aborde: hoy `Health.Die()` no tiene ningun estado de "cuerpo recuperable" (solo dispara ragdoll); `PlayerController.OnDeath()` simplemente desactiva el control del jugador.
+
+### Arquitectura objetivo (para cuando se retome)
+
+El flujo de partida deberia converger en un unico estado autoritativo en vez de que cada sistema decida por su cuenta cuando empieza o termina un dia:
+
+```text
+Run
+ ├── CurrentMode (Story / Infinity)
+ ├── CurrentDay / DaysRemaining
+ ├── CurrentQuota / DeliveredValue
+ ├── RunState: AtMacLarens -> TravelingToTown -> InTown -> LeavingTown
+ │             -> ReturningToMacLarens -> ResolvingDay -> QuotaCompleted / RunFailed
+ └── Player state: Alive / Dead / BodyOnTrain / Respawned
+```
+
+`QuotaManager`, `TrainDeparture`, `TrainSplineFollower`, `LootDeliveryPoint`, `EnemySpawner` y el futuro sistema de muerte/revive deberian leer y alimentar este estado en vez de tomar decisiones de flujo por su cuenta. Esto no implica reescribir esos sistemas ahora: es la direccion a seguir la proxima vez que se toque `RunManager` a fondo, para no rehacer el flujo dos veces.
+
 ## Objetivo online realista
 
 El objetivo tecnico online no debe definirse como P2P full mesh.
@@ -97,6 +142,9 @@ Motivo: es una idea buena, pero no es un primer enemigo. Requiere reglas de line
 - Progresion permanente
 - Misiones secundarias complejas
 - Tren fisicamente simulado
+- Deuda total de partida y separacion Story Mode / Infinity Mode (ver "Vision extendida del loop")
+- Fog que despawnea el pueblo al salir el tren y consecuencias de jugador abandonado (Fase 6 coop)
+- Recuperacion y revivir cuerpos de jugador muerto (Fase 6 coop)
 
 ## Hitos resumidos
 
@@ -188,32 +236,31 @@ El tren sigue el spline automaticamente; el jugador activa la salida, no conduce
 
 ### Entregables (ya implementados)
 
-- `TrainCargo` — trigger de deposito fisico en el vagon
-- `QuotaManager` — cuota actual, cargo acumulado, evento de cambio
+- `TrainCargo` — trigger de deposito fisico en el vagon; reparenta el loot al vagon mientras esta dentro (bug de reparentado corregido tras el refactor de "single source of truth")
+- `QuotaManager` — cuota actual, cargo en transito (`CurrentCargoValue`) y valor entregado (`DeliveredValue`, fuente de verdad de `QuotaMet`), evento de cambio
 - `RunManager` — Day 1/2/3, avance y reset
-- `TrainDeparture` — interaccion "Return to MacLarens" con countdown de 5s y hook `OnTrainDeparted`/`OnArrived`
+- `TrainDeparture` — interaccion contextual ("Return to MacLarens" / "Depart to Town" segun estacion actual) con countdown de 5s y hook `OnTrainDeparted`/`OnArrived`
+- Composicion visual del tren en escena (locomotora + vagones + `TrainCargo`), ya colocada en `MainScene`
+- Rail spline circular `MacLarens → Town → MacLarens` usando Unity Splines (`TrainSpline`)
+- Estacion MacLarens y estacion Town como marcadores de distancia sobre el spline (`townPosition`/`macLarensPosition` en `TrainSplineFollower`)
+- Movimiento automatico del tren siguiendo el spline (`TrainSplineFollower` + `TrainCarFollower`, maquina de estados `IsMoving`/`CurrentStation` equivalente a un `TrainController`)
+- Jugadores reparentados al vagon mientras viajan (`TrainPassenger` + `TrainPassengerArea`, reemplaza el enfoque anterior de inyeccion de velocidad)
+- Animacion de ruedas (`TrainWheelSpin`)
+- UI de cuota, cargo y estado del dia (`QuotaUI` + `CargoValueUI`)
+- `LootRegistry` — controla que loot existe activo en la run
+- `LootDeliveryPoint` — punto donde depositar loot para que cuente como entregado
 
 ### Entregables (pendientes)
 
-- Composicion visual del tren en escena (locomotora + vagon + area de cargo)
-- `TrainController` — maquina de estados `AT_STATION / TRAVELLING`, velocidad y distancia sobre spline
-- Rail spline circular `MacLarens → Town → MacLarens` usando Unity Splines
-- Estacion MacLarens y estacion Town como zonas de docking
-- Movimiento automatico del tren siguiendo el spline (sin fisica de rieles)
-- Jugadores como hijos del `TrainRoot` mientras viajan
-- Spawn/posicion del jugador al subir al tren
-- Animacion de ruedas (rotacion simple en eje local, sin simulacion)
-- UI de cuota, cargo y estado del dia (`QuotaUI`)
-- Activar `TrainDeparture` como `IInteractable` conectado al `TrainController`
-- `LootRegistry` - manager que se encargue de controlar qué loot existe actualmente en esta partida
-- `LootDeliveryPoint` - punto donde colocar el loot para que cuente como entregado
+- Spawn/posicion explicito del jugador al subir al tren por primera vez
+- Playtest end-to-end grabado del criterio de salida completo (todas las piezas existen pero no hay validacion jugable documentada)
 
 ### Criterios de salida
 
-- El jugador aparece en MacLarens, entra al tren, viaja fisicamente hasta el pueblo, puede bajarse, recoger loot, volver al tren y regresar a MacLarens a depositar el loot
-- La cuota solo avanza al depositar fisicamente en el vagon, no al recoger loot y solo cuenta como entregado al depositarlo en el LootDeliveryPoint
-- Al alcanzar cuota, el jugador puede decidir seguir saqueando o activar la salida
-- Todo ocurre en una sola escena sin cambio de escena
+- El jugador aparece en MacLarens, entra al tren, viaja fisicamente hasta el pueblo, puede bajarse, recoger loot, volver al tren y regresar a MacLarens a depositar el loot — **implementado a nivel de sistemas, pendiente de playtest de validacion**
+- La cuota solo avanza al depositar fisicamente en el vagon, no al recoger loot y solo cuenta como entregado al depositarlo en el LootDeliveryPoint — implementado
+- Al alcanzar cuota, el jugador puede decidir seguir saqueando o activar la salida — implementado (`TrainDeparture` no bloquea salida por cuota)
+- Todo ocurre en una sola escena sin cambio de escena — implementado (`MainScene`)
 
 ### Si hay retraso
 
@@ -222,6 +269,7 @@ El tren sigue el spline automaticamente; el jugador activa la salida, no conduce
 - La animacion de ruedas queda como entregable post-milestone, no bloquea criterios de salida
 
 ## Fase 3 - 2026-09-14 a 2026-09-20
+
 
 ### Meta
 
@@ -233,17 +281,17 @@ En esta fase la conexion tren-pueblo ya existe (resuelta en Fase 2). El foco es 
 
 - `Town_Western_01` montado con props del POLYGON Western Pack
 - 4-6 puntos de interes claros y navegables
-- `LootSpawnPoint` — authoring para colocar loot en el mundo
-- `LootSpawner` — reparto aleatorio simple al iniciar la run
-- Reposicion parcial de loot entre dias (loot sobrante + nuevos spawns)
+- `LootSpawnPoint` — authoring para colocar loot en el mundo (implementado)
+- `LootSpawner` — reparto aleatorio ponderado por distancia al iniciar la run (implementado)
+- Reposicion parcial de loot entre dias (loot sobrante + nuevos spawns) — implementado: `LootSpawner.Restock()` ahora se conecta a `RunManager.OnDayChanged`
 - Primer loop completo singleplayer jugable de inicio a fin sin enemigos
 
 ### Criterios de salida
 
-- La misma escena produce partidas ligeramente distintas sin procedural generation real
-- El jugador encuentra loot valioso en rutas alternativas, no en una sola linea optima
-- El pueblo se entiende visualmente y se puede recorrer en menos de 60 segundos
-- Una run completa MacLarens → tren → pueblo → loot → deposito → decision → salida funciona sin errores bloqueantes
+- La misma escena produce partidas ligeramente distintas sin procedural generation real — implementado (distribucion ponderada de `LootSpawner`)
+- El jugador encuentra loot valioso en rutas alternativas, no en una sola linea optima — depende de la composicion de `Town_Western_01`, no verificable por codigo
+- El pueblo se entiende visualmente y se puede recorrer en menos de 60 segundos — pendiente de playtest
+- Una run completa MacLarens → tren → pueblo → loot → deposito → decision → salida funciona sin errores bloqueantes — pendiente de playtest end-to-end
 
 ### Si hay retraso
 
@@ -258,17 +306,18 @@ Introducir presion dinamica para convertir el transporte de loot en riesgo.
 
 ### Entregables
 
-- Enemigos orientados a perseguir jugador en vez de loot
-- `EnemySpawner`
-- `ThreatManager`
-- Umbrales de amenaza y tablas de spawn simples
-- `Board Train`, cuenta atras de salida y aceleracion progresiva
+- Enemigos orientados a perseguir jugador en vez de loot — implementado (`EnemyController` persigue y ataca al jugador mas cercano)
+- `EnemySpawner` — implementado (limite de enemigos vivos, spawn points validados contra NavMesh)
+- `Hitbox` — implementado (multiplicador de daño por headshot en `Weapon`)
+- `ThreatManager` — pendiente, no existe todavia en el codigo
+- Umbrales de amenaza y tablas de spawn simples — pendiente (ligado a `ThreatManager`)
+- `Board Train`, cuenta atras de salida y aceleracion progresiva — el countdown de salida ya existe en `TrainDeparture` (Fase 2); falta la aceleracion progresiva del tren al partir
 
 ### Criterios de salida
 
-- La amenaza sube por saquear y no por tiempo puro
-- La cantidad de enemigos escala de forma legible
-- Volver al tren se siente como extraccion, no como teletransporte gratuito
+- La amenaza sube por saquear y no por tiempo puro — pendiente, no hay `ThreatManager` conectado al spawn de enemigos todavia
+- La cantidad de enemigos escala de forma legible — parcialmente cubierto por el limite fijo `maxAliveEnemies` de `EnemySpawner`, sin escalado dinamico por amenaza
+- Volver al tren se siente como extraccion, no como teletransporte gratuito — depende de la presion de `EnemySpawner`, pendiente de playtest
 
 ### Si hay retraso
 

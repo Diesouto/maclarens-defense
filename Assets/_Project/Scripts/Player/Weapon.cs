@@ -13,6 +13,7 @@ public class Weapon : MonoBehaviour
     [SerializeField] private Transform muzzleTransform;
     [SerializeField] private LayerMask hitMask = ~0;
     [SerializeField] private GameObject gunshotParticleReference;
+    [SerializeField] private float hitForceMultiplier = 12f;
 
     private PlayerInventory inventory;
     private float nextTimeToFire;
@@ -152,7 +153,7 @@ public class Weapon : MonoBehaviour
         currentAmmo--;
         SaveAmmoState();
         OnAmmoChanged?.Invoke(currentAmmo, currentReserveAmmo);
-        gunshotParticleReference?.GetComponent<ParticleSystem>().Play();
+        gunshotParticleReference?.GetComponent<ParticleSystem>()?.Play();
 
         ShootRaycast();
     }
@@ -225,7 +226,7 @@ public class Weapon : MonoBehaviour
                     : hit.normal;
 
             // Final damage determines hit force too.
-            float hitForce = damage * 12f;
+            float hitForce = damage * hitForceMultiplier;
 
             if (damageable != null)
             {

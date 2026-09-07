@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class DeathFloor : MonoBehaviour
 {
-    [SerializeField] BoxCollider deathZone;
+    [SerializeField] private BoxCollider deathZone;
 
     private void Awake()
     {
@@ -12,13 +12,11 @@ public class DeathFloor : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<Health>() != null)
-        {
-            var health = other.GetComponent<Health>();
-            if (health != null)
-            {
-                health.TakeDamage(health.MaxHealth, Vector3.up, 0f);
-            }
-        }
+        Health health = other.GetComponent<Health>();
+
+        if (health == null)
+            return;
+
+        health.TakeDamage(health.MaxHealth, Vector3.up, 0f);
     }
 }

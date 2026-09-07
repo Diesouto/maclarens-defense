@@ -6,14 +6,11 @@ public class CargoValueUI : MonoBehaviour
     [SerializeField] private TMPro.TextMeshProUGUI quotaText;
     [SerializeField] private string quotaFormat = "Total: {0}$";
 
-    private void Awake()
+    private void OnEnable()
     {
         if (quotaManager == null)
             quotaManager = QuotaManager.Instance;
-    }
 
-    private void OnEnable()
-    {
         if (quotaManager != null)
             quotaManager.OnQuotaProgressChanged += Refresh;
 

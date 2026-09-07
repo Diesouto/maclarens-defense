@@ -10,14 +10,11 @@ public class QuotaUI : MonoBehaviour
     [SerializeField] private string quotaMetMessage = "Quota reached";
     [SerializeField] private string quotaPendingMessage = "Quota pending";
 
-    private void Awake()
+    private void OnEnable()
     {
         if (quotaManager == null)
             quotaManager = QuotaManager.Instance;
-    }
 
-    private void OnEnable()
-    {
         if (quotaManager != null)
             quotaManager.OnQuotaProgressChanged += Refresh;
 

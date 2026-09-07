@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 [RequireComponent(typeof(PlayerInputHandler))]
 [RequireComponent(typeof(PlayerMotor))]
@@ -6,6 +7,10 @@
 [RequireComponent(typeof(ItemHolder))]
 public class PlayerController : MonoBehaviour
 {
+    // Lets gameplay code (e.g. enemy targeting) find players without FindGameObjectsWithTag.
+    private static readonly List<PlayerController> activePlayers = new();
+    public static IReadOnlyList<PlayerController> ActivePlayers => activePlayers;
+
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private float lookSensitivity = 1f;
@@ -48,8 +53,10 @@ public class PlayerController : MonoBehaviour
             interactUI = FindFirstObjectByType<InteractUI>();
 
         if (health != null)
+        {
             health.OnHit += OnHit;
             health.OnDeath += OnDeath;
+        }
 
         if (cameraTransform == null)
             cameraTransform = Camera.main != null ? Camera.main.transform : null;
@@ -67,6 +74,16 @@ public class PlayerController : MonoBehaviour
             mainCamera.fieldOfView = currentFov;
         else
             Debug.LogWarning("PlayerController: No camera found for look/zoom.");
+    }
+
+    private void OnEnable()
+    {
+        activePlayers.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        activePlayers.Remove(this);
     }
 
     private void Update()

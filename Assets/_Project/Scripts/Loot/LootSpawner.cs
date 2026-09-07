@@ -38,12 +38,27 @@ public class LootSpawner : MonoBehaviour
     {
         if (spawnOnStart)
             InitialSpawn();
+
+        if (RunManager.Instance != null)
+            RunManager.Instance.OnDayChanged += HandleDayChanged;
+    }
+
+    private void OnDisable()
+    {
+        if (RunManager.Instance != null)
+            RunManager.Instance.OnDayChanged -= HandleDayChanged;
     }
 
     private void OnDestroy()
     {
         if (Instance == this)
             Instance = null;
+    }
+
+    // Each new day tops up leftover loot instead of a full re-spawn, per the Roadmap P3 criteria.
+    private void HandleDayChanged(int day)
+    {
+        Restock();
     }
 
     private void FindSpawnPoints()
