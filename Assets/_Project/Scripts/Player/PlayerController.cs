@@ -13,6 +13,8 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private Camera mainCamera;
+    [Tooltip("Head/neck ragdoll bone the camera reparents to on death, so it rides the ragdoll physics. Leave cameraTransform parented to a static pivot (not this bone) for normal play, otherwise the bone's bind-pose rotation breaks ApplyLookRotation's math.")]
+    [SerializeField] private Transform ragdollCameraAnchor;
     [SerializeField] private float lookSensitivity = 1f;
     [SerializeField] private float lookSmoothing = 10f;
     [SerializeField] private float maxLookPitch = 80f;
@@ -279,6 +281,13 @@ public class PlayerController : MonoBehaviour
 
         if (motor != null)
             motor.enabled = false;
+
+        // Keep cameraTransform parented under the head bone: disabling this component (below) stops
+        // us from overriding its rotation every LateUpdate, so it's free to ride the ragdoll physics.
+        if (cameraTransform != null && ragdollCameraAnchor != null)
+            cameraTransform.SetParent(ragdollCameraAnchor, true);
+
+        DeathCameraController.Instance?.NotifyPlayerDied(this);
 
         enabled = false;
     }

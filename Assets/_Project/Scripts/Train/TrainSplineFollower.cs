@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -30,8 +31,12 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
 
     [Header("Movement")]
     [SerializeField, Min(0f)] private float maxSpeed = 12f;
-    [SerializeField, Min(0.01f)] private float accelerationTime = 4f;
+    [Tooltip("Distance (meters) over which the train eases up to maxSpeed after departing.")]
+    [SerializeField, Min(0f)] private float accelerationDistance = 15f;
+    [Tooltip("Distance (meters) over which the train eases down to a stop before arriving.")]
     [SerializeField, Min(0f)] private float decelerationDistance = 15f;
+    [Tooltip("Minimum creep speed so departure never stalls at exactly zero.")]
+    [SerializeField, Min(0.01f)] private float minCreepSpeed = 0.1f;
 
     [Header("Orientation")]
     [SerializeField] private Vector3 up = Vector3.up;
@@ -47,6 +52,10 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
 
     public bool IsMoving { get; private set; }
     public bool IsInitialized { get; private set; }
+
+    // Hooks for FX/audio (horn once on departure, looping rail sound + smoke/dust while moving).
+    public event Action OnMovementStarted;
+    public event Action OnMovementStopped;
 
     private Coroutine travelRoutine;
     private Vector3 previousPosition;
@@ -158,24 +167,20 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
             $"to {target}. Total distance: {totalDistance:F2}."
         );
 
+        OnMovementStarted?.Invoke();
+
         while (traveled < totalDistance)
         {
             float remaining = totalDistance - traveled;
 
-            float targetSpeed =
-                remaining < decelerationDistance
-                    ? Mathf.Lerp(
-                        0.5f,
-                        maxSpeed,
-                        remaining / decelerationDistance
-                    )
-                    : maxSpeed;
+            // Ease in near the start and ease out near the end (whichever is closer), so the train
+            // creeps away slowly enough for players to still board, and stops just as gently.
+            float accelFactor = accelerationDistance > 0f ? Mathf.Clamp01(traveled / accelerationDistance) : 1f;
+            float decelFactor = decelerationDistance > 0f ? Mathf.Clamp01(remaining / decelerationDistance) : 1f;
 
-            speed = Mathf.MoveTowards(
-                speed,
-                targetSpeed,
-                (maxSpeed / accelerationTime) * Time.deltaTime
-            );
+            float speedFactor = Mathf.Min(Mathf.SmoothStep(0f, 1f, accelFactor), Mathf.SmoothStep(0f, 1f, decelFactor));
+
+            speed = Mathf.Max(maxSpeed * speedFactor, minCreepSpeed);
 
             traveled += Mathf.Min(
                 speed * Time.deltaTime,
@@ -210,6 +215,8 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
         previousPosition = transform.position;
 
         trainDeparture?.OnArrived();
+
+        OnMovementStopped?.Invoke();
     }
 
     private void UpdateMotionState()

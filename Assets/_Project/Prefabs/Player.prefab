@@ -1884,6 +1884,7 @@ GameObject:
   - component: {fileID: 1848756857575416761}
   - component: {fileID: 9181120398824042980}
   - component: {fileID: 8362558454854477792}
+  - component: {fileID: 1421682693203095834}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1928,13 +1929,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 2
+  m_Height: 1.8
   m_Radius: 0.2
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.9, z: 0}
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!114 &8149199625139822230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2014,6 +2015,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraTransform: {fileID: 408399513450918475}
   mainCamera: {fileID: 0}
+  ragdollCameraAnchor: {fileID: 2487617200157583898}
   lookSensitivity: 5
   lookSmoothing: 10
   maxLookPitch: 80
@@ -2080,6 +2082,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5ee6b6b4e5b07e4eb56596974902896, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassenger
+  groundedMomentumDecay: 20
+--- !u!114 &1421682693203095834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5860787695679847855}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0c95b22017e08b488686c10a2b093bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterRagdollController
+  enableOnStart: 0
+  disableAnimatorDelay: 0.05
+  destroyAfterDeath: 0
+  destroyDelay: 30
 --- !u!1 &6037817788625409431
 GameObject:
   m_ObjectHideFlags: 0

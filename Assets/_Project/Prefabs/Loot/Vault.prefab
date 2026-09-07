@@ -60,6 +60,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5ee6b6b4e5b07e4eb56596974902896, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassenger
+  groundedMomentumDecay: 20
 --- !u!1001 &2096229207619263148
 PrefabInstance:
   m_ObjectHideFlags: 0

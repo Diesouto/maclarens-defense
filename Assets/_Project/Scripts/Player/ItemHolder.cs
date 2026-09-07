@@ -77,8 +77,8 @@ public class ItemHolder : MonoBehaviour
         if (item.IsWeapon && item.HeldPrefab == null && residentWeapon != null)
         {
             residentWeapon.transform.SetParent(holdPoint, false);
-            residentWeapon.transform.localPosition = Vector3.zero;
-            residentWeapon.transform.localRotation = Quaternion.identity;
+            residentWeapon.transform.localPosition = item.HeldPositionOffset;
+            residentWeapon.transform.localRotation = Quaternion.Euler(item.HeldRotationOffset);
             residentWeapon.transform.localScale = Vector3.one;
             residentWeapon.SyncWithActiveItem();
             SetPlayerWeapon(residentWeapon);
@@ -90,8 +90,8 @@ public class ItemHolder : MonoBehaviour
             return;
 
         currentHeldVisual = Instantiate(visualPrefab, holdPoint);
-        currentHeldVisual.transform.localPosition = Vector3.zero;
-        currentHeldVisual.transform.localRotation = Quaternion.identity;
+        currentHeldVisual.transform.localPosition = item.HeldPositionOffset;
+        currentHeldVisual.transform.localRotation = Quaternion.Euler(item.HeldRotationOffset);
         currentHeldVisual.transform.localScale = Vector3.one;
 
         if (item.IsWeapon)

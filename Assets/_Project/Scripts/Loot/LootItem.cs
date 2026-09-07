@@ -18,6 +18,7 @@ public class LootItem : MonoBehaviour, IInteractable
             Instance = new ItemInstance(lootData);
 
         Instance?.BindWorldItem(this);
+        ApplyRigidbodyMass();
     }
 
     public void SetData(LootDataSO newData)
@@ -27,6 +28,7 @@ public class LootItem : MonoBehaviour, IInteractable
             Instance = new ItemInstance(newData);
 
         Instance.BindWorldItem(this);
+        ApplyRigidbodyMass();
     }
 
     public void SetInstance(ItemInstance itemInstance)
@@ -34,6 +36,18 @@ public class LootItem : MonoBehaviour, IInteractable
         Instance = itemInstance ?? new ItemInstance(lootData);
         Instance.BindWorldItem(this);
         lootData = Instance.Data;
+        ApplyRigidbodyMass();
+    }
+
+    // Keeps physics weight authored on LootDataSO instead of tuned by hand on every prefab.
+    private void ApplyRigidbodyMass()
+    {
+        if (lootData == null)
+            return;
+
+        Rigidbody rigidbody = GetComponent<Rigidbody>();
+        if (rigidbody != null)
+            rigidbody.mass = lootData.RigidbodyMass;
     }
 
     public void SetSpawnPoint(LootSpawnPoint point)
@@ -104,6 +118,7 @@ public class LootItem : MonoBehaviour, IInteractable
         if (rigidbody == null)
             rigidbody = instance.AddComponent<Rigidbody>();
 
+        rigidbody.mass = data.RigidbodyMass;
         rigidbody.isKinematic = false;
         rigidbody.useGravity = true;
         rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
