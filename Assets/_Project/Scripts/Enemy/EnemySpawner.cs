@@ -1,18 +1,35 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class EnemySpawner : MonoBehaviour
 {
+    [Serializable]
+    public class ThreatSpawnSettings
+    {
+        public ThreatLevel level = ThreatLevel.Calm;
+        public int maxAliveEnemies = 2;
+        public float spawnInterval = 8f;
+    }
+
     [Header("Enemy Prefabs")]
     [SerializeField] private GameObject[] enemyPrefabs;
 
     [Header("Spawn Points")]
     [SerializeField] private EnemySpawnPoint[] spawnPoints;
 
+    [Header("Threat Intensity")]
+    [SerializeField] private ThreatSpawnSettings[] intensityLevels =
+    {
+        new ThreatSpawnSettings { level = ThreatLevel.Calm, maxAliveEnemies = 2, spawnInterval = 8f },
+        new ThreatSpawnSettings { level = ThreatLevel.Low, maxAliveEnemies = 4, spawnInterval = 6f },
+        new ThreatSpawnSettings { level = ThreatLevel.Medium, maxAliveEnemies = 6, spawnInterval = 4f },
+        new ThreatSpawnSettings { level = ThreatLevel.High, maxAliveEnemies = 9, spawnInterval = 3f },
+        new ThreatSpawnSettings { level = ThreatLevel.Critical, maxAliveEnemies = 12, spawnInterval = 2f },
+    };
+
     [Header("Spawn Settings")]
-    [SerializeField] private float spawnInterval = 3f;
-    [SerializeField] private int maxAliveEnemies = 10;
     [SerializeField] private bool spawnOnStart = true;
 
     private readonly List<EnemyController> aliveEnemies = new();
@@ -22,14 +39,16 @@ public class EnemySpawner : MonoBehaviour
     private void Start()
     {
         if (spawnOnStart)
-            spawnTimer = spawnInterval;
+            spawnTimer = GetCurrentSettings().spawnInterval;
     }
 
     private void Update()
     {
         CleanupDeadEnemies();
 
-        if (aliveEnemies.Count >= maxAliveEnemies)
+        ThreatSpawnSettings settings = GetCurrentSettings();
+
+        if (aliveEnemies.Count >= settings.maxAliveEnemies)
             return;
 
         spawnTimer -= Time.deltaTime;
@@ -37,8 +56,26 @@ public class EnemySpawner : MonoBehaviour
         if (spawnTimer <= 0f)
         {
             TrySpawnEnemy();
-            spawnTimer = spawnInterval;
+            spawnTimer = settings.spawnInterval;
         }
+    }
+
+    private ThreatSpawnSettings GetCurrentSettings()
+    {
+        ThreatLevel currentLevel = ThreatManager.Instance != null
+            ? ThreatManager.Instance.CurrentLevel
+            : ThreatLevel.Calm;
+
+        if (intensityLevels != null)
+        {
+            foreach (ThreatSpawnSettings settings in intensityLevels)
+            {
+                if (settings != null && settings.level == currentLevel)
+                    return settings;
+            }
+        }
+
+        return new ThreatSpawnSettings();
     }
 
     private void TrySpawnEnemy()
@@ -49,7 +86,7 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        EnemySpawnPoint spawnPoint = GetRandomSpawnPoint();
+        EnemySpawnPoint spawnPoint = GetBestSpawnPoint();
 
         if (spawnPoint == null)
             return;
@@ -95,9 +132,11 @@ public class EnemySpawner : MonoBehaviour
         }
 
         aliveEnemies.Add(enemy);
+        spawnPoint.MarkUsed();
     }
 
-    private EnemySpawnPoint GetRandomSpawnPoint()
+    // Picks the valid point farthest from any player, so enemies feel like they come from the town, not thin air.
+    private EnemySpawnPoint GetBestSpawnPoint()
     {
         if (spawnPoints == null || spawnPoints.Length == 0)
         {
@@ -105,20 +144,23 @@ public class EnemySpawner : MonoBehaviour
             return null;
         }
 
-        List<EnemySpawnPoint> validPoints = new();
+        EnemySpawnPoint best = null;
+        float bestScore = float.NegativeInfinity;
 
         foreach (EnemySpawnPoint point in spawnPoints)
         {
-            if (point != null && point.IsValid())
-                validPoints.Add(point);
+            if (point == null || !point.IsValid())
+                continue;
+
+            float score = point.GetScore();
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = point;
+            }
         }
 
-        if (validPoints.Count == 0)
-            return null;
-
-        return validPoints[
-            Random.Range(0, validPoints.Count)
-        ];
+        return best;
     }
 
     private void CleanupDeadEnemies()

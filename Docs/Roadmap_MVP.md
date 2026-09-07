@@ -307,17 +307,17 @@ Introducir presion dinamica para convertir el transporte de loot en riesgo.
 ### Entregables
 
 - Enemigos orientados a perseguir jugador en vez de loot — implementado (`EnemyController` persigue y ataca al jugador mas cercano)
-- `EnemySpawner` — implementado (limite de enemigos vivos, spawn points validados contra NavMesh)
+- `EnemySpawner` — implementado (cantidad y ritmo de spawn dinamicos por `ThreatLevel`, spawn points validados contra NavMesh, distancia a jugadores, cooldown de reuso y score)
 - `Hitbox` — implementado (multiplicador de daño por headshot en `Weapon`)
-- `ThreatManager` — pendiente, no existe todavia en el codigo
-- Umbrales de amenaza y tablas de spawn simples — pendiente (ligado a `ThreatManager`)
-- `Board Train`, cuenta atras de salida y aceleracion progresiva — el countdown de salida ya existe en `TrainDeparture` (Fase 2); falta la aceleracion progresiva del tren al partir
+- `ThreatManager` — implementado (`Assets/_Project/Scripts/Core/ThreatManager.cs`): threat por tiempo constante + pickup unico por item de loot, sin decay por matar enemigos, niveles `ThreatLevel` con 4 umbrales configurables, reset por dia
+- Umbrales de amenaza y tablas de spawn simples — implementado: `EnemySpawner.ThreatSpawnSettings[]` mapea cada `ThreatLevel` a `maxAliveEnemies`/`spawnInterval`
+- `Board Train`, cuenta atras de salida y aceleracion progresiva — el countdown de salida ya existe en `TrainDeparture` (Fase 2); la aceleracion/deceleracion progresiva del tren (ease-in/ease-out via `accelerationDistance`/`decelerationDistance`) ya esta implementada en `TrainSplineFollower`, ver P4/Docs TODOs en memoria de repo
 
 ### Criterios de salida
 
-- La amenaza sube por saquear y no por tiempo puro — pendiente, no hay `ThreatManager` conectado al spawn de enemigos todavia
-- La cantidad de enemigos escala de forma legible — parcialmente cubierto por el limite fijo `maxAliveEnemies` de `EnemySpawner`, sin escalado dinamico por amenaza
-- Volver al tren se siente como extraccion, no como teletransporte gratuito — depende de la presion de `EnemySpawner`, pendiente de playtest
+- La amenaza sube por saquear y no por tiempo puro — el diseno final acordado con el usuario combina ambas fuentes a proposito (tiempo constante + pickup unico de loot); no hay decay por matar enemigos, que era el riesgo real a evitar. Implementado.
+- La cantidad de enemigos escala de forma legible — implementado: `EnemySpawner` lee `maxAliveEnemies`/`spawnInterval` en vivo segun `ThreatManager.CurrentLevel`
+- Volver al tren se siente como extraccion, no como teletransporte gratuito — sistemas ya en su sitio (threat, spawn dinamico, spawn points con distancia/cooldown/score); confirmacion final pendiente de playtest
 
 ### Si hay retraso
 

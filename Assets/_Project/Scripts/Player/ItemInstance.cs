@@ -12,6 +12,14 @@ public class ItemInstance
     public int CurrentReserveAmmo => currentReserveAmmo;
     public LootItem WorldItem { get; private set; }
 
+    // Prevents drop-and-repickup from re-triggering the one-time Threat spike for this item.
+    public bool HasTriggeredThreat { get; private set; }
+
+    public void MarkThreatTriggered()
+    {
+        HasTriggeredThreat = true;
+    }
+
     public ItemInstance(LootDataSO itemData)
     {
         data = itemData;

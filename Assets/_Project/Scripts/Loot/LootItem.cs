@@ -90,6 +90,12 @@ public class LootItem : MonoBehaviour, IInteractable
 
         cargo?.RemoveItem(this);
 
+        if (Instance != null && !Instance.HasTriggeredThreat)
+        {
+            Instance.MarkThreatTriggered();
+            ThreatManager.Instance?.RegisterLootPickup();
+        }
+
         IsCollected = true;
 
         spawnPoint?.SetOccupied(false);

@@ -194,7 +194,7 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Enemy] Crear EnemySpawner`
   Resultado: spawns controlados por presupuesto de amenaza.
   Aceptacion: los enemigos aparecen en puntos validos y no saturan el mapa sin control.
-  Estado: implementado en `Assets/_Project/Scripts/Enemy/EnemySpawner.cs`, pero el limite es fijo (`maxAliveEnemies`), no ligado a un presupuesto de amenaza real.
+  Estado: implementado en `Assets/_Project/Scripts/Enemy/EnemySpawner.cs`. `maxAliveEnemies`/`spawnInterval` ya no son fijos: se leen en vivo de `ThreatSpawnSettings[]` (uno por `ThreatLevel`) segun `ThreatManager.Instance.CurrentLevel`. Los puntos se filtran por `EnemySpawnPoint.IsValid()` (activo, `ThreatLevel` minimo, cooldown de reuso, sin jugador demasiado cerca) y se elige el de mayor `GetScore()` (mas lejos de cualquier jugador) en vez de uno aleatorio.
 
 - `[Enemy] Crear Hitbox`
   Resultado: enemigos reciben más daño si son disparados en la cabeza.
@@ -204,21 +204,22 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Core] Crear ThreatManager`
   Resultado: scalar de amenaza y thresholds simples.
   Aceptacion: recoger loot aumenta threat y el HUD se actualiza.
-  Estado: pendiente, no existe todavia en el codigo.
+  Estado: implementado en `Assets/_Project/Scripts/Core/ThreatManager.cs`. MVP: `+threatPerSecond` constante mientras la escena esta activa, `+lootPickupThreat` una unica vez por item de loot (deduplicado via `ItemInstance.HasTriggeredThreat`). Expone `CurrentLevel` (`ThreatLevel` en `Assets/_Project/Scripts/Core/ThreatLevel.cs`, calculado con 4 umbrales configurables) y eventos `OnThreatChanged`/`OnThreatLevelChanged`. Se resetea a 0 en `RunManager.OnDayChanged`. Sin decay por matar enemigos (decision explicita de diseno).
 
 - `[UI] Crear ThreatUI`
   Resultado: lectura clara del nivel de peligro.
   Aceptacion: el jugador entiende cuando se esta sobreexponiendo.
-  Estado: pendiente (depende de `ThreatManager`).
+  Estado: implementado en `Assets/_Project/UI/ThreatUI.cs` (mismo patron que `QuotaUI`: texto + barra opcional, se suscribe a `ThreatManager.OnThreatChanged`).
 
 - `[Train] Implementar Board Train y countdown`
   Resultado: extraccion legible y con tension.
   Aceptacion: volver al tren no finaliza al instante; hay una ventana de riesgo corta.
-  Estado: el countdown de salida ya existe en `TrainDeparture` (Fase 2); falta la aceleracion progresiva del tren al partir.
+  Estado: implementado. Countdown de `TrainDeparture` (Fase 2) + aceleracion/deceleracion progresiva de `TrainSplineFollower` (ease-in/ease-out via `accelerationDistance`/`decelerationDistance`).
 
 - `[Train] Implementar aceleracion progresiva de salida`
   Resultado: el tren ofrece una ultima oportunidad corta para subirse.
   Aceptacion: existe una ventana de riesgo legible en la que llegar tarde aun puede salvar la run.
+  Estado: implementado en `TrainSplineFollower` (arranque con `SmoothStep`/`minCreepSpeed`, muy lento al inicio para dar tiempo a subirse).
 
 ## P5 - MVP freeze
 
