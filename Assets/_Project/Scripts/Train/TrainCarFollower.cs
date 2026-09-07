@@ -8,6 +8,8 @@ using UnityEngine;
 ///
 /// Lead distance - (spacing × car index)
 /// </summary>
+// Runs before default-order scripts (e.g. PlayerController) so riders read this frame's pose, not last frame's.
+[DefaultExecutionOrder(-100)]
 public class TrainCarFollower : MonoBehaviour, ITrainMotion
 {
     [Header("References")]

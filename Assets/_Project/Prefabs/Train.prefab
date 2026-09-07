@@ -929,8 +929,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.2804677, y: 3.300165, z: 7.5588794}
-  m_Center: {x: 0, y: 3, z: 0}
+  m_Size: {x: 5, y: 6, z: 7.5588794}
+  m_Center: {x: 0, y: 4, z: 0}
 --- !u!114 &8775288433437303853
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1224,6 +1224,7 @@ MonoBehaviour:
   departurePrepDuration: 1
   interactUI: {fileID: 0}
   runManager: {fileID: 0}
+  trainSplineFollower: {fileID: 0}
 --- !u!1 &2500634476083364210 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1235095919362174, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
@@ -1248,8 +1249,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.2773616, y: 4.7085752, z: 12.494934}
-  m_Center: {x: 0, y: 3.5, z: 0}
+  m_Size: {x: 4, y: 6, z: 12.494934}
+  m_Center: {x: 0, y: 4, z: 0}
 --- !u!114 &397385441959882617
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2025,8 +2026,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.7662463, y: 4.9246345, z: 17.336218}
-  m_Center: {x: 0, y: 3.5, z: 0}
+  m_Size: {x: 5, y: 6, z: 17.336218}
+  m_Center: {x: 0, y: 4, z: 0}
 --- !u!114 &7747919174857148425
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2412,8 +2413,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.559341, y: 5.0264764, z: 13.883895}
-  m_Center: {x: 0, y: 2.5132382, z: 0}
+  m_Size: {x: 5, y: 6, z: 13.883895}
+  m_Center: {x: 0, y: 4, z: 0}
 --- !u!114 &3345573206632777912
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -26,6 +26,7 @@ public class PlayerController : MonoBehaviour
 
     private PlayerInputHandler input;
     private PlayerMotor motor;
+    private TrainPassenger trainPassenger;
     private PlayerInventory inventory;
     private Weapon weapon;
     private Health health;
@@ -43,6 +44,7 @@ public class PlayerController : MonoBehaviour
     {
         input = GetComponent<PlayerInputHandler>();
         motor = GetComponent<PlayerMotor>();
+        trainPassenger = GetComponent<TrainPassenger>();
         inventory = GetComponent<PlayerInventory>();
         itemHolder = GetComponent<ItemHolder>();
         weapon = itemHolder != null ? itemHolder.RuntimeWeapon : GetComponentInChildren<Weapon>(true);
@@ -98,8 +100,28 @@ public class PlayerController : MonoBehaviour
             motor.Jump();
     }
 
+    // Rides the train without parenting: applies the carriage's per-frame position delta through
+    // the motor's CharacterController.Move(), and adds the yaw delta directly (no smoothing) so the
+    // camera turns in lockstep with the train instead of staying pinned to a world-absolute heading.
+    // Runs in LateUpdate (after train followers, see [DefaultExecutionOrder] on their scripts, and
+    // after this frame's input movement) so it always reads this frame's up-to-date carriage pose.
+    private void ApplyTrainMotion()
+    {
+        if (trainPassenger == null)
+            return;
+
+        if (!trainPassenger.TryGetCarriageDelta(transform.position, motor.IsGrounded, out Vector3 deltaPosition, out float deltaYaw))
+            return;
+
+        motor.ApplyExternalDisplacement(deltaPosition);
+
+        yaw += deltaYaw;
+        smoothedYaw += deltaYaw;
+    }
+
     private void LateUpdate()
     {
+        ApplyTrainMotion();
         ApplyLookRotation();
     }
 

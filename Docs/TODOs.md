@@ -5,8 +5,7 @@
 - Train correct behaviour: the PlayerController and PlayerMotor are messing up the transforms from the train when the Player gets parented. If I disable the PlayerController the player will stay correctly on the train and the camera will stay in place. I want to be able to have the player move around the train, get on and off, drop and pick items, etc. while the train is moving. How can we fix this?
 - Connect FX[] (dust on ground, smoke on smokestack, wind?...) and sounds (bell hiss when it begins moving and rail sounds) on the train movement 
 - Train movement is damped (it starts and ends its movement slowly)
-- Check added scripts from P3 and P4 make sense and are correct
 - Player camera is "attached to head", so when the player ragdolls the camera has the POV from the player model
-- Add a death camera - 3rd person rotating camera targeting the player corpse or alive players, can change the current objective (previous - next) with some keys
+- Add a death camera - some time after player dies (SerializeField) their 3rd person rotating camera is enabled. This camera will target the player corpse or alive players, just like PEAK does, and we can change the current objective (previous player - next player) with left or right
 - Final gameplay loop (debt, Story/Infinity modes, fog, body recovery) is now formalized in `Roadmap_MVP.md` > "Vision extendida del loop" and `MVP_Backlog.md` > P8; not part of the current MVP freeze.
 

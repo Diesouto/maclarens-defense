@@ -11,6 +11,8 @@ public enum TrainDestination
 /// Drives the lead train car forward around a closed TrainSpline loop
 /// between the two MVP destinations.
 /// </summary>
+// Runs before default-order scripts (e.g. PlayerController) so riders read this frame's pose, not last frame's.
+[DefaultExecutionOrder(-100)]
 public class TrainSplineFollower : MonoBehaviour, ITrainMotion
 {
     [Header("References")]

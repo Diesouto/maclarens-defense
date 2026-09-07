@@ -21,10 +21,20 @@ public class PlayerMotor : MonoBehaviour
     private Vector3 velocity;
     private bool grounded;
 
+    public bool IsGrounded => grounded;
+
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
         inventory = GetComponent<PlayerInventory>();
+    }
+
+    // Applies the current carriage's per-frame delta (see TrainPassenger) through the same Move()
+    // API used for input/gravity, so CharacterController never gets moved outside of a Move() call.
+    public void ApplyExternalDisplacement(Vector3 displacement)
+    {
+        if (displacement.sqrMagnitude > 0f)
+            controller.Move(displacement);
     }
 
     public void Move(Vector3 direction, bool sprint)
