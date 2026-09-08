@@ -92,7 +92,7 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         GameObject prefab = enemyPrefabs[
-            Random.Range(0, enemyPrefabs.Length)
+            UnityEngine.Random.Range(0, enemyPrefabs.Length)
         ];
 
         Vector3 spawnPosition = spawnPoint.Position;

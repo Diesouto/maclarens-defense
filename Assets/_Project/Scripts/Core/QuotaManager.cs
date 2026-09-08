@@ -31,6 +31,13 @@ public class QuotaManager : MonoBehaviour
         }
 
         Instance = this;
+        currentQuota = Mathf.Max(currentQuota, 0);
+    }
+
+    private void Start()
+    {
+        if (RunManager.Instance != null)
+            RunManager.Instance.ApplyQuotaForCurrentDay();
     }
 
     private void OnDestroy()

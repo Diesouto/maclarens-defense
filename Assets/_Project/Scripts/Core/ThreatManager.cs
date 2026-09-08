@@ -7,7 +7,7 @@ public class ThreatManager : MonoBehaviour
 {
     public static ThreatManager Instance { get; private set; }
 
-    [SerializeField] private float threatPerSecond = 1f;
+    [SerializeField] private float threatPerSecond = 0.2f;
     [SerializeField] private float lootPickupThreat = 5f;
     [SerializeField] private float maxThreat = 100f;
 
@@ -55,7 +55,18 @@ public class ThreatManager : MonoBehaviour
 
     private void Update()
     {
+        if (!IsThreatActiveInTown())
+            return;
+
         AddThreat(threatPerSecond * Time.deltaTime);
+    }
+
+    private bool IsThreatActiveInTown()
+    {
+        if (PlayersInTownTrigger.Instance == null)
+            return true;
+
+        return PlayersInTownTrigger.Instance.AnyPlayerInside;
     }
 
     // First-time-only pickup threat is enforced by the caller (ItemInstance.HasTriggeredThreat), not here.

@@ -20,8 +20,11 @@ MonoBehaviour:
   spawnWeight: 10
   itemType: 0
   isHeavy: 1
-  isTwoHanded: 0
+  isTwoHanded: 1
   animationProfile: 0
   weaponData: {fileID: 0}
   worldPrefab: {fileID: 1967322254841212, guid: 3d52ec66d27ee224e8b89794093d1b60, type: 3}
   heldPrefab: {fileID: 0}
+  rigidbodyMass: 4
+  heldPositionOffset: {x: 0, y: -0.1, z: 0}
+  heldRotationOffset: {x: 0, y: 0, z: 0}

@@ -33,6 +33,18 @@ public class RunManager : MonoBehaviour
         ApplyQuotaForCurrentDay();
     }
 
+    public void ApplyQuotaForCurrentDay()
+    {
+        if (dayQuotas == null || dayQuotas.Length == 0)
+            return;
+
+        int index = Mathf.Clamp(CurrentDay - 1, 0, dayQuotas.Length - 1);
+        int quota = dayQuotas[index];
+
+        if (QuotaManager.Instance != null)
+            QuotaManager.Instance.SetQuota(quota);
+    }
+
     public void AdvanceDay()
     {
         CurrentDay++;
@@ -47,12 +59,4 @@ public class RunManager : MonoBehaviour
         OnDayChanged?.Invoke(CurrentDay);
     }
 
-    private void ApplyQuotaForCurrentDay()
-    {
-        if (dayQuotas == null || dayQuotas.Length == 0 || QuotaManager.Instance == null)
-            return;
-
-        int index = Mathf.Clamp(CurrentDay - 1, 0, dayQuotas.Length - 1);
-        QuotaManager.Instance.SetQuota(dayQuotas[index]);
-    }
 }

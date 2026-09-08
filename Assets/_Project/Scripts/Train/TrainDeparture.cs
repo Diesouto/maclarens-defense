@@ -61,6 +61,8 @@ public class TrainDeparture : MonoBehaviour, IInteractable
         IsDeparting = false;
         HasDeparted = true;
 
+        PlayersInTownTrigger.Instance?.KillPlayersStillInsideTown();
+
         if (runManager == null)
             runManager = RunManager.Instance;
         runManager?.AdvanceDay();

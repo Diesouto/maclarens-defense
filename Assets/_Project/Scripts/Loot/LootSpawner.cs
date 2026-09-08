@@ -6,8 +6,10 @@ public class LootSpawner : MonoBehaviour
     public static LootSpawner Instance { get; private set; }
 
     [Header("Spawn Settings")]
-    [SerializeField] private int maxActiveLoot = 15;
+    [SerializeField] private int minActiveLoot = 12;
+    [SerializeField] private int maxActiveLoot = 18;
     [SerializeField] private bool spawnOnStart = true;
+    [SerializeField] private float quotaToLootScale = 75f;
 
     [Header("Distribution")]
     [SerializeField, Min(0f)]
@@ -107,11 +109,9 @@ public class LootSpawner : MonoBehaviour
 
     private void SpawnUntilLimit()
     {
-        int existingLoot =
-            LootRegistry.Instance.GetExistingLootCount();
-
-        int amountToSpawn =
-            maxActiveLoot - existingLoot;
+        int targetCount = ResolveTargetLootCount();
+        int existingLoot = LootRegistry.Instance.GetExistingLootCount();
+        int amountToSpawn = Mathf.Max(targetCount - existingLoot, 0);
 
         if (amountToSpawn <= 0)
             return;
@@ -175,19 +175,18 @@ public class LootSpawner : MonoBehaviour
         );
 
         LootItem spawnedLoot =
-            instance.GetComponent<LootItem>();
+            instance.GetComponentInChildren<LootItem>(true);
 
         if (spawnedLoot == null)
         {
-            Debug.LogError(
+            spawnedLoot = instance.AddComponent<LootItem>();
+            Debug.LogWarning(
                 $"[LootSpawner] Prefab '{lootData.WorldPrefab.name}' " +
-                "does not contain a LootItem component."
+                "did not contain a LootItem component, so one was added automatically."
             );
-
-            Destroy(instance);
-            return false;
         }
 
+        spawnedLoot.SetData(lootData);
         spawnedLoot.SetSpawnPoint(spawnPoint);
 
         spawnPoint.SetOccupied(true);
@@ -279,6 +278,20 @@ public class LootSpawner : MonoBehaviour
             1f,
             distanceRatio
         );
+    }
+
+    private int ResolveTargetLootCount()
+    {
+        int currentQuota = QuotaManager.Instance != null
+            ? QuotaManager.Instance.CurrentQuota
+            : 0;
+
+        int quotaDrivenTarget = currentQuota > 0
+            ? Mathf.CeilToInt(currentQuota / quotaToLootScale)
+            : minActiveLoot;
+
+        int targetCount = Mathf.Clamp(quotaDrivenTarget, minActiveLoot, maxActiveLoot);
+        return Mathf.Max(targetCount, minActiveLoot);
     }
 
     private List<LootSpawnPoint> GetAvailableSpawnPoints()

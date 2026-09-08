@@ -52,4 +52,16 @@ public class LootSpawnPoint : MonoBehaviour
     {
         IsOccupied = occupied;
     }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = IsOccupied ? new Color(1f, 0.5f, 0f, 0.9f) : new Color(0.2f, 0.8f, 1f, 0.8f);
+        Gizmos.DrawWireSphere(transform.position, 0.65f);
+
+        if (lootOptions != null && lootOptions.Count > 0)
+        {
+            Gizmos.color = new Color(1f, 0.94f, 0.3f, 0.9f);
+            Gizmos.DrawLine(transform.position, transform.position + Vector3.up * 1.2f);
+        }
+    }
 }
