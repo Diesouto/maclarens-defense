@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(20)]
 public class LootSpawner : MonoBehaviour
 {
     public static LootSpawner Instance { get; private set; }
@@ -74,20 +75,6 @@ public class LootSpawner : MonoBehaviour
         Debug.Log(
             $"[LootSpawner] Found {spawnPoints.Count} spawn points."
         );
-    }
-
-    public void InitialSpawn()
-    {
-        if (LootRegistry.Instance == null)
-        {
-            Debug.LogError(
-                "[LootSpawner] No LootRegistry found in the scene."
-            );
-
-            return;
-        }
-
-        SpawnUntilLimit();
     }
 
     public void Restock()

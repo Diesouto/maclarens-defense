@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7396728985478706284}
   - component: {fileID: 2586899260779065196}
   m_Layer: 0
-  m_Name: ShopStand
+  m_Name: _ShopStand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
