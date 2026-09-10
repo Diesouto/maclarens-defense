@@ -21,7 +21,7 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 3. Cerrar deposito, quota y decision de escapar.
 4. Cerrar pueblo, puntos de loot y repetibilidad simple.
 5. Cerrar threat, enemigo base y extraccion.
-6. Cerrar failure states, day loop y build singleplayer estable.
+6. Cerrar Story Mode, failure states, day loop y build singleplayer estable.
 7. Migrar a online host-authoritative con Relay.
 8. Añadir hazards, segundo enemigo y contenido extra solo despues de lo anterior.
 
@@ -223,19 +223,63 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 
 ## P5 - MVP freeze
 
-- `[Core] Cerrar estados de juego minimos`
-  Resultado: menu, run, success, fail.
-  Aceptacion: cada estado tiene entrada, salida y feedback visual claro.
+- `[P5.1][Core] Crear GameStateManager`
+  Resultado: cuatro estados globales (`Menu`, `Run`, `Success`, `Fail`) con entrada, salida y evento `OnStateChanged`.
+  Aceptacion: `Fail` y `Success` detienen gameplay, spawning e interacciones; ningun sistema usa una fase funcional del run como estado global.
 
-- `[Fail] Implementar game over por muerte, wipe y cuota fallida`
-  Resultado: las derrotas quedan claras y reinician correctamente.
-  Aceptacion: no hay softlocks ni estados ambiguos tras fallar.
+- `[P5.2][Core] Separar RunManager y flujo funcional del run`
+  Resultado: esqueleto jugable `MacLarens -> Town -> MacLarens -> Finish Day`, con fases funcionales dentro de `Run`.
+  Aceptacion: cada transicion tiene owner, validacion y siguiente paso; el primer milestone puede recorrer el flujo con botones o datos temporales sin softlocks.
 
-- `[Balance] Ajustar economia y threat del Day 1`
-  Resultado: una run normal genera decision real de seguir o escapar.
-  Aceptacion: un playtest produce al menos una decision de riesgo interesante.
+- `[P5.3][Economy] Crear MoneyManager de equipo`
+  Resultado: `TeamMoney`, `AddMoney()` y `TrySpendMoney()` como unica fuente del efectivo comun.
+  Aceptacion: no existe dinero individual; vender y comprar modifican el bote y todas las operaciones pasan por este manager.
 
-- `[Build] Generar build interna estable`
+- `[P5.4][Core] Convertir QuotaManager en deuda y cuotas`
+  Resultado: deuda total, deuda restante, cuota base, modificadores de cuota, deuda pagada y dias restantes separados de `CargoValue` y `TeamMoney`.
+  Aceptacion: `Finish Day` calcula la cuota efectiva, comprueba el dinero disponible, descuenta el pago de `TeamMoney` y suma exactamente ese pago a `DebtPaid`; `DeliveredValue` no se usa como deuda pagada.
+
+- `[P5.5][Train] Completar entrega física de loot en MacLarens`
+  Resultado: los `LootItem` fisicos que entran en `LootDeliveryPoint` se retiran del mundo/cargo y su valor se añade a `TeamMoney`.
+  Aceptacion: cada `LootItem` se procesa una sola vez, `CargoValue` se recalcula y queda en cero cuando se entrega todo, sin convertir directamente un total agregado como atajo.
+
+- `[P5.6][World] Crear fase MacLarens y Finish Day`
+  Resultado: zona segura con venta, compras, curacion/municion, preparacion y accion explicita de cierre.
+  Aceptacion: el equipo puede vender y comprar antes de cerrar; al pulsar `Finish Day` se bloquean nuevas compras y el resultado de la cuota queda fijado.
+
+- `[P5.7][Extraction] Resolver abandono del pueblo al partir el tren`
+  Resultado: la salida del tren cierra la expedicion y el fog limpia jugadores atrasados, cuerpos, enemigos, loot restante y entidades temporales antes del regreso.
+  Aceptacion: ninguna entidad temporal del pueblo afecta al siguiente dia y el tren continua a MacLarens sin softlock.
+
+- `[P5.8][Player] Implementar cuerpo recuperable y penalizacion`
+  Resultado: la muerte deja un cuerpo transportable; cuerpo a bordo revive al llegar al MacLarens y cuerpo abandonado respawnea alli con modificador de cuota.
+  Aceptacion: la resolucion distingue cuerpo recuperado y abandonado; el wipe se evalua por separado y provoca `Fail` inmediato.
+
+- `[P5.9][Fail] Implementar team wipe y cuota fallida`
+  Resultado: todas las derrotas llegan a `GameState.Fail` con causa y resultado visibles.
+  Aceptacion: el wipe es inmediato; la cuota solo causa fallo al cerrar el ultimo dia sin dinero suficiente; `Restart` recarga una run limpia y `Main Menu` sale del flujo.
+
+- `[P5.10][Success] Implementar deuda pagada`
+  Resultado: `DebtRemaining == 0` lleva a `GameState.Success`.
+  Aceptacion: el pago final se descuenta del bote, no se puede comprar ni continuar la run despues y se ofrecen `Play Again` y `Main Menu`.
+
+- `[P5.11][Story] Crear Owner de MacLarens`
+  Resultado: NPC interactuable que lee estado de run, deuda y dinero para mostrar dialogos ciclicos y feedback contextual.
+  Aceptacion: el Owner no modifica reglas ni llama a otros sistemas para decidir; los textos avanzan al interactuar (`texto 1 -> texto 2 -> texto 3 -> texto 1`).
+
+- `[P5.12][UI] Completar HUD de Story Mode`
+  Resultado: deuda, dinero, dia/cuotas, threat, inventario y `Cargo Value` son legibles y separados.
+  Aceptacion: los valores se actualizan por eventos; los modificadores muestran feedback temporal, por ejemplo `Quota: $2,000 [+ $500 - jugador abandonado]`, sin que la UI calcule reglas.
+
+- `[P5.13][UI] Completar UI del juego base`
+  Resultado: Menú principal con opciones Play y Exit, pantalla de Success con Restart y Exit y pantalla de Defeat con Restart y Exit.
+  Aceptacion: las pantallas son funcionales y aparecen cuando corresponde.
+
+- `[P5.14][Balance] Tunear economia, cuotas, dias y threat del Story Mode`
+  Resultado: la run ofrece decisiones de riesgo reales y una ruta posible de victoria.
+  Aceptacion: se valida el flujo completo, una cuota persistente entre dias, un modificador por abandono, un team wipe, un fallo del ultimo dia y un pago de deuda completo.
+
+- `[P5.15][Build] Generar build interna estable`
   Resultado: vertical slice portable y demostrable.
   Aceptacion: se puede jugar de inicio a fin sin usar el editor para arreglar nada.
 
@@ -244,6 +288,10 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Network] Instalar Authentication + Relay`
   Resultado: base de servicios para host y join por codigo.
   Aceptacion: el proyecto puede crear o unirse a una sesion Relay sin pasos manuales fuera del flujo previsto.
+
+- `[UI] Crear UI para que un jugador hostee y otro pueda introducir el código para unirse`
+  Resultado: UI de multijugador añadida al Menú Principal.
+  Aceptacion: .
 
 - `[Network] Host + Join con Relay`
   Resultado: dos jugadores conectan por codigo.
@@ -272,29 +320,21 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 ## P7 - Polish posterior
 
 - `[Combat] Anadir shotgun o rifle`
-- `[Enemy] Anadir segundo enemigo solo si el primero ya es estable`
-- `[Loot] Ampliar a 10-12 objetos`
+- `[Enemy] Anadir más enemigos solo si los primeros son estables`
+- `[Loot] Ampliar objetos y objetos utilizables (pociones, lazo para agarrar cosas, dinamita...)`
 - `[Hazard] Añadir plantas rodadoras explosivas si la build ya es estable`
 - `[Enemy] Prototipar cactus observador solo despues de cerrar hazards simples`
 - `[Audio] Sonidos de armas, loot, enemigos y tren`
 - `[VFX] Muzzle flash, hit, blood y warning de threat`
 - `[UI] Refinar HUD final`
+- `[UI] Menú de opciones (gráficos, sonido, salir de la partida...)`
 
-## P8 - Vision extendida (registrada, no priorizada)
+## P8 - Post-MVP: Infinity Mode y cooperacion avanzada
 
-> Diseno completo documentado en `Roadmap_MVP.md` > "Vision extendida del loop". No se abre trabajo aqui hasta que P0-P6 esten cerrados.
-
-- `[Core] Deuda total de partida y modos Story / Infinity`
-  Resultado: capa de progresion sobre la cuota (deuda total con deadline en Story, cuotas encadenadas sin limite en Infinity).
-  Aceptacion: N/A todavia — requiere decidir si `DeliveredValue` persiste entre dias antes de disenar la UI.
-
-- `[World] Fog que sella el pueblo al salir el tren`
-  Resultado: loot no entregado, cuerpos y enemigos se destruyen al partir.
-  Aceptacion: N/A todavia — version minima candidata pre-freeze: solo despawnear loot no entregado, sin logica de jugador/cuerpo.
-
-- `[Player] Recuperacion y revivir cuerpos de jugador`
-  Resultado: cuerpo persistente, transportable al tren, revive en MacLarens; penalizacion de cuota si se abandona.
-  Aceptacion: N/A todavia — depende de coop (Fase 6); no aplica de forma significativa en singleplayer.
+- `[Core] Infinity Mode`
+  Resultado: cuotas progresivamente mayores sin deuda final, con record de dinero, cuota y dias sobrevividos.
+  Aceptacion: separado de Story Mode y sin cambiar sus reglas de victoria o derrota.
+- `[UI] Menú de opciones de partida (fuego amigo...)`
 
 ## Reglas de prioridad
 

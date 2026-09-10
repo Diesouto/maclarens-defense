@@ -33,7 +33,14 @@ Conclusión practica:
 - Threat por acciones de loot
 - Countdown de salida
 - Aceleracion progresiva del tren
-- Victoria, derrota y siguiente dia
+- Deuda total y Story Mode con cuotas encadenadas
+- TeamMoney compartido, venta de loot y compras basicas
+- Cierre explicito de dia en MacLarens
+- Pago de cuota desde TeamMoney y deuda persistente entre dias
+- Modificadores de cuota visibles y auditables
+- Limpieza del pueblo al partir el tren
+- Cuerpo recuperable, revive o penalizacion por abandono
+- Victoria, derrota, team wipe y siguiente dia
 
 ### Obligatorio para multiplayer base
 
@@ -52,9 +59,8 @@ Conclusión practica:
 - Sistema de shop
 - Progression permanente
 - Voice chat
-- Deuda total de partida y modos Story / Infinity separados (ver `Roadmap_MVP.md` > Vision extendida del loop)
-- Fog que despawnea el pueblo al salir el tren y logica de jugador abandonado
-- Recuperacion y revivir cuerpos de jugador muerto
+- Infinity Mode y estadisticas de record
+- Nuevos hazards, enemigos y contenido fuera del loop base
 
 ## Clasificacion de ideas por impacto
 
@@ -108,7 +114,7 @@ Threat, enemigo base, damage pressure y extraccion con countdown.
 
 ### Paso 6
 
-Loop completo de dia, fail states y build singleplayer estable.
+Story Mode, loop completo de dia, fail states y build singleplayer estable.
 
 ### Paso 7
 

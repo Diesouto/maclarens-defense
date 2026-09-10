@@ -3,8 +3,9 @@
 - Ajustar posición y peso de LootItems
 - Connect SerializeField GameObjects[] FX (dust on ground, smoke on smokestack, wind?...) and sounds (bell hiss when it begins moving and rail sounds) on the train movement?
 - Ajustar player camera
-- Final gameplay loop (debt, Story/Infinity modes, fog, body recovery) is now formalized in `Roadmap_MVP.md` > "Vision extendida del loop" and `MVP_Backlog.md` > P8; not part of the current MVP freeze.
-- Conectar los menús y añadir GameOver etc.
+- Final gameplay loop de Story Mode (debt, TeamMoney, venta, cierre de dia, Success/Fail) esta formalizado en `Roadmap_MVP.md` y `MVP_Backlog.md` > P5.
+- Infinity Mode queda como trabajo post-MVP en P8; el fog que sella el pueblo y la recuperacion de cuerpos pertenecen a P5.
+- Conectar los menus, `GameStateManager`, `Success`, `Fail` y restart fiable.
 
 - Ajustar número de enemigos en threat
 - Añadir más posiciones de enemigos

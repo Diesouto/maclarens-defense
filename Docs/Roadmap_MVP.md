@@ -18,16 +18,20 @@ Eso fuerza el tipo de decisiones que queremos: codicia, discusion, panico, perdi
 - El pueblo debe ser pequeno, denso y facil de leer en menos de un minuto.
 - El juego debe producir decisiones estupidas pero comprensibles entre amigos.
 
-## Vision extendida del loop (post-MVP)
+## Vision de producto y alcance de P5
 
-Esta seccion registra la direccion final del juego (deuda, modos de juego, fog y recuperacion de cuerpos) tal y como se ha discutido. **No forma parte del freeze de MVP singleplayer** (Fase 0-5); se retoma cuando el loop base ya este validado y estable, mayormente en o despues de la Fase 6 (coop). El proposito de documentarla ahora es no perder la idea y no bloquear el trabajo diario con decisiones de diseno a largo plazo.
+P5 cierra el MVP jugable del modo historia alrededor de un unico loop. La deuda total, el dinero compartido, el cierre explicito del dia y los estados `Success`/`Fail` forman parte del MVP. Infinity Mode queda fuera y se conserva como trabajo post-MVP.
 
-### Story Mode (modo principal)
+### Story Mode (modo principal del MVP)
 
 - Los jugadores parten con una deuda total con MacLarens (ej. $10.000) y un numero de dias limite para pagarla.
-- Cada expedicion resuelve una cuota parcial; completarla genera una cuota nueva y mayor.
-- Si se agotan los dias sin pagar la deuda completa, la run termina y se reinicia desde el Day 1.
-- Si la cuota de una expedicion no se completa pero quedan dias, la cuota **persiste** en vez de resetearse. Esto difiere de como se comporta hoy `RunManager.AdvanceDay()` (sustituye la cuota entera por la siguiente de una tabla fija `dayQuotas`, sin arrastrar `DeliveredValue`). Decision pendiente para cuando se aborde esta fase: si `DeliveredValue` debe acumularse entre dias no completados y como se refleja en `RunManager`/`QuotaManager`.
+- Cada dia puede cerrar una cuota parcial; al pagarla se genera la siguiente cuota.
+- El loot vendido se convierte en `TeamMoney`. Comprar reduce ese dinero, pero nunca reduce la deuda ya pagada.
+- `Finish Day` calcula la cuota efectiva con sus modificadores, comprueba el dinero disponible, descuenta el pago de `TeamMoney` y suma exactamente ese pago a `DebtPaid`.
+- `DeliveredValue` representa valor entregado desde el tren; no sustituye a `DebtPaid` ni se usa como progreso de deuda.
+- Si la cuota no se alcanza y quedan dias, la cuota pendiente y sus modificadores persisten para el siguiente dia; no se comprueba cuanto loot queda en el pueblo.
+- Si se cierra el ultimo dia sin alcanzar la cuota efectiva, la run termina en `Fail`.
+- Si la deuda restante alcanza cero, la run termina en `Success`.
 
 ### Infinity Mode (modo secundario)
 
@@ -35,25 +39,25 @@ Esta seccion registra la direccion final del juego (deuda, modos de juego, fog y
 - Requiere tracking de record (dinero total, cuotas completadas, dias sobrevividos): un sistema de meta-progresion nuevo que no existe hoy.
 - Se construye despues de que Story Mode este completo y estable; no se reparte esfuerzo entre ambos modos antes del freeze.
 
-### El fog y la extraccion forzada
+### El fog y la extraccion forzada (P5)
 
 - Al salir el tren del pueblo, este queda sellado por niebla: todo lo que quede dentro (jugadores que no llegaron al tren, cuerpos, enemigos, loot no entregado) se destruye.
-- Hoy no existe ninguna consecuencia si un jugador se queda atras al partir el tren; es una laguna real frente al pilar "la extraccion importa", pero el fog completo (VFX + despawn + logica de jugador abandonado) es contenido de Fase 6 (coop): en singleplayer con 1 jugador "quedarse atras" no tiene la misma lectura (no hay equipo que decida abandonarlo).
-- Version minima que si podria entrar antes del freeze si sobra tiempo: limpiar/despawnear el loot no entregado del pueblo al salir el tren. Refuerza "solo cuenta lo entregado" sin necesitar logica de jugadores ni cuerpos.
+- La extraccion resuelve primero que jugadores y cuerpos llegaron al tren; despues el fog/despawn limpia jugadores atrasados, cuerpos abandonados, enemigos, loot restante y entidades temporales.
+- La salida debe tener un owner de limpieza unico y ejecutarse antes de comenzar el regreso, para que ningun objeto del pueblo sobreviva accidentalmente al siguiente dia.
 
-### Recuperacion de cuerpos y penalizacion por abandono
+### Recuperacion de cuerpos y penalizacion por abandono (P5, preparado para coop)
 
 - Si un jugador muere en el pueblo, su cuerpo queda fisicamente en el mundo; el equipo puede cargarlo hasta el tren para revivirlo al llegar a MacLarens, o abandonarlo (revive igualmente en MacLarens, pero con penalizacion de cuota).
-- Es un sistema intrinsecamente cooperativo (recuperar a un companero); no aplica de forma significativa en singleplayer. Se implementa en Fase 6 junto al resto de sistemas de coop, no antes.
-- Punto de partida cuando se aborde: hoy `Health.Die()` no tiene ningun estado de "cuerpo recuperable" (solo dispara ragdoll); `PlayerController.OnDeath()` simplemente desactiva el control del jugador.
+- Aunque su lectura principal es cooperativa, forma parte del contrato del run: un cuerpo recuperado llega a MacLarens y revive; un cuerpo abandonado provoca respawn en MacLarens y penalizacion de cuota.
+- Punto de partida: hoy `Health.Die()` no tiene ningun estado de "cuerpo recuperable" (solo dispara ragdoll); `PlayerController.OnDeath()` simplemente desactiva el control del jugador.
 
-### Arquitectura objetivo (para cuando se retome)
+### Arquitectura de flujo de Run
 
-El flujo de partida deberia converger en un unico estado autoritativo en vez de que cada sistema decida por su cuenta cuando empieza o termina un dia:
+El flujo de partida debe tener un owner autoritativo desde P5. `RunManager` coordina las fases funcionales y `GameStateManager` mantiene los cuatro estados globales; ningun sistema secundario decide por su cuenta cuando termina la run:
 
 ```text
 Run
- ├── CurrentMode (Story / Infinity)
+ ├── CurrentMode (Story en el MVP; Infinity despues)
  ├── CurrentDay / DaysRemaining
  ├── CurrentQuota / DeliveredValue
  ├── RunState: AtMacLarens -> TravelingToTown -> InTown -> LeavingTown
@@ -61,7 +65,7 @@ Run
  └── Player state: Alive / Dead / BodyOnTrain / Respawned
 ```
 
-`QuotaManager`, `TrainDeparture`, `TrainSplineFollower`, `LootDeliveryPoint`, `EnemySpawner` y el futuro sistema de muerte/revive deberian leer y alimentar este estado en vez de tomar decisiones de flujo por su cuenta. Esto no implica reescribir esos sistemas ahora: es la direccion a seguir la proxima vez que se toque `RunManager` a fondo, para no rehacer el flujo dos veces.
+`QuotaManager`, `TrainDeparture`, `TrainSplineFollower`, `LootDeliveryPoint`, `EnemySpawner` y el sistema de muerte/revive deben leer y alimentar este estado en vez de tomar decisiones de flujo por su cuenta. Las fases funcionales no son estados globales: solo `GameStateManager` puede entrar en `Success` o `Fail`.
 
 ## Objetivo online realista
 
@@ -76,7 +80,7 @@ Para este proyecto, lo realista con Unity 6 es esto:
 
 En terminos de producto puede describirse como cooperativo online con host, pero el codigo debe asumir una unica fuente de verdad para loot, threat, enemigos, daño, cuota y salida del tren.
 
-## Definicion de MVP
+## Definicion del loop MVP
 
 El MVP queda logrado cuando una persona puede hacer una run completa con este flujo:
 
@@ -90,8 +94,10 @@ Train safe area
     -> Return to train
     -> Deposit loot
     -> Decide to leave or keep risking
-    -> Reach quota or fail the day
-    -> Start next day or game over
+    -> Sell loot into shared TeamMoney
+    -> Buy and prepare at MacLarens
+    -> Finish day and check quota
+    -> Start next day, Success or Fail
 ```
 
 ## Lo que si entra exactamente en el MVP freeze
@@ -103,6 +109,8 @@ Train safe area
 - 5 objetos de loot minimos, con objetivo de 8 antes del freeze
 - 4 slots de inventario
 - 1 sistema de quota por dias
+- Deuda total de Story Mode con cuotas encadenadas
+- Bote comun `TeamMoney`, venta de loot y compras basicas
 - 1 sistema de threat
 - 1 flujo de extraccion con countdown y aceleracion del tren
 - 1 loop completo de victoria y derrota en singleplayer
@@ -142,9 +150,8 @@ Motivo: es una idea buena, pero no es un primer enemigo. Requiere reglas de line
 - Progresion permanente
 - Misiones secundarias complejas
 - Tren fisicamente simulado
-- Deuda total de partida y separacion Story Mode / Infinity Mode (ver "Vision extendida del loop")
-- Fog que despawnea el pueblo al salir el tren y consecuencias de jugador abandonado (Fase 6 coop)
-- Recuperacion y revivir cuerpos de jugador muerto (Fase 6 coop)
+- Infinity Mode y estadisticas de record
+- Nuevos hazards, enemigos y contenido fuera del loop base
 
 ## Hitos resumidos
 
@@ -329,19 +336,38 @@ Introducir presion dinamica para convertir el transporte de loot en riesgo.
 
 ### Meta
 
-Cerrar el vertical slice singleplayer y congelar alcance.
+Cerrar el vertical slice singleplayer del modo historia y congelar alcance.
 
 ### Entregables
 
+- Milestone interno P5.1: `Menu -> Run -> MacLarens -> Town -> MacLarens -> Finish Day -> Next Day/Success/Fail`, inicialmente validable con botones o datos temporales
 - Loop completo de partida
 - Estados de juego minimos: menu, run, success, fail
+- `GameStateManager` separado de `RunManager`, con solo `Menu`, `Run`, `Success` y `Fail`
+- `RunManager` con fases funcionales de run, cierre de dia y transiciones sin softlocks
+- `MoneyManager` con `TeamMoney`, gasto y venta de loot
+- `QuotaManager` con deuda total, deuda restante, cuota efectiva, modificadores, deuda pagada y dias restantes
+- MacLarens: venta, compras, preparacion y boton `Finish Day`
+- Fog de salida y limpieza de entidades del pueblo
+- Cuerpo recuperable, transporte al tren, revive y penalizacion por abandono
 - Game over por muerte, wipe o cuota fallida
-- Progresion de dias simple
+- Story Mode completo hasta `Success`
+- Reinicio fiable recargando la escena de gameplay y creando una run nueva
+- HUD de deuda, dinero, dia, cuota y `Cargo Value` separado
+- Owner de MacLarens como NPC interactuable con feedback narrativo minimo
+- Infinity Mode documentado como post-MVP, sin implementarlo
 - Build interna estable
 
 ### Criterios de salida
 
-- Una persona puede empezar, completar y perder una run completa sin ayuda externa
+- Una persona puede empezar, preparar, saquear, extraer, vender, comprar y cerrar todos los dias de una run
+- La cuota se comprueba solo al pulsar `Finish Day`, despues de vender y antes de avanzar
+- La entrega procesa `LootItem` fisicos individualmente; no convierte `CargoValue` como total agregado
+- El dinero comun, el `CargoValue`, el `DeliveredValue` y la deuda pagada son valores distintos y visibles donde corresponde
+- Una penalizacion de abandono se refleja como modificador de cuota visible y auditable
+- Team wipe provoca `Fail` inmediatamente; la cuota fallida solo provoca `Fail` al cerrar el ultimo dia
+- `Success` se alcanza unicamente al pagar la deuda total
+- Reiniciar elimina el estado de la run anterior sin dejar loot, enemigos, tren, threat o dinero residual
 - No hay errores bloqueantes ni reglas esenciales sin implementar
 - Toda feature abierta pero no estable se corta en lugar de arrastrarse
 
@@ -349,7 +375,7 @@ Cerrar el vertical slice singleplayer y congelar alcance.
 
 Desde este punto no entran features nuevas de sistema. Solo correcciones, UX, balance y estabilidad.
 
-## Fase 6 - 2026-09-26 a 2026-10-02
+## Fase 6 - 2026-10-02 a 2026-10-08
 
 ### Meta
 
@@ -375,7 +401,7 @@ Escalar el loop ya validado a cooperativo 1-4 con NGO + Relay.
 - Se optimiza para Host + 1 primero
 - Se recortan animaciones o detalles visuales antes de tocar autoridad de servidor
 
-## Fase 7 - 2026-10-03 a 2026-10-05
+## Fase 7 - Post-MVP
 
 ### Meta
 
@@ -392,7 +418,7 @@ Mejorar game feel sin abrir sistemas nuevos grandes.
 
 Si el loop base todavia tiene bugs serios, esta fase se convierte en fase de estabilizacion.
 
-## Fase 8 - 2026-10-06 a 2026-10-08
+## Fase 8 - Post-MVP / entrega
 
 ### Meta
 

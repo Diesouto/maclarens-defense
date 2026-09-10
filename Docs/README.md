@@ -21,7 +21,7 @@ El objetivo del proximo mes es llegar a un MVP divertido y funcional en singlepl
 - [Set de animaciones placeholder](Set_Animaciones_Placeholder.md): estados bloqueados y clips pendientes de importar.
 - La interaccion base ya cuenta con `IInteractable`, `PlayerInteractor` y prompt generico; validada en Play Mode con el objeto de prueba.
 - [Prueba de interaccion base](Auditorias/Prueba_Interaccion_Base.md): montaje rapido y criterios para validar el contrato en Play Mode.
-- La estructura de scripts por dominio ya incluye `Loot/` y `Train/`, preparada para el prototipo de inventario.
+- La estructura de scripts por dominio ya incluye `Core/`, `Loot/`, `Train/` y `UI/`, preparada para cerrar Story Mode en P5.
 
 ## Working Agreements
 
@@ -54,6 +54,8 @@ El objetivo del proximo mes es llegar a un MVP divertido y funcional en singlepl
 ## Estado roadmap
 
 - P0: completada.
-- P1: implementada a nivel de sistemas y escena de prueba; existen 6 assets de loot con valores distintos. Sigue pendiente para cerrarla al 100% mostrar el valor total transportado en el HUD y completar el playtest final.
+- P1-P4: implementadas a nivel de sistemas; queda validacion end-to-end en Play Mode.
+- P5: siguiente bloque. Incluye Story Mode, deuda total, `TeamMoney`, cierre de dia, `Success`/`Fail` y build singleplayer estable.
+- Infinity Mode queda fuera del MVP. Fog, abandono y recuperacion de cuerpos forman parte del contrato P5 y deben quedar resueltos antes del freeze; la autoridad online se ampliara despues.
 
 Usa el roadmap para decidir prioridades, la arquitectura para decidir donde vive cada comportamiento y la guia de estilo para mantener consistencia al crecer el proyecto.
