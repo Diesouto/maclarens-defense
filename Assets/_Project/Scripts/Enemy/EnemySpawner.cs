@@ -44,6 +44,9 @@ public class EnemySpawner : MonoBehaviour
 
     private void Update()
     {
+        if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
+            return;
+
         CleanupDeadEnemies();
 
         ThreatSpawnSettings settings = GetCurrentSettings();
@@ -171,4 +174,15 @@ public class EnemySpawner : MonoBehaviour
     }
 
     public int AliveEnemyCount => aliveEnemies.Count;
+
+    public void DespawnAll()
+    {
+        foreach (EnemyController enemy in aliveEnemies)
+        {
+            if (enemy != null)
+                Destroy(enemy.gameObject);
+        }
+
+        aliveEnemies.Clear();
+    }
 }

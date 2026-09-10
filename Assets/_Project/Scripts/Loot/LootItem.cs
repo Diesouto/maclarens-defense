@@ -8,6 +8,7 @@ public class LootItem : MonoBehaviour, IInteractable
     public LootDataSO Data => lootData;
     public ItemInstance Instance { get; private set; }
     public bool IsCollected { get; private set; }
+    public TrainCargo Cargo => cargo;
 
     private LootSpawnPoint spawnPoint;
     private TrainCargo cargo;
@@ -160,6 +161,7 @@ public class LootItem : MonoBehaviour, IInteractable
 
         lootItem.SetInstance(itemInstance ?? new ItemInstance(data));
         lootItem.IsCollected = false;
+        LootRegistry.Instance?.Register(lootItem);
         return lootItem;
     }
 }

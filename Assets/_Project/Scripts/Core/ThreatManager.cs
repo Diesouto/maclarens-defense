@@ -38,13 +38,19 @@ public class ThreatManager : MonoBehaviour
     private void OnEnable()
     {
         if (RunManager.Instance != null)
+        {
             RunManager.Instance.OnDayChanged += ResetThreat;
+            RunManager.Instance.OnPhaseChanged += HandlePhaseChanged;
+        }
     }
 
     private void OnDisable()
     {
         if (RunManager.Instance != null)
+        {
             RunManager.Instance.OnDayChanged -= ResetThreat;
+            RunManager.Instance.OnPhaseChanged -= HandlePhaseChanged;
+        }
     }
 
     private void OnDestroy()
@@ -55,6 +61,9 @@ public class ThreatManager : MonoBehaviour
 
     private void Update()
     {
+        if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
+            return;
+
         if (!IsThreatActiveInTown())
             return;
 
@@ -63,10 +72,14 @@ public class ThreatManager : MonoBehaviour
 
     private bool IsThreatActiveInTown()
     {
-        if (PlayersInTownTrigger.Instance == null)
-            return true;
+        if (RunManager.Instance != null &&
+            RunManager.Instance.CurrentPhase != RunPhase.Town)
+        {
+            return false;
+        }
 
-        return PlayersInTownTrigger.Instance.AnyPlayerInside;
+        return InTownTrigger.Instance == null ||
+            InTownTrigger.Instance.AnyPlayerInside;
     }
 
     // First-time-only pickup threat is enforced by the caller (ItemInstance.HasTriggeredThreat), not here.
@@ -87,9 +100,23 @@ public class ThreatManager : MonoBehaviour
 
     private void ResetThreat(int day)
     {
+        ResetThreat();
+    }
+
+    public void ResetThreat()
+    {
+        if (CurrentThreat == 0f && CurrentLevel == ThreatLevel.Calm)
+            return;
+
         CurrentThreat = 0f;
         OnThreatChanged?.Invoke();
         UpdateLevel();
+    }
+
+    private void HandlePhaseChanged(RunPhase phase)
+    {
+        if (phase != RunPhase.Town)
+            ResetThreat();
     }
 
     private void UpdateLevel()

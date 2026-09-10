@@ -1,10 +1,13 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class EnemyController : MonoBehaviour
 {
+    private static readonly HashSet<EnemyController> activeEnemies = new();
+
     [SerializeField] private float searchInterval = 1f;
     [SerializeField] private float attackDistance = 1.5f;
     [SerializeField] private float attackDamage = 10f;
@@ -33,6 +36,22 @@ public class EnemyController : MonoBehaviour
             health.OnHit += OnHit;
             health.OnDeath += OnDeath;
         }
+    }
+
+    private void OnEnable()
+    {
+        activeEnemies.Add(this);
+    }
+
+    public static void DespawnAll()
+    {
+        foreach (EnemyController enemy in new List<EnemyController>(activeEnemies))
+        {
+            if (enemy != null)
+                Destroy(enemy.gameObject);
+        }
+
+        activeEnemies.Clear();
     }
 
     void Start()
@@ -121,6 +140,8 @@ public class EnemyController : MonoBehaviour
 
     private void OnDestroy()
     {
+        activeEnemies.Remove(this);
+
         if (health != null)
         {
             health.OnHit -= OnHit;

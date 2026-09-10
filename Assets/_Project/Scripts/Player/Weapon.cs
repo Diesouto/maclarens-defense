@@ -72,7 +72,7 @@ public class Weapon : MonoBehaviour
         currentAmmo = Mathf.Max(weaponData.magazineSize, 0);
         currentReserveAmmo = Mathf.Max(weaponData.maxAmmo, 0);
 
-        if (inventory != null && inventory.ActiveItemInstance != null && inventory.ActiveItemInstance.Data.WeaponData == weaponData && inventory.TryGetWeaponAmmo(inventory.ActiveItemInstance, out int savedAmmo, out int savedReserveAmmo))
+        if (inventory != null && inventory.ActiveItem != null && inventory.ActiveItem.WeaponData == weaponData && inventory.TryGetWeaponAmmo(inventory.ActiveItemInstance, out int savedAmmo, out int savedReserveAmmo))
         {
             currentAmmo = savedAmmo;
             currentReserveAmmo = savedReserveAmmo;
@@ -298,22 +298,25 @@ public class Weapon : MonoBehaviour
 
     private void SaveAmmoState()
     {
-        if (inventory != null && inventory.ActiveItemInstance != null && inventory.ActiveItemInstance.Data.IsWeapon)
+        if (inventory != null && inventory.ActiveItem != null && inventory.ActiveItem.IsWeapon)
             inventory.SetWeaponAmmo(inventory.ActiveItemInstance, currentAmmo, currentReserveAmmo);
     }
 
     private bool SyncWithActiveItemInternal()
     {
-        if (inventory == null || inventory.ActiveItemInstance == null || !inventory.ActiveItemInstance.Data.IsWeapon)
+        ItemInstance activeInstance = inventory != null ? inventory.ActiveItemInstance : null;
+        LootDataSO activeData = activeInstance?.Data;
+
+        if (activeData == null || !activeData.IsWeapon)
         {
             equippedInstance = null;
             return false;
         }
 
-        if (equippedInstance != inventory.ActiveItemInstance || weaponData != inventory.ActiveItemInstance.Data.WeaponData)
+        if (equippedInstance != activeInstance || weaponData != activeData.WeaponData)
         {
-            equippedInstance = inventory.ActiveItemInstance;
-            Equip(inventory.ActiveItemInstance.Data.WeaponData);
+            equippedInstance = activeInstance;
+            Equip(activeData.WeaponData);
         }
 
         return weaponData != null;

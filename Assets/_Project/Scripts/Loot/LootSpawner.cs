@@ -182,9 +182,12 @@ public class LootSpawner : MonoBehaviour
             spawnedLoot = instance.AddComponent<LootItem>();
             Debug.LogWarning(
                 $"[LootSpawner] Prefab '{lootData.WorldPrefab.name}' " +
-                "did not contain a LootItem component, so one was added automatically."
+                "did not contain a LootItem component, so one was added automatically. " +
+                "Assign a dedicated WorldPrefab (with LootItem + Collider) on the LootDataSO instead."
             );
         }
+
+        EnsureInteractionCollider(instance, lootData);
 
         spawnedLoot.SetData(lootData);
         spawnedLoot.SetSpawnPoint(spawnPoint);
@@ -196,6 +199,33 @@ public class LootSpawner : MonoBehaviour
         recentlyUsedPoints.Add(spawnPoint);
 
         return true;
+    }
+
+    // Raw prop meshes may have no Collider, which silently makes them impossible to pick up
+    // since PlayerInteractor's raycast requires one.
+    private static void EnsureInteractionCollider(GameObject instance, LootDataSO lootData)
+    {
+        if (instance.GetComponentInChildren<Collider>() != null)
+            return;
+
+        Renderer renderer = instance.GetComponentInChildren<Renderer>();
+        if (renderer == null)
+            return;
+
+        BoxCollider collider = instance.AddComponent<BoxCollider>();
+        Bounds worldBounds = renderer.bounds;
+        Vector3 lossyScale = instance.transform.lossyScale;
+
+        collider.center = instance.transform.InverseTransformPoint(worldBounds.center);
+        collider.size = new Vector3(
+            lossyScale.x != 0f ? worldBounds.size.x / lossyScale.x : worldBounds.size.x,
+            lossyScale.y != 0f ? worldBounds.size.y / lossyScale.y : worldBounds.size.y,
+            lossyScale.z != 0f ? worldBounds.size.z / lossyScale.z : worldBounds.size.z
+        );
+
+        Debug.LogWarning(
+            $"[LootSpawner] Loot '{lootData.DisplayName}' had no Collider, so a BoxCollider was added automatically."
+        );
     }
 
     private LootSpawnPoint ChooseSpawnPoint(

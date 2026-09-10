@@ -1,5 +1,10 @@
 # MacLarens Defense - MVP Backlog
 
+## Leyenda de estado
+
+- <span style="color:#2f81f7">✅ Texto azul</span>: tarea implementada y validada en Play Mode (aceptada).
+- Texto normal: tarea pendiente, parcial o sin validar todavia.
+
 ## Como usar este backlog
 
 Cada item debe convertirse en una tarjeta independiente y cerrarse solo cuando tenga validacion jugable, no cuando el script compila.
@@ -227,9 +232,10 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: cuatro estados globales (`Menu`, `Run`, `Success`, `Fail`) con entrada, salida y evento `OnStateChanged`.
   Aceptacion: `Fail` y `Success` detienen gameplay, spawning e interacciones; ningun sistema usa una fase funcional del run como estado global.
 
-- `[P5.2][Core] Separar RunManager y flujo funcional del run`
+- <span style="color:#2f81f7">✅ `[P5.2][Core] Separar RunManager y flujo funcional del run`</span>
   Resultado: esqueleto jugable `MacLarens -> Town -> MacLarens -> Finish Day`, con fases funcionales dentro de `Run`.
   Aceptacion: cada transicion tiene owner, validacion y siguiente paso; el primer milestone puede recorrer el flujo con botones o datos temporales sin softlocks.
+  Estado: validado en Play Mode. Las transiciones `MacLarens -> TravelingToTown -> Town -> LeavingTown -> ReturningToMacLarens -> ResolvingDay` ocurren via gameplay real (sin botones de debug).
 
 - `[P5.3][Economy] Crear MoneyManager de equipo`
   Resultado: `TeamMoney`, `AddMoney()` y `TrySpendMoney()` como unica fuente del efectivo comun.
@@ -242,14 +248,22 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[P5.5][Train] Completar entrega física de loot en MacLarens`
   Resultado: los `LootItem` fisicos que entran en `LootDeliveryPoint` se retiran del mundo/cargo y su valor se añade a `TeamMoney`.
   Aceptacion: cada `LootItem` se procesa una sola vez, `CargoValue` se recalcula y queda en cero cuando se entrega todo, sin convertir directamente un total agregado como atajo.
+  Estado: implementacion base realizada. Falta validar en Play Mode que cada objeto entre en el punto, desaparezca del cargo y aumente una sola vez el dinero.
 
 - `[P5.6][World] Crear fase MacLarens y Finish Day`
   Resultado: zona segura con venta, compras, curacion/municion, preparacion y accion explicita de cierre.
   Aceptacion: el equipo puede vender y comprar antes de cerrar; al pulsar `Finish Day` se bloquean nuevas compras y el resultado de la cuota queda fijado.
+  Estado: `FinishDayInteractable` implementado para `ResolvingDay`. Falta colocar y probar el objeto interactuable en MacLarens; servicios de compra, curacion y municion siguen pendientes.
 
-- `[P5.7][Extraction] Resolver abandono del pueblo al partir el tren`
+- <span style="color:#2f81f7">✅ `[P5.7][Extraction] Resolver abandono del pueblo al partir el tren`</span>
   Resultado: la salida del tren cierra la expedicion y el fog limpia jugadores atrasados, cuerpos, enemigos, loot restante y entidades temporales antes del regreso.
   Aceptacion: ninguna entidad temporal del pueblo afecta al siguiente dia y el tren continua a MacLarens sin softlock.
+  Estado: validado en Play Mode. `TownExitMarker`, `TownExtractionResolver` y la limpieza (jugadores, loot, enemigos, threat) funcionan correctamente y la fase pasa a `ResolvingDay` al llegar a MacLarens.
+
+- <span style="color:#2f81f7">✅ `[P4/P5][Threat] Activar threat exclusivamente dentro de Town`</span>
+  Resultado: el threat aumenta durante `RunPhase.Town`, se resetea al abandonar Town y permanece detenido durante viajes, extraccion y resolucion.
+  Aceptacion: el valor no aumenta en `MacLarens`, `TravelingToTown`, `LeavingTown`, `ReturningToMacLarens` ni `ResolvingDay`; vuelve a cero al cruzar `TownExitMarker`.
+  Estado: validado en Play Mode.
 
 - `[P5.8][Player] Implementar cuerpo recuperable y penalizacion`
   Resultado: la muerte deja un cuerpo transportable; cuerpo a bordo revive al llegar al MacLarens y cuerpo abandonado respawnea alli con modificador de cuota.
@@ -264,8 +278,9 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Aceptacion: el pago final se descuenta del bote, no se puede comprar ni continuar la run despues y se ofrecen `Play Again` y `Main Menu`.
 
 - `[P5.11][Story] Crear Owner de MacLarens`
-  Resultado: NPC interactuable que lee estado de run, deuda y dinero para mostrar dialogos ciclicos y feedback contextual.
-  Aceptacion: el Owner no modifica reglas ni llama a otros sistemas para decidir; los textos avanzan al interactuar (`texto 1 -> texto 2 -> texto 3 -> texto 1`).
+  Resultado: NPC interactuable que muestra dialogos ciclicos sin ownership de reglas ni de estado de la run.
+  Aceptacion: los textos avanzan al interactuar (`texto 1 -> texto 2 -> texto 3 -> texto 1`); el dia, dinero y deuda se muestran en un componente separado (`FinishDayStatusUI`), no en el Owner.
+  Estado: `MacLarensOwner` simplificado a dialogo puro (sin leer RunManager/QuotaManager/MoneyManager). `FinishDayStatusUI` implementado en el objeto de Finish Day, se actualiza por eventos (`OnDayChanged`, `OnMoneyChanged`, `OnDebtChanged`, `OnQuotaProgressChanged`) y al activarse, no solo al interactuar. Falta colocar ambos objetos en escena y asignar sus `TMP_Text`.
 
 - `[P5.12][UI] Completar HUD de Story Mode`
   Resultado: deuda, dinero, dia/cuotas, threat, inventario y `Cargo Value` son legibles y separados.
@@ -289,7 +304,7 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: base de servicios para host y join por codigo.
   Aceptacion: el proyecto puede crear o unirse a una sesion Relay sin pasos manuales fuera del flujo previsto.
 
-- `[UI] Crear UI para que un jugador hostee y otro pueda introducir el código para unirse`
+- `[UI] Crear UI para que un jugador hostee y otro pueda introducir el código para unirse + lobby con empezar partida??`
   Resultado: UI de multijugador añadida al Menú Principal.
   Aceptacion: .
 
@@ -316,6 +331,10 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Network] Sincronizar knockback, incapacitacion y recovery basicos`
   Resultado: el juego queda preparado para hazards fisicas simples sin estados imposibles.
   Aceptacion: un empujon o caida controlada no desincroniza posicion ni control entre host y cliente.
+
+- `[UI] Crear selector de personaje en el maclarens??`
+  Resultado: El jugador puede cambiar su personaje.
+  Aceptacion: El jugador puede cambiar su personaje y todos los jugadores ven el personaje seleccionado (activar o desactivar el gameobject correspondiente, todos los personajes se encuentran dentro del root del modelo).
 
 ## P7 - Polish posterior
 

@@ -27,6 +27,9 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
     [Tooltip("Position of MacLarens along the spline, as a percentage of the total spline length.")]
     [SerializeField, Range(0f, 1f)] private float macLarensPosition = 0.5f;
 
+    [Tooltip("Marker at the point where the train has fully left Town and extraction is resolved.")]
+    [SerializeField] private Transform townExitMarker;
+
     [SerializeField] private TrainDestination startingStation = TrainDestination.Town;
 
     [Header("Movement")]
@@ -56,6 +59,7 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
     // Hooks for FX/audio (horn once on departure, looping rail sound + smoke/dust while moving).
     public event Action OnMovementStarted;
     public event Action OnMovementStopped;
+    public event Action OnTownExitReached;
 
     private Coroutine travelRoutine;
     private Vector3 previousPosition;
@@ -87,6 +91,19 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
             return macLarensPosition * spline.Length;
         }
     }
+
+    public float TownExitDistance
+    {
+        get
+        {
+            if (spline == null || townExitMarker == null)
+                return TownDistance;
+
+            return spline.GetNearestDistance(townExitMarker.position);
+        }
+    }
+
+    public bool HasTownExitMarker => townExitMarker != null;
 
     private void Awake()
     {
@@ -161,6 +178,11 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
 
         float traveled = 0f;
         float speed = 0f;
+        bool townExitReached = false;
+
+        float townExitTravelDistance = TownExitDistance - startDistance;
+        if (townExitTravelDistance <= 0f)
+            townExitTravelDistance += spline.Length;
 
         Debug.Log(
             $"TrainSplineFollower: Departing from {CurrentStation} " +
@@ -186,6 +208,15 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
                 speed * Time.deltaTime,
                 remaining
             );
+
+            if (!townExitReached &&
+                HasTownExitMarker &&
+                CurrentStation == TrainDestination.Town &&
+                traveled >= townExitTravelDistance)
+            {
+                townExitReached = true;
+                OnTownExitReached?.Invoke();
+            }
 
             CurrentDistance =
                 spline.WrapDistance(
@@ -271,6 +302,21 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
             "MACLARENS",
             Color.red
         );
+
+        if (townExitMarker != null)
+        {
+            DrawStationGizmo(
+                TownExitDistance,
+                "TOWN EXIT",
+                Color.yellow
+            );
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(
+                townExitMarker.position,
+                spline.GetPointAtDistance(TownExitDistance)
+            );
+        }
     }
 
     private void DrawStationGizmo(

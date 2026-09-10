@@ -27,9 +27,31 @@ public class TrainDeparture : MonoBehaviour, IInteractable
             trainSplineFollower = FindFirstObjectByType<TrainSplineFollower>();
     }
 
+    private void OnEnable()
+    {
+        if (trainSplineFollower != null)
+            trainSplineFollower.OnTownExitReached += HandleTownExitReached;
+    }
+
+    private void OnDisable()
+    {
+        if (trainSplineFollower != null)
+            trainSplineFollower.OnTownExitReached -= HandleTownExitReached;
+    }
+
+    private void HandleTownExitReached()
+    {
+        if (runManager == null)
+            runManager = RunManager.Instance;
+
+        runManager?.HandleTownExit();
+    }
+
     public bool CanInteract(PlayerInteractor interactor)
     {
-        return !IsDeparting && !HasDeparted;
+        return !IsDeparting &&
+               !HasDeparted &&
+               (GameStateManager.Instance == null || GameStateManager.Instance.IsRunActive);
     }
 
     public string GetPrompt(PlayerInteractor interactor)
@@ -61,11 +83,13 @@ public class TrainDeparture : MonoBehaviour, IInteractable
         IsDeparting = false;
         HasDeparted = true;
 
-        PlayersInTownTrigger.Instance?.KillPlayersStillInsideTown();
-
         if (runManager == null)
             runManager = RunManager.Instance;
-        runManager?.AdvanceDay();
+
+        bool returningToMacLarens = trainSplineFollower != null &&
+            trainSplineFollower.CurrentStation == TrainDestination.Town;
+
+        runManager?.BeginDeparture(returningToMacLarens);
 
         OnTrainDeparted?.Invoke();
     }
@@ -74,5 +98,12 @@ public class TrainDeparture : MonoBehaviour, IInteractable
     public void OnArrived()
     {
         HasDeparted = false;
+
+        if (runManager == null)
+            runManager = RunManager.Instance;
+
+        runManager?.HandleTrainArrived(trainSplineFollower != null
+            ? trainSplineFollower.CurrentStation
+            : TrainDestination.Town);
     }
 }

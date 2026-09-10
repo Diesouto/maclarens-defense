@@ -2,14 +2,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
-public class PlayersInTownTrigger : MonoBehaviour
+// Tracks all temporary entities that can be affected by Town extraction.
+public class InTownTrigger : MonoBehaviour
 {
-    public static PlayersInTownTrigger Instance { get; private set; }
+    public static InTownTrigger Instance { get; private set; }
 
     [SerializeField] private bool killPlayersOnDeparture = true;
     [SerializeField] private float killDistanceThreshold = 2f;
 
     private readonly HashSet<PlayerController> playersInsideTown = new();
+    private readonly HashSet<LootItem> lootInsideTown = new();
 
     public bool AnyPlayerInside => playersInsideTown.Count > 0;
 
@@ -37,19 +39,29 @@ public class PlayersInTownTrigger : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         PlayerController player = other.GetComponentInParent<PlayerController>();
-        if (player == null)
+        if (player != null)
+        {
+            playersInsideTown.Add(player);
             return;
+        }
 
-        playersInsideTown.Add(player);
+        LootItem lootItem = other.GetComponentInParent<LootItem>();
+        if (lootItem != null)
+            lootInsideTown.Add(lootItem);
     }
 
     private void OnTriggerExit(Collider other)
     {
         PlayerController player = other.GetComponentInParent<PlayerController>();
-        if (player == null)
+        if (player != null)
+        {
+            playersInsideTown.Remove(player);
             return;
+        }
 
-        playersInsideTown.Remove(player);
+        LootItem lootItem = other.GetComponentInParent<LootItem>();
+        if (lootItem != null)
+            lootInsideTown.Remove(lootItem);
     }
 
     public void KillPlayersStillInsideTown()
@@ -74,5 +86,43 @@ public class PlayersInTownTrigger : MonoBehaviour
                     Destroy(player.gameObject);
             }
         }
+    }
+
+    public void AbandonPlayersStillInsideTown()
+    {
+        foreach (PlayerController player in new List<PlayerController>(playersInsideTown))
+        {
+            if (player == null)
+            {
+                playersInsideTown.Remove(player);
+                continue;
+            }
+
+            Health health = player.GetComponent<Health>();
+            if (health != null)
+                health.TakeDamage(health.MaxHealth);
+            else
+                Destroy(player.gameObject);
+        }
+    }
+
+    public void DestroyLootInsideTown()
+    {
+        foreach (LootItem lootItem in new List<LootItem>(lootInsideTown))
+        {
+            if (lootItem == null)
+            {
+                lootInsideTown.Remove(lootItem);
+                continue;
+            }
+
+            if (lootItem.Cargo != null)
+                continue;
+
+            LootRegistry.Instance?.Unregister(lootItem);
+            Destroy(lootItem.gameObject);
+        }
+
+        lootInsideTown.Clear();
     }
 }

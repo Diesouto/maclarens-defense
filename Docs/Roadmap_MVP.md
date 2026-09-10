@@ -45,6 +45,18 @@ P5 cierra el MVP jugable del modo historia alrededor de un unico loop. La deuda 
 - La extraccion resuelve primero que jugadores y cuerpos llegaron al tren; despues el fog/despawn limpia jugadores atrasados, cuerpos abandonados, enemigos, loot restante y entidades temporales.
 - La salida debe tener un owner de limpieza unico y ejecutarse antes de comenzar el regreso, para que ningun objeto del pueblo sobreviva accidentalmente al siguiente dia.
 
+Secuencia de fases:
+
+```text
+MacLarens -> TravelingToTown -> Town -> LeavingTown
+    -> [TownExitMarker + cleanup] -> ReturningToMacLarens
+    -> [llegada] -> ResolvingDay -> Finish Day -> MacLarens / Success / Fail
+```
+
+`ReturningToMacLarens` comienza al cruzar `TownExitMarker`, no al alcanzar una fraccion fija del spline. `ResolvingDay` comienza al llegar a MacLarens y permanece activo durante entrega, compras, resolucion de cuerpos y `Finish Day`.
+
+`TownExitMarker` es un `Transform` serializado en `TrainSplineFollower` y tiene Gizmo propio de estacion/salida. El cleanup no depende de referencias a cada `EnemySpawner`: `EnemyController` mantiene los enemigos activos y el trigger general de Town mantiene los jugadores y loot que siguen dentro del pueblo. `ThreatManager` solo aumenta en `Town` y se resetea al salir.
+
 ### Recuperacion de cuerpos y penalizacion por abandono (P5, preparado para coop)
 
 - Si un jugador muere en el pueblo, su cuerpo queda fisicamente en el mundo; el equipo puede cargarlo hasta el tren para revivirlo al llegar a MacLarens, o abandonarlo (revive igualmente en MacLarens, pero con penalizacion de cuota).

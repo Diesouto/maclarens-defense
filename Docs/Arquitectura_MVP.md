@@ -124,7 +124,13 @@ El transporte no se mezcla con el contrato `IInteractable`: interactuar puede in
 - `TrainCargo`: conserva los `LootItem` fisicos dentro del tren y expone `CargoValue` calculado a partir de ellos.
 - `LootDeliveryPoint`: procesa cada `LootItem` entregado, lo retira del mundo/cargo y añade su valor a `MoneyManager` mediante una operacion idempotente.
 - `TrainDeparture`: comprueba condiciones de salida y gestiona countdown.
+- `TrainSplineFollower`: expone `townExitMarker` como `Transform` serializado, muestra su posicion con Gizmo, emite `OnTownExitReached` al cruzarlo y `TrainDeparture` alimenta la transicion de fase.
 - `TrainInteractable`: si hace falta, encapsula prompts y acciones del tren.
+
+### Extraction
+
+- `TownExtractionResolver`: procesa una sola vez el abandono del pueblo, solicita despawn de jugadores/enemigos, limpia loot dentro del trigger, resetea threat y destruye entidades temporales configuradas.
+- `InTownTrigger`: trigger general de Town que informa de jugadores y loot dentro del area; conserva el nombre de clase temporalmente para no romper referencias serializadas de Unity.
 
 ### Enemy
 
@@ -141,7 +147,8 @@ El transporte no se mezcla con el contrato `IInteractable`: interactuar puede in
 - `ThreatUI`: lectura de amenaza actual.
 - `GameStateUI`: success, fail, next day y estados globales.
 - `StoryHUD`: deuda, dinero comun, dia y cuota; observa managers y no decide reglas.
-- `MacLarensOwner`: dialogo contextual y feedback narrativo, sin ownership de economia o flujo.
+- `MacLarensOwner`: dialogo ciclico puro, sin leer ni depender de `RunManager`/`QuotaManager`/`MoneyManager`.
+- `FinishDayStatusUI`: vive en el objeto de Finish Day; muestra dia, dinero, deuda y cuota, se refresca por eventos (`OnDayChanged`/`OnMoneyChanged`/`OnDebtChanged`/`OnQuotaProgressChanged`) y en `OnEnable`, no solo al interactuar.
 
 ## Contrato de interaccion recomendado
 
@@ -218,9 +225,13 @@ Player interactua con Finish Day
 ```text
 Players aboard
     -> TrainDeparture countdown
-    -> RunManager cambia la fase funcional a ReturningToMacLarens
+    -> RunManager cambia la fase a LeavingTown
+    -> TrainSplineFollower cruza TownExitMarker
     -> ExtractionResolver determina jugadores/cuerpos recuperados y abandonados
-    -> Fog limpia Town antes del regreso
+    -> InTownTrigger limpia jugadores, loot y entidades temporales; EnemyController limpia enemigos
+    -> ThreatManager resetea threat y detiene su incremento fuera de Town
+    -> RunManager cambia la fase a ReturningToMacLarens
+    -> Train llega a MacLarens y cambia a ResolvingDay
     -> El cierre de MacLarens resuelve el dia; salir del pueblo no paga la cuota
 ```
 
@@ -228,11 +239,11 @@ Players aboard
 
 ```text
 Run / Money / Quota / Threat / Inventory
-    ├── MacLarensOwner lee estado y muestra dialogo
+    ├── FinishDayStatusUI lee estado y se refresca por eventos
     └── StoryHUD lee estado y muestra valores/modificadores temporales
 ```
 
-`MacLarensOwner` y la UI no modifican dinero, deuda, fases, muerte ni condiciones de victoria/derrota.
+`MacLarensOwner` solo cicla dialogo estatico; no lee estado de la run. `FinishDayStatusUI` y la UI no modifican dinero, deuda, fases, muerte ni condiciones de victoria/derrota.
 
 ## Datos tuneables que si merecen ScriptableObject
 
