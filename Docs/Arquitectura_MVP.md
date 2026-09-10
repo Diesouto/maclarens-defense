@@ -127,6 +127,12 @@ El transporte no se mezcla con el contrato `IInteractable`: interactuar puede in
 - `TrainSplineFollower`: expone `townExitMarker` como `Transform` serializado, muestra su posicion con Gizmo, emite `OnTownExitReached` al cruzarlo y `TrainDeparture` alimenta la transicion de fase.
 - `TrainInteractable`: si hace falta, encapsula prompts y acciones del tren.
 
+### World
+
+- `ShopStand`: punto de venta en MacLarens; entrega un `LootDataSO` al inventario y descuenta su `Price` de `TeamMoney`. Disponible mientras `GameState.Run` este activo y `RunPhase` sea `MacLarens` o `ResolvingDay`, con dinero y espacio de inventario suficientes. No conoce deuda ni cuota.
+- `FinishDayInteractable`: unico punto que llama a `RunManager.FinishDay()`.
+- `MacLarensOwner`: dialogo ciclico puro.
+
 ### Extraction
 
 - `TownExtractionResolver`: procesa una sola vez el abandono del pueblo, solicita despawn de jugadores/enemigos, limpia loot dentro del trigger, resetea threat y destruye entidades temporales configuradas.

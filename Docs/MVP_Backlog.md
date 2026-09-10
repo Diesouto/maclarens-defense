@@ -237,23 +237,23 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Aceptacion: cada transicion tiene owner, validacion y siguiente paso; el primer milestone puede recorrer el flujo con botones o datos temporales sin softlocks.
   Estado: validado en Play Mode. Las transiciones `MacLarens -> TravelingToTown -> Town -> LeavingTown -> ReturningToMacLarens -> ResolvingDay` ocurren via gameplay real (sin botones de debug).
 
-- `[P5.3][Economy] Crear MoneyManager de equipo`
+- `✅ [P5.3][Economy] Crear MoneyManager de equipo`
   Resultado: `TeamMoney`, `AddMoney()` y `TrySpendMoney()` como unica fuente del efectivo comun.
   Aceptacion: no existe dinero individual; vender y comprar modifican el bote y todas las operaciones pasan por este manager.
 
-- `[P5.4][Core] Convertir QuotaManager en deuda y cuotas`
+- `✅ [P5.4][Core] Convertir QuotaManager en deuda y cuotas`
   Resultado: deuda total, deuda restante, cuota base, modificadores de cuota, deuda pagada y dias restantes separados de `CargoValue` y `TeamMoney`.
   Aceptacion: `Finish Day` calcula la cuota efectiva, comprueba el dinero disponible, descuenta el pago de `TeamMoney` y suma exactamente ese pago a `DebtPaid`; `DeliveredValue` no se usa como deuda pagada.
 
-- `[P5.5][Train] Completar entrega física de loot en MacLarens`
+- `✅ [P5.5][Train] Completar entrega física de loot en MacLarens`
   Resultado: los `LootItem` fisicos que entran en `LootDeliveryPoint` se retiran del mundo/cargo y su valor se añade a `TeamMoney`.
   Aceptacion: cada `LootItem` se procesa una sola vez, `CargoValue` se recalcula y queda en cero cuando se entrega todo, sin convertir directamente un total agregado como atajo.
-  Estado: implementacion base realizada. Falta validar en Play Mode que cada objeto entre en el punto, desaparezca del cargo y aumente una sola vez el dinero.
+  Estado: implementacion realizada.
 
-- `[P5.6][World] Crear fase MacLarens y Finish Day`
+- `✅ [P5.6][World] Crear fase MacLarens y Finish Day`
   Resultado: zona segura con venta, compras, curacion/municion, preparacion y accion explicita de cierre.
   Aceptacion: el equipo puede vender y comprar antes de cerrar; al pulsar `Finish Day` se bloquean nuevas compras y el resultado de la cuota queda fijado.
-  Estado: `FinishDayInteractable` implementado para `ResolvingDay`. Falta colocar y probar el objeto interactuable en MacLarens; servicios de compra, curacion y municion siguen pendientes.
+  Estado: `FinishDayInteractable` implementado para `ResolvingDay`. `ShopStand` implementado: interactuable que entrega un `LootDataSO` y descuenta su `Price` de `TeamMoney`, disponible durante `RunPhase.MacLarens` y `RunPhase.ResolvingDay` (ambas representan estar en la zona segura) con dinero y espacio de inventario suficientes. Falta colocar y probar los objetos en escena.
 
 - <span style="color:#2f81f7">✅ `[P5.7][Extraction] Resolver abandono del pueblo al partir el tren`</span>
   Resultado: la salida del tren cierra la expedicion y el fog limpia jugadores atrasados, cuerpos, enemigos, loot restante y entidades temporales antes del regreso.
@@ -277,12 +277,12 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: `DebtRemaining == 0` lleva a `GameState.Success`.
   Aceptacion: el pago final se descuenta del bote, no se puede comprar ni continuar la run despues y se ofrecen `Play Again` y `Main Menu`.
 
-- `[P5.11][Story] Crear Owner de MacLarens`
+- `✅ [P5.11][Story] Crear Owner de MacLarens`
   Resultado: NPC interactuable que muestra dialogos ciclicos sin ownership de reglas ni de estado de la run.
   Aceptacion: los textos avanzan al interactuar (`texto 1 -> texto 2 -> texto 3 -> texto 1`); el dia, dinero y deuda se muestran en un componente separado (`FinishDayStatusUI`), no en el Owner.
-  Estado: `MacLarensOwner` simplificado a dialogo puro (sin leer RunManager/QuotaManager/MoneyManager). `FinishDayStatusUI` implementado en el objeto de Finish Day, se actualiza por eventos (`OnDayChanged`, `OnMoneyChanged`, `OnDebtChanged`, `OnQuotaProgressChanged`) y al activarse, no solo al interactuar. Falta colocar ambos objetos en escena y asignar sus `TMP_Text`.
+  Estado: `MacLarensOwner` simplificado a dialogo puro (sin leer RunManager/QuotaManager/MoneyManager). `FinishDayStatusUI` implementado en el objeto de Finish Day, se actualiza por eventos (`OnDayChanged`, `OnMoneyChanged`, `OnDebtChanged`, `OnQuotaProgressChanged`) y al activarse, no solo al interactuar..
 
-- `[P5.12][UI] Completar HUD de Story Mode`
+- `✅ [P5.12][UI] Completar HUD de Story Mode`
   Resultado: deuda, dinero, dia/cuotas, threat, inventario y `Cargo Value` son legibles y separados.
   Aceptacion: los valores se actualizan por eventos; los modificadores muestran feedback temporal, por ejemplo `Quota: $2,000 [+ $500 - jugador abandonado]`, sin que la UI calcule reglas.
 

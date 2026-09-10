@@ -73,7 +73,8 @@ public class ThreatManager : MonoBehaviour
     private bool IsThreatActiveInTown()
     {
         if (RunManager.Instance != null &&
-            RunManager.Instance.CurrentPhase != RunPhase.Town)
+            RunManager.Instance.CurrentPhase != RunPhase.Town &&
+            RunManager.Instance.CurrentPhase != RunPhase.LeavingTown)
         {
             return false;
         }

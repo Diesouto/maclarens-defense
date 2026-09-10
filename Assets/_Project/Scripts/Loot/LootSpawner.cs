@@ -8,7 +8,6 @@ public class LootSpawner : MonoBehaviour
     [Header("Spawn Settings")]
     [SerializeField] private int minActiveLoot = 12;
     [SerializeField] private int maxActiveLoot = 18;
-    [SerializeField] private bool spawnOnStart = true;
     [SerializeField] private float quotaToLootScale = 75f;
 
     [Header("Distribution")]
@@ -36,19 +35,16 @@ public class LootSpawner : MonoBehaviour
         FindSpawnPoints();
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        if (spawnOnStart)
-            InitialSpawn();
-
         if (RunManager.Instance != null)
-            RunManager.Instance.OnDayChanged += HandleDayChanged;
+            RunManager.Instance.OnPhaseChanged += HandlePhaseChanged;
     }
 
     private void OnDisable()
     {
         if (RunManager.Instance != null)
-            RunManager.Instance.OnDayChanged -= HandleDayChanged;
+            RunManager.Instance.OnPhaseChanged -= HandlePhaseChanged;
     }
 
     private void OnDestroy()
@@ -57,10 +53,11 @@ public class LootSpawner : MonoBehaviour
             Instance = null;
     }
 
-    // Each new day tops up leftover loot instead of a full re-spawn, per the Roadmap P3 criteria.
-    private void HandleDayChanged(int day)
+    // Spawn loot when traveling to town
+    private void HandlePhaseChanged(RunPhase phase)
     {
-        Restock();
+        if (phase == RunPhase.TravelingToTown)
+            Restock();
     }
 
     private void FindSpawnPoints()
