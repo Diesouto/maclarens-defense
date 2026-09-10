@@ -40,8 +40,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9067089829192655702}
-  - component: {fileID: 955008620360613685}
   - component: {fileID: 2105930197200411641}
+  - component: {fileID: 1688434577474046192}
   m_Layer: 0
   m_Name: Revolver
   m_TagString: Untagged
@@ -67,18 +67,6 @@ Transform:
   - {fileID: 972479629328408785}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &955008620360613685
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8340733476502590775}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b99d6715489c12c4ebf997925b93dae3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputHandler
 --- !u!114 &2105930197200411641
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100,7 +88,21 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 129
   gunshotParticleReference: {fileID: 3146090152744175757}
-  headshotMultiplier: 2
+  hitForceMultiplier: 12
+--- !u!114 &1688434577474046192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8340733476502590775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 020ee07c337e75945876c7cc87dc3956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LootItem
+  lootData: {fileID: 11400000, guid: aefaf4f0e7906504cb3e64abdec30d7d, type: 2}
+  hideOnPickup: 1
 --- !u!1001 &3146090152744038175
 PrefabInstance:
   m_ObjectHideFlags: 0
