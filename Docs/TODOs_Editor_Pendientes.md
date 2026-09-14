@@ -35,3 +35,31 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       soltado (no cargado en brazos) dentro del vagon del tren no se re-parenta como el loot
       (`TrainCargo`), por lo que no viaja solo; de momento el unico camino soportado es cargarlo
       en brazos hasta el arribo a MacLarens.
+
+## P5.16 - UI del mundo apuntando al jugador
+
+- Script listo: `Assets/_Project/UI/WorldSpaceBillboard.cs`. Rota el transform hacia la camara en
+  `LateUpdate` (mismo orden que usa `PlayerController` para su propia camara).
+- [ ] Añadir el componente a los Canvas world-space que se quieran (prompts sobre NPCs, dialogo de
+      `MacLarensOwner`, nameplates, etc.) y comprobar que `targetCamera` resuelve bien (por defecto
+      usa `Camera.main`; solo hace falta asignarlo a mano si hay varias camaras activas a la vez).
+- [ ] Ajustar `lockYAxisOnly` por elemento: activado (por defecto) mantiene el elemento vertical;
+      desactivarlo si se quiere un billboard que tambien incline segun la altura de la camara.
+
+## P5.17 - Separar partes del cuerpo visibles por la camara propia
+
+- Script listo: `Assets/_Project/Scripts/Player/PlayerBodyVisibility.cs`. Usa la layer
+  `CameraHidden` que ya existe reservada en `ProjectSettings/TagManager.asset` (no hacia falta
+  crearla) y excluye esa layer del `cullingMask` de la camara del propio jugador; las camaras de
+  otros jugadores/espectador no se tocan, así que ellos siguen viendo el cuerpo completo.
+- [ ] **Importante**: esto depende de que el modelo del jugador tenga renderers separados por
+      parte del cuerpo (cabeza/torso/brazos/piernas vs manos/pies). Si el modelo es un unico
+      `SkinnedMeshRenderer` fusionado (un solo mesh para todo el cuerpo), este enfoque por layer no
+      puede ocultar solo una region del mismo renderer: haria falta separar el mesh en el rig
+      (tipico en packs modulares tipo Synty POLYGON) o usar un viewmodel de manos/pies dedicado.
+      Revisar el rig de `Player.prefab` primero para confirmar que aplica.
+- [ ] Si el modelo si esta separado por partes: añadir `PlayerBodyVisibility` a `Player.prefab`,
+      asignar `playerCamera` y rellenar `hiddenFromOwnCameraRoots` con los renderers de
+      cabeza/torso/brazos/piernas (dejando fuera manos y pies).
+- [ ] Playtest: la camara del jugador solo debe mostrar sus propias manos y pies; mirando a otro
+      jugador (o en una futura camara de espectador) el cuerpo debe verse completo.

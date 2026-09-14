@@ -298,6 +298,14 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: vertical slice portable y demostrable.
   Aceptacion: se puede jugar de inicio a fin sin usar el editor para arreglar nada.
 
+- `[P5.16][QoL] Cierta UI del mundo siempre apuntando al jugador`
+  Resultado: crear un script que haga que ciertos elementos de la UI del mundo siempre apunten al jugador.
+  Aceptacion: se pueden ver los elementos de la UI del mundo apuntando al jugador.
+
+- `[P5.17][QoL] Separar partes del cuerpo del jugador visibles por la cámara`
+  Resultado: conseguir que la cámara del jugador solo muestre las manos y pies de su personaje.
+  Aceptacion: la cámara del jugador solo muestra sus propias manos y pies de su personaje, y no otras partes del cuerpo. Los demás jugadores serán siempre completamente visibles
+
 ## P6 - Multiplayer despues del freeze
 
 - `[Network] Instalar Authentication + Relay`
