@@ -17,6 +17,7 @@ public class PlayerMotor : MonoBehaviour
 
     private CharacterController controller;
     private PlayerInventory inventory;
+    private BodyCarrier bodyCarrier;
 
     private Vector3 velocity;
     private bool grounded;
@@ -27,6 +28,7 @@ public class PlayerMotor : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         inventory = GetComponent<PlayerInventory>();
+        bodyCarrier = GetComponent<BodyCarrier>();
     }
 
     // Applies the current carriage's per-frame delta (see TrainPassenger) through the same Move()
@@ -43,12 +45,11 @@ public class PlayerMotor : MonoBehaviour
 
         float speed = sprint ? sprintSpeed : walkSpeed;
 
-        if (inventory != null &&
-            inventory.ActiveItem != null &&
-            inventory.ActiveItem.IsHeavy)
-        {
+        bool carryingHeavyItem = inventory != null && inventory.ActiveItem != null && inventory.ActiveItem.IsHeavy;
+        bool carryingBody = bodyCarrier != null && bodyCarrier.IsCarryingBody;
+
+        if (carryingHeavyItem || carryingBody)
             speed *= heavyCarrySpeedMultiplier;
-        }
 
         Vector3 movement =
             direction * speed;

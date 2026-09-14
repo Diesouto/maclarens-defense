@@ -12,7 +12,14 @@ public class CharacterRagdollController : MonoBehaviour
     private Animator animator;
     private List<Rigidbody> ragdollRigidbodies = new List<Rigidbody>();
     private List<Collider> ragdollColliders = new List<Collider>();
+    private List<Transform> ragdollTransforms = new List<Transform>();
+    private List<Vector3> bindLocalPositions = new List<Vector3>();
+    private List<Quaternion> bindLocalRotations = new List<Quaternion>();
     private bool isRagdollActive;
+
+    public bool IsRagdollActive => isRagdollActive;
+    public Rigidbody RootRigidbody { get; private set; }
+    public IReadOnlyList<Collider> RagdollColliders => ragdollColliders;
 
     private void Awake()
     {
@@ -62,6 +69,41 @@ public class CharacterRagdollController : MonoBehaviour
             Destroy(gameObject, destroyDelay);
     }
 
+    // Restores the bind pose and hands animation/collision back to the animator; used on revive.
+    public void DisableRagdoll()
+    {
+        if (!isRagdollActive)
+            return;
+
+        isRagdollActive = false;
+
+        StopAllCoroutines();
+
+        SetRagdollState(false);
+
+        for (int i = 0; i < ragdollTransforms.Count; i++)
+        {
+            Transform ragdollTransform = ragdollTransforms[i];
+            if (ragdollTransform == null)
+                continue;
+
+            ragdollTransform.localPosition = bindLocalPositions[i];
+            ragdollTransform.localRotation = bindLocalRotations[i];
+        }
+
+        foreach (var rb in ragdollRigidbodies)
+        {
+            if (rb == null)
+                continue;
+
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        if (animator != null)
+            animator.enabled = true;
+    }
+
     private T GetChildComponent<T>() where T : Component
     {
         Transform current = transform;
@@ -108,6 +150,9 @@ public class CharacterRagdollController : MonoBehaviour
     {
         ragdollRigidbodies.Clear();
         ragdollColliders.Clear();
+        ragdollTransforms.Clear();
+        bindLocalPositions.Clear();
+        bindLocalRotations.Clear();
 
         Rigidbody[] rigidbodies = GetComponentsInChildren<Rigidbody>();
         foreach (var rigidbody in rigidbodies)
@@ -116,6 +161,9 @@ public class CharacterRagdollController : MonoBehaviour
                 continue;
 
             ragdollRigidbodies.Add(rigidbody);
+            ragdollTransforms.Add(rigidbody.transform);
+            bindLocalPositions.Add(rigidbody.transform.localPosition);
+            bindLocalRotations.Add(rigidbody.transform.localRotation);
 
             Collider collider = rigidbody.GetComponent<Collider>();
             if (collider != null)
@@ -126,12 +174,31 @@ public class CharacterRagdollController : MonoBehaviour
         {
             Rigidbody rootRb = GetComponent<Rigidbody>();
             if (rootRb != null)
+            {
                 ragdollRigidbodies.Add(rootRb);
+                ragdollTransforms.Add(rootRb.transform);
+                bindLocalPositions.Add(rootRb.transform.localPosition);
+                bindLocalRotations.Add(rootRb.transform.localRotation);
+            }
 
             Collider rootCollider = GetComponent<Collider>();
             if (rootCollider != null)
                 ragdollColliders.Add(rootCollider);
         }
+
+        // Classic ragdoll rigs join every bone back to its parent except the root (e.g. hips/pelvis).
+        RootRigidbody = null;
+        foreach (Rigidbody rigidbody in ragdollRigidbodies)
+        {
+            if (rigidbody != null && rigidbody.GetComponent<Joint>() == null)
+            {
+                RootRigidbody = rigidbody;
+                break;
+            }
+        }
+
+        if (RootRigidbody == null && ragdollRigidbodies.Count > 0)
+            RootRigidbody = ragdollRigidbodies[0];
     }
 
     private void SetRagdollState(bool enabled)

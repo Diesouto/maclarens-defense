@@ -72,6 +72,16 @@ public class Health : MonoBehaviour, IDamageable
         OnHealthChanged?.Invoke(CurrentHealth);
     }
 
+    // Brings a dead entity fully back; callers own repositioning and ragdoll/control reset.
+    public void Revive()
+    {
+        if (!IsDead)
+            return;
+
+        CurrentHealth = maxHealth;
+        OnHealthChanged?.Invoke(CurrentHealth);
+    }
+
     private void Die()
     {
         if (ragdollController != null)

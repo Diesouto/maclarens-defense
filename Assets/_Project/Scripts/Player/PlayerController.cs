@@ -30,6 +30,7 @@ public class PlayerController : MonoBehaviour
     private PlayerMotor motor;
     private TrainPassenger trainPassenger;
     private PlayerInventory inventory;
+    private BodyCarrier bodyCarrier;
     private Weapon weapon;
     private Health health;
     private Animator animator;
@@ -38,8 +39,12 @@ public class PlayerController : MonoBehaviour
     private float smoothedYaw;
     private float smoothedPitch;
     private float currentFov;
+    private Transform cameraDefaultParent;
+    private Vector3 cameraDefaultLocalPosition;
+    private Quaternion cameraDefaultLocalRotation;
     private float throwChargeStartedAt;
     private bool isChargingThrow;
+    private bool isChargingBodyThrow;
     private ItemHolder itemHolder;
 
     private void Awake()
@@ -48,6 +53,7 @@ public class PlayerController : MonoBehaviour
         motor = GetComponent<PlayerMotor>();
         trainPassenger = GetComponent<TrainPassenger>();
         inventory = GetComponent<PlayerInventory>();
+        bodyCarrier = GetComponent<BodyCarrier>();
         itemHolder = GetComponent<ItemHolder>();
         weapon = itemHolder != null ? itemHolder.RuntimeWeapon : GetComponentInChildren<Weapon>(true);
         health = GetComponent<Health>();
@@ -73,6 +79,13 @@ public class PlayerController : MonoBehaviour
         smoothedYaw = yaw;
         smoothedPitch = pitch;
         currentFov = mainCamera != null ? mainCamera.fieldOfView : normalFov;
+
+        if (cameraTransform != null)
+        {
+            cameraDefaultParent = cameraTransform.parent;
+            cameraDefaultLocalPosition = cameraTransform.localPosition;
+            cameraDefaultLocalRotation = cameraTransform.localRotation;
+        }
 
         if (mainCamera != null)
             mainCamera.fieldOfView = currentFov;
@@ -169,7 +182,9 @@ public class PlayerController : MonoBehaviour
         if (direction.sqrMagnitude > 1f)
             direction.Normalize();
 
-        bool sprinting = input.SprintHeld && (inventory == null || inventory.ActiveItem == null || !inventory.ActiveItem.IsHeavy);
+        bool sprinting = input.SprintHeld &&
+            (inventory == null || inventory.ActiveItem == null || !inventory.ActiveItem.IsHeavy) &&
+            (bodyCarrier == null || !bodyCarrier.IsCarryingBody);
         motor.Move(direction, sprinting);
 
         if (animator != null)
@@ -182,6 +197,13 @@ public class PlayerController : MonoBehaviour
 
     private void HandleInventoryInput()
     {
+        // Carrying a body occupies both hands: no inventory switching, only drop or charge-throw.
+        if (bodyCarrier != null && bodyCarrier.IsCarryingBody)
+        {
+            HandleBodyThrowInput();
+            return;
+        }
+
         if (inventory == null)
             return;
 
@@ -227,6 +249,9 @@ public class PlayerController : MonoBehaviour
 
     private void HandleWeaponInput()
     {
+        if (bodyCarrier != null && bodyCarrier.IsCarryingBody)
+            return;
+
         if (inventory == null || inventory.ActiveItem == null || !inventory.ActiveItem.IsWeapon)
             return;
 
@@ -257,6 +282,30 @@ public class PlayerController : MonoBehaviour
 
         isChargingThrow = false;
         interactUI?.CancelProgress();
+    }
+
+    private void HandleBodyThrowInput()
+    {
+        if (input.DropPressed)
+        {
+            isChargingBodyThrow = true;
+            throwChargeStartedAt = Time.time;
+            interactUI?.StartHeldProgress(throwChargeDuration, "Throwing body...");
+            return;
+        }
+
+        if (isChargingBodyThrow && input.DropReleased)
+            ReleaseBodyThrow();
+    }
+
+    private void ReleaseBodyThrow()
+    {
+        float charge = Mathf.Clamp01((Time.time - throwChargeStartedAt) / Mathf.Max(throwChargeDuration, 0.01f));
+        float force = Mathf.Lerp(minimumThrowForce, maximumThrowForce, charge);
+        Vector3 throwDirection = mainCamera != null ? mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f)).direction : transform.forward;
+        isChargingBodyThrow = false;
+        interactUI?.FinishProgress();
+        bodyCarrier.Throw(throwDirection * force);
     }
 
     private void OnDestroy()
@@ -290,6 +339,32 @@ public class PlayerController : MonoBehaviour
         DeathCameraController.Instance?.NotifyPlayerDied(this);
 
         enabled = false;
+    }
+
+    // Called by PlayerBody once its Health has been revived; hands control back to the player.
+    public void Revive()
+    {
+        if (cameraTransform != null && cameraDefaultParent != null)
+        {
+            cameraTransform.SetParent(cameraDefaultParent, false);
+            cameraTransform.localPosition = cameraDefaultLocalPosition;
+            cameraTransform.localRotation = cameraDefaultLocalRotation;
+        }
+
+        yaw = transform.eulerAngles.y;
+        pitch = 0f;
+        smoothedYaw = yaw;
+        smoothedPitch = pitch;
+
+        DeathCameraController.Instance?.Deactivate();
+
+        enabled = true;
+
+        if (input != null)
+            input.enabled = true;
+
+        if (motor != null)
+            motor.enabled = true;
     }
 
     private static float NormalizeAngle(float angle)

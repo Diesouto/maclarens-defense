@@ -47,6 +47,7 @@ public class TownExtractionResolver : MonoBehaviour
 
         extractionResolved = true;
         InTownTrigger.Instance?.AbandonPlayersStillInsideTown();
+        BodyRecoveryManager.Instance?.ResolveBodiesAtTownExit();
         InTownTrigger.Instance?.DestroyLootInsideTown();
         EnemyController.DespawnAll();
         ThreatManager.Instance?.ResetThreat();

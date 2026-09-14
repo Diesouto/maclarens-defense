@@ -15,6 +15,11 @@ public class InTownTrigger : MonoBehaviour
 
     public bool AnyPlayerInside => playersInsideTown.Count > 0;
 
+    public bool IsPlayerInsideTown(PlayerController player)
+    {
+        return player != null && playersInsideTown.Contains(player);
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
