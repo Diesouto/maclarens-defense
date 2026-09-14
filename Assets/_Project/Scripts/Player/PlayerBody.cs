@@ -71,7 +71,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
     private void HandleDeath()
     {
         if (IsTeamWiped)
-            GameStateManager.Instance?.SetFail();
+            GameStateManager.Instance?.SetFail(FailCause.TeamWipe);
     }
 
     public bool CanInteract(PlayerInteractor interactor)

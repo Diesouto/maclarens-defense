@@ -6,6 +6,8 @@ public class RunManager : MonoBehaviour
     public static RunManager Instance { get; private set; }
 
     [SerializeField] private int[] dayQuotas = { 100, 150, 200 };
+    [Tooltip("If enabled, missing the quota fails the run immediately on any day instead of only on the last one.")]
+    [SerializeField] private bool failOnAnyMissedQuota = false;
 
     public int CurrentDay { get; private set; } = 1;
     public RunPhase CurrentPhase { get; private set; } = RunPhase.MacLarens;
@@ -111,8 +113,8 @@ public class RunManager : MonoBehaviour
 
         if (!QuotaManager.Instance.TryPayCurrentQuota(MoneyManager.Instance))
         {
-            if (CurrentDay >= TotalDays)
-                GameStateManager.Instance?.SetFail();
+            if (failOnAnyMissedQuota || CurrentDay >= TotalDays)
+                GameStateManager.Instance?.SetFail(FailCause.QuotaFailed);
             else
                 AdvanceDay();
 

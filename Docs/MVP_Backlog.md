@@ -340,10 +340,6 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: el juego queda preparado para hazards fisicas simples sin estados imposibles.
   Aceptacion: un empujon o caida controlada no desincroniza posicion ni control entre host y cliente.
 
-- `[UI] Crear selector de personaje en el maclarens??`
-  Resultado: El jugador puede cambiar su personaje.
-  Aceptacion: El jugador puede cambiar su personaje y todos los jugadores ven el personaje seleccionado (activar o desactivar el gameobject correspondiente, todos los personajes se encuentran dentro del root del modelo).
-
 ## P7 - Polish posterior
 
 - `[Combat] Anadir shotgun o rifle`
@@ -355,6 +351,10 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[VFX] Muzzle flash, hit, blood y warning de threat`
 - `[UI] Refinar HUD final`
 - `[UI] Menú de opciones (gráficos, sonido, salir de la partida...)`
+
+- `[UI] Crear selector de personaje en el maclarens??`
+  Resultado: El jugador puede cambiar su personaje.
+  Aceptacion: El jugador puede cambiar su personaje y todos los jugadores ven el personaje seleccionado (activar o desactivar el gameobject correspondiente, todos los personajes se encuentran dentro del root del modelo).
 
 ## P8 - Post-MVP: Infinity Mode y cooperacion avanzada
 

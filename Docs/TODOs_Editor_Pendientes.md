@@ -63,3 +63,30 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       cabeza/torso/brazos/piernas (dejando fuera manos y pies).
 - [ ] Playtest: la camara del jugador solo debe mostrar sus propias manos y pies; mirando a otro
       jugador (o en una futura camara de espectador) el cuerpo debe verse completo.
+
+## P5.9 - Team wipe y cuota fallida / P5.10 - Deuda pagada
+
+- Codigo listo: `GameStateManager` ahora tiene `FailCause` (`TeamWipe`/`QuotaFailed`), `SetFail(cause)`,
+  `RestartRun()` (recarga la escena activa) y `ReturnToMainMenu()` (carga `mainMenuSceneName`,
+  por defecto `"MenuScene"`). `RunManager` tiene un nuevo toggle `failOnAnyMissedQuota`: en `false`
+  (por defecto) solo falla en el ultimo dia sin cuota pagada; en `true` falla inmediatamente el
+  primer dia que no se alcance, para poder probar cual es mas divertido sin tocar codigo.
+- [ ] **Importante**: `Assets/_Project/Scenes/MainScene.unity` y `MenuScene.unity` no estan en
+      `Build Settings` (solo aparece `SampleScene`). `SceneManager.LoadScene` falla si la escena no
+      esta en la lista, incluso en el Editor. Añadir ambas escenas en
+      `File > Build Profiles > Scene List` (o el menu equivalente) antes de probar Restart/Main Menu.
+- [ ] Crear el panel de `GameStateUI` (`Assets/_Project/UI/GameStateUI.cs`) en el Canvas principal:
+      un `panelRoot` desactivado por defecto, texto de titulo, texto de causa y dos botones
+      (Restart -> `RestartRun()`, Main Menu -> `ReturnToMainMenu()`, ya conectados via `onClick` en
+      el propio script). Es deliberadamente minimo (sin estilo) para no adelantar trabajo de
+      `P5.13`; ese ticket puede reemplazar/mejorar visualmente este panel sin tocar la logica.
+- [ ] Decidir y fijar `failOnAnyMissedQuota` tras probar ambas variantes (`P5.14` de balance).
+- [ ] Playtest:
+  - Provocar un team wipe -> `Fail` inmediato con causa "team wipe" visible.
+  - Fallar la cuota en el ultimo dia (con `failOnAnyMissedQuota=false`) -> `Fail` con causa "quota".
+  - Fallar la cuota en un dia intermedio con `failOnAnyMissedQuota=true` -> `Fail` inmediato.
+  - Pagar toda la deuda -> `Success`; comprobar que `ShopStand`/`FinishDayInteractable`/
+    `TrainDeparture` dejan de aceptar interaccion (ya gatean por `IsRunActive`, deberia funcionar
+    solo con el cambio de estado).
+  - Pulsar Restart -> la escena se recarga limpia (sin loot/enemigos/threat/dinero residual).
+  - Pulsar Main Menu -> carga `MenuScene` y sale del flujo de run.
