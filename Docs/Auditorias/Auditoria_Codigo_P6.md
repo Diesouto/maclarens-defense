@@ -276,6 +276,9 @@ Pendiente de codigo/editor:
 
 ### Bloque 5 - Enemigos y threat
 
+Estado actual: base host-authoritative implementada en codigo; la replicacion visual y el balance
+final requieren configuracion de prefabs/escena y Play Mode.
+
 #### T5.1 - Enemy spawn y AI autoritativos
 
 Objetivo:
@@ -287,6 +290,13 @@ Tareas:
 - `EnemyState` replicado por `NetworkBehaviour` o `NetworkVariable` basico
 - `Damage` y `Death` autoritativos
 
+Implementado:
+- `EnemySpawner` solo simula y crea enemigos en el host cuando NGO esta escuchando.
+- Los enemigos networkados se spawnean desde el host y `NetworkEnemyState` replica muerte y ataque.
+- `EnemyController` no ejecuta AI en copias cliente.
+- `NetworkHealth` permite que el propietario o el servidor solicite/aplique dano; los enemigos
+	server-owned reciben la validacion en host.
+
 #### T5.2 - Threat por numero de jugadores
 
 Objetivo:
@@ -297,6 +307,18 @@ Tareas:
 - `ResolveCurrentThreatProfile()` en host
 - `EnemySpawner` y `ThreatManager` leyendo la config centralizada
 - no dispersar `if (playerCount == 2)` a lo largo del proyecto
+
+Implementado:
+- `NetworkThreatState` replica threat, nivel, jugadores conectados y enemigos vivos.
+- `ResolveMultiplier` centraliza multiplicadores para 1/2/3/4 jugadores (1.0/1.25/1.5/1.75).
+- `ThreatManager` aplica el multiplicador solo en el host, sin alterar la ruta singleplayer.
+
+Pendiente de codigo/editor:
+- registrar prefabs de enemigos con `NetworkObject`, `NetworkEnemyState`, `NetworkHealth` y
+	`NetworkTransform`;
+- confirmar que los spawns dinamicos usan prefabs registrados y que el NavMesh es identico en todos
+	los peers;
+- validar dano, muerte, conteo, threat y curva 1/2/3/4 en Play Mode.
 
 ### Bloque 6 - GameState, cuerpo y desconexiones
 

@@ -36,7 +36,9 @@ public class NetworkHealth : NetworkBehaviour
     public void RequestDamageServerRpc(float damage, Vector3 hitDirection, float forceAmount,
         ServerRpcParams rpcParams = default)
     {
-        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+        bool isOwnerRequest = rpcParams.Receive.SenderClientId == OwnerClientId;
+        bool isServerOwnedTarget = OwnerClientId == NetworkManager.ServerClientId;
+        if (!isOwnerRequest && !isServerOwnedTarget)
             return;
 
         if (damage <= 0f || health.IsDead)

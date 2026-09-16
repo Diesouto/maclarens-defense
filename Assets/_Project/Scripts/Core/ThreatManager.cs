@@ -91,6 +91,13 @@ public class ThreatManager : MonoBehaviour
 
     private void AddThreat(float amount)
     {
+        NetworkThreatState networkState = GetComponent<NetworkThreatState>();
+        if (networkState != null && networkState.IsSpawned && !networkState.IsServer)
+            return;
+
+        if (networkState != null && networkState.IsServer)
+            amount *= networkState.CurrentThreatMultiplier;
+
         if (amount == 0f)
             return;
 

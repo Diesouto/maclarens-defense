@@ -405,17 +405,20 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] `ThreatManager`/`EnemySpawner` autoritativos en host`
   Resultado: threat, spawn y comportamiento de `EnemyController` se calculan solo en host; transform/estado/ataques se replican.
   Aceptacion: ningun cliente ve enemigos o niveles de threat distintos entre si.
-  Estado: pendiente.
+  Estado: `EnemySpawner` y `EnemyController` quedan limitados al host cuando NGO esta activo;
+  `NetworkEnemyState` replica ataque/muerte y `NetworkHealth` mantiene el dano autoritativo.
+  Falta configurar prefabs y validar en Play Mode.
 
 - `[Balance] Escalar threat y densidad de enemigos por numero de jugadores`
   Resultado: `ThreatTuningSO`/`EnemySpawner` leen un multiplicador segun jugadores conectados (1/2/3/4) en vez de un valor fijo.
   Aceptacion: la presion por jugador se mantiene comparable entre 1 y 4 jugadores (ajuste per-capita con techo, no escalado lineal sin limite).
-  Estado: pendiente.
+  Estado: `NetworkThreatState` centraliza multiplicadores 1/2/3/4 y replica threat, nivel,
+  jugadores y enemigos vivos. Falta calibracion jugable.
 
 - `[QA] Gate 1/2/3/4 de amenaza`
   Resultado: comprobacion de la curva de threat/enemigos en las 4 configuraciones de jugadores.
   Aceptacion: la amenaza es jugable en todas las configuraciones sin trivializar ni romper la partida.
-  Estado: pendiente.
+  Estado: pendiente de Play Mode; la ruta de codigo y el estado replicado ya estan preparados.
 
 #### P6.6 - Game state y desconexiones
 

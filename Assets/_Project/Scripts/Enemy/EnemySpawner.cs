@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -44,6 +45,10 @@ public class EnemySpawner : MonoBehaviour
 
     private void Update()
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return;
+
         if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
             return;
 
@@ -136,6 +141,11 @@ public class EnemySpawner : MonoBehaviour
 
         aliveEnemies.Add(enemy);
         spawnPoint.MarkUsed();
+
+        NetworkObject networkObject = instance.GetComponent<NetworkObject>();
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            networkObject != null && !networkObject.IsSpawned)
+            networkObject.Spawn(true);
     }
 
     // Picks the valid point farthest from any player, so enemies feel like they come from the town, not thin air.
@@ -180,7 +190,13 @@ public class EnemySpawner : MonoBehaviour
         foreach (EnemyController enemy in aliveEnemies)
         {
             if (enemy != null)
-                Destroy(enemy.gameObject);
+            {
+                NetworkObject networkObject = enemy.GetComponent<NetworkObject>();
+                if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+                    networkObject.Despawn(true);
+                else
+                    Destroy(enemy.gameObject);
+            }
         }
 
         aliveEnemies.Clear();

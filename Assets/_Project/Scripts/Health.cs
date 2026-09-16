@@ -40,8 +40,7 @@ public class Health : MonoBehaviour, IDamageable
     {
         if (networkHealth != null && !networkHealth.IsServer)
         {
-            if (networkHealth.IsOwner)
-                networkHealth.RequestDamageServerRpc(damage, hitDirection, forceAmount);
+            networkHealth.RequestDamageServerRpc(damage, hitDirection, forceAmount);
 
             return;
         }

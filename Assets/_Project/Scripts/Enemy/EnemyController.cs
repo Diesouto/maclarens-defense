@@ -21,12 +21,14 @@ public class EnemyController : MonoBehaviour
     private Transform target;
     private bool isDead;
     private bool isAttacking;
+    private NetworkEnemyState networkState;
 
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
         health = GetComponent<Health>();
         animator = GetComponentInChildren<Animator>();
+        networkState = GetComponent<NetworkEnemyState>();
 
         if (agent != null)
             agent.speed = runSpeed;
@@ -56,6 +58,12 @@ public class EnemyController : MonoBehaviour
 
     void Start()
     {
+        if (networkState != null && networkState.IsSpawned && !networkState.IsServer)
+        {
+            enabled = false;
+            return;
+        }
+
         StartCoroutine(AwaitSpawnAnimation());
         StartCoroutine(BehaviorLoop());
     }
@@ -98,6 +106,7 @@ public class EnemyController : MonoBehaviour
             return;
 
         isAttacking = true;
+        networkState?.SetAttacking(true);
         agent.isStopped = true;
         animator.SetTrigger("HasAttacked");
 
@@ -113,6 +122,7 @@ public class EnemyController : MonoBehaviour
     {
         yield return new WaitForSeconds(attackCooldown);
         isAttacking = false;
+        networkState?.SetAttacking(false);
         agent.isStopped = false;
     }
 
@@ -170,6 +180,7 @@ public class EnemyController : MonoBehaviour
     private void OnDeath()
     {
         isDead = true;
+        networkState?.SetDead(true);
         StopAllCoroutines();
 
         if (agent != null)

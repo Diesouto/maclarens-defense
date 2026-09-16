@@ -130,3 +130,14 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       la autoridad del host y que el parentado visual del cargo se replica correctamente.
 - [ ] Playtest con 2 y 4 jugadores: salida simultanea, aceleracion, town exit, entrega sin doble
       cobro, llegada a MacLarens y `Finish Day` validado por el host.
+
+## P6 - Bloque 5 de networking
+
+- [ ] Añadir `NetworkObject`, `NetworkTransform`, `NetworkEnemyState` y `NetworkHealth` a cada
+      prefab de enemigo que pueda spawnear `EnemySpawner`; registrarlos en NetworkPrefabs.
+- [ ] Añadir `NetworkThreatState` al objeto de managers networkado y comprobar referencias a
+      `ThreatManager` y `EnemySpawner`.
+- [ ] Confirmar que los enemigos dinamicos se crean solo desde el host y que el NavMesh, capas,
+      hitboxes y colliders producen el mismo resultado visual en clientes.
+- [ ] Playtest 1/2/3/4 jugadores: threat, densidad, persecucion, ataque, dano, muerte, despawn y
+      convergencia de `AliveEnemyCount` sin enemigos fantasma.
