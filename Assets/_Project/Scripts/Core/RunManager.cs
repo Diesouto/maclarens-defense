@@ -42,6 +42,9 @@ public class RunManager : MonoBehaviour
 
     public void ApplyQuotaForCurrentDay()
     {
+        if (IsNetworkClient())
+            return;
+
         if (dayQuotas == null || dayQuotas.Length == 0)
             return;
 
@@ -54,6 +57,9 @@ public class RunManager : MonoBehaviour
 
     public void AdvanceDay()
     {
+        if (IsNetworkClient())
+            return;
+
         if (CurrentDay >= TotalDays)
             return;
 
@@ -65,6 +71,9 @@ public class RunManager : MonoBehaviour
 
     public void ResetRun()
     {
+        if (IsNetworkClient())
+            return;
+
         CurrentDay = 1;
         SetPhase(RunPhase.MacLarens);
         GameStateManager.Instance?.StartRun();
@@ -76,6 +85,9 @@ public class RunManager : MonoBehaviour
 
     public void BeginDeparture(bool returningToMacLarens)
     {
+        if (IsNetworkClient())
+            return;
+
         SetPhase(returningToMacLarens
             ? RunPhase.LeavingTown
             : RunPhase.TravelingToTown);
@@ -83,6 +95,9 @@ public class RunManager : MonoBehaviour
 
     public void HandleTrainArrived(TrainDestination destination)
     {
+        if (IsNetworkClient())
+            return;
+
         SetPhase(destination == TrainDestination.Town
             ? RunPhase.Town
             : RunPhase.ResolvingDay);
@@ -90,17 +105,26 @@ public class RunManager : MonoBehaviour
 
     public void HandleTownExit()
     {
+        if (IsNetworkClient())
+            return;
+
         if (CurrentPhase == RunPhase.LeavingTown)
             SetPhase(RunPhase.ReturningToMacLarens);
     }
 
     public void BeginDayResolution()
     {
+        if (IsNetworkClient())
+            return;
+
         SetPhase(RunPhase.ResolvingDay);
     }
 
     public void FinishDay()
     {
+        if (IsNetworkClient())
+            return;
+
         if (CurrentPhase != RunPhase.ResolvingDay ||
             GameStateManager.Instance?.IsRunActive == false ||
             QuotaManager.Instance == null ||
@@ -137,6 +161,18 @@ public class RunManager : MonoBehaviour
 
         CurrentPhase = nextPhase;
         OnPhaseChanged?.Invoke(nextPhase);
+    }
+
+    public void ApplyReplicatedRunState(int day, RunPhase phase)
+    {
+        CurrentDay = Mathf.Max(day, 1);
+        SetPhase(phase);
+    }
+
+    private bool IsNetworkClient()
+    {
+        NetworkRunState networkState = GetComponent<NetworkRunState>();
+        return networkState != null && networkState.IsSpawned && !networkState.IsServer;
     }
 
 }

@@ -322,6 +322,9 @@ Pendiente de codigo/editor:
 
 ### Bloque 6 - GameState, cuerpo y desconexiones
 
+Estado actual: estado global y run phase replicados en codigo; desconexion host/client y cuerpo
+recuperable requieren integracion de escena y Play Mode para considerarse cerrados.
+
 #### T6.1 - Estado global sincronizado
 
 Objetivo:
@@ -333,6 +336,11 @@ Tareas:
 - `SetSuccess()` desde host
 - `RestartRun` / `ReturnToMainMenu` si se decide desde host o desde codigo de return al menu
 
+Implementado:
+- `NetworkGameState` replica `GameState` y `FailCause`, y bloquea mutaciones directas de clientes.
+- `NetworkRunState` replica `CurrentDay` y `RunPhase`, y bloquea mutaciones de `RunManager` en
+	clientes.
+
 #### T6.2 - Desconexiones
 
 Objetivo:
@@ -342,6 +350,43 @@ Tareas:
 - `OnClientDisconnect` en el host
 - `ResolveDisconnectedPlayerState` segun si estaba vivo, muerto, cargando cuerpo, en tren o en MacLarens
 - respetar rules de team wipe, abandono y penalizacion
+
+Implementado:
+- `BodyRecoveryManager` solo resuelve cuerpos en el host cuando NGO esta activo.
+- Al desconectarse un cliente, `NetworkPlayerSpawner` marca como perdido su cuerpo muerto antes
+	del despawn; la sesion elimina su entrada.
+
+Pendiente de codigo/editor:
+- cierre/retorno al menu visible para todos tras desconexion del host;
+- estado de abandono para un jugador vivo desconectado durante `Run`;
+- RPCs y autoridad completa de inventario, cargo, economia, compra y drop;
+- Relay/Authentication, prefabs, escenas y gates de Play Mode.
+
+## Veredicto de conversion multijugador del juego actual
+
+No se puede confirmar que todas las funcionalidades actuales hayan quedado convertidas. La base de
+autoridad y los estados publicos estan preparados, pero estos sistemas siguen teniendo mutaciones
+locales o integracion incompleta:
+
+| Sistema | Estado actual |
+| --- | --- |
+| Lobby/session | Base NGO implementada; Relay/UI/editor pendientes |
+| Player spawn/camera/input | Codigo de ownership implementado; prefab/transform/playtest pendientes |
+| Health/damage | Host-authoritative base implementada; prefab y validacion pendientes |
+| Body recovery | Logica host-only base implementada; spawn/desconexion completa pendientes |
+| Train/departure | Requests y estado replicado implementados; cargo visual y playtest pendientes |
+| Enemy AI/spawn | Host-only base implementada; prefabs, transform y playtest pendientes |
+| Threat | Estado y multiplicador replicados; calibracion y UI de cliente pendientes |
+| GameState/run phase | Replicados y bloqueados para mutacion cliente |
+| PlayerInventory | Estado visible replicado, pero drop/throw y cambios completos aun locales |
+| Loot pickup | Pickup host-validado implementado; drops/spawns dinamicos aun incompletos |
+| TrainCargo/delivery | Delivery host-validada implementada; cargo y salida de objetos requieren red completa |
+| MoneyManager/QuotaManager | Snapshot replicado; compras, pago, cargo y mutaciones no tienen RPC completo |
+| Finish Day | Request host implementado; resultado global depende de economia autoritativa pendiente |
+
+Por tanto, hemos convertido la arquitectura y una parte importante del runtime, pero no todas las
+funcionalidades jugables. El cierre real exige completar los RPCs de inventario/economia/cargo,
+registrar y cablear prefabs/escenas, instalar Relay/Authentication y ejecutar los gates 1/2/3/4.
 
 ## Principios de implementacion para codigo
 

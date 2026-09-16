@@ -141,3 +141,21 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       hitboxes y colliders producen el mismo resultado visual en clientes.
 - [ ] Playtest 1/2/3/4 jugadores: threat, densidad, persecucion, ataque, dano, muerte, despawn y
       convergencia de `AliveEnemyCount` sin enemigos fantasma.
+
+## P6 - Bloque 6 de networking
+
+- [ ] Añadir `NetworkObject`, `NetworkGameState` y `NetworkRunState` al objeto de managers; validar
+      que solo el host cambia `GameState`, `FailCause`, dia y fase.
+- [ ] Configurar `BodyRecoveryManager` en escena y confirmar que la desconexion de un jugador
+      muerto aplica abandono/penalizacion solo una vez.
+- [ ] Definir y probar el contrato de un jugador vivo desconectado durante `Run` y el retorno al
+      menu cuando se pierde el host.
+- [ ] Ejecutar QA final de P6 con 1/2/3/4 jugadores y registrar los resultados antes de marcar la
+      conversion multijugador como terminada.
+
+## P6 - Cierre de conversion pendiente
+
+- [ ] Completar RPCs de `PlayerInventory` para drop/throw y sincronizacion de `ItemInstance`.
+- [ ] Completar autoridad de `TrainCargo`, `MoneyManager`, `QuotaManager`, compras y pago de cuota.
+- [ ] Completar registro networkado de loot creado dinamicamente y parentado de cargo.
+- [ ] Instalar Authentication + Relay y crear Host/Join por codigo.

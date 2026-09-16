@@ -51,6 +51,10 @@ public class GameStateManager : MonoBehaviour
 
     public bool TrySetState(GameState nextState)
     {
+        NetworkGameState networkState = GetComponent<NetworkGameState>();
+        if (networkState != null && networkState.IsSpawned && !networkState.IsServer)
+            return false;
+
         if (CurrentState == nextState)
             return false;
 
@@ -76,6 +80,17 @@ public class GameStateManager : MonoBehaviour
             return;
 
         LastFailCause = cause;
+    }
+
+    public void ApplyReplicatedState(GameState state, FailCause cause)
+    {
+        if (CurrentState == state && LastFailCause == cause)
+            return;
+
+        GameState previous = CurrentState;
+        CurrentState = state;
+        LastFailCause = cause;
+        OnStateChanged?.Invoke(previous, state);
     }
 
     // Reloading the gameplay scene is the reset: every manager, loot, enemy and threat instance

@@ -425,18 +425,19 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Sincronizar `GameStateManager`/`RunManager` para todos`
   Resultado: fases de `RunManager` y estados de `GameStateManager` (`Success`/`Fail`) son un unico valor replicado por el host.
   Aceptacion: todos los clientes entran y salen de `Success`/`Fail` en el mismo instante y ven la misma pantalla.
-  Estado: `FinishDayInteractable` ya envia la peticion al host mediante `NetworkTrainState`; la
-  replicacion global de `GameStateManager`/`RunManager` queda para P6.6.
+  Estado: `NetworkGameState` y `NetworkRunState` replican estado global, dia y fase; falta
+  configurar managers en escena y validar Success/Fail en Play Mode.
 
 - `[Network] Reconexion o abandono durante la run`
   Resultado: un cliente desconectado durante `Run` no bloquea al resto; su jugador pasa a cuerpo abandonado o estado inerte segun corresponda.
   Aceptacion: la partida sigue siendo terminable por el resto del equipo con 1, 2 o 3 jugadores restantes.
-  Estado: pendiente.
+  Estado: base de despawn y marcado de cuerpo muerto implementada; falta resolver jugador vivo,
+  host desconectado, retorno al menu y validacion en Play Mode.
 
 - `[QA] Gate de desconexion`
   Resultado: pruebas forzadas de desconexion de cliente y host en Town, tren y MacLarens.
   Aceptacion: el resto del equipo sigue jugando o cerrando correctamente la partida.
-  Estado: pendiente.
+  Estado: pendiente; requiere Relay, escena configurada y sesiones reales.
 
 #### P6.7 - Balance final y cierre de fase
 
@@ -451,6 +452,9 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
   Estado: pendiente.
 
 ### Regla de prioridad
+
+> **Estado de P6:** los bloques 0-6 tienen base de codigo, pero P6 no esta cerrado como milestone
+> jugable. Inventario/drop, economia, cargo completo, Relay, prefabs, escenas y QA siguen abiertos.
 
 - Primero se cierran sistemas del core loop y autoridad del host.
 - Luego se sincronizan UI y lobby.

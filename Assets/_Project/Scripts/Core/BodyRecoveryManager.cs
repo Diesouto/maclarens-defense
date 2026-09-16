@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 // Resolves what happens to dead players' bodies once Town is left behind: a body still inside
@@ -59,6 +60,10 @@ public class BodyRecoveryManager : MonoBehaviour
     // killed players are included alongside anyone who died earlier in the day.
     public void ResolveBodiesAtTownExit()
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return;
+
         foreach (PlayerBody body in PlayerBody.AllBodies)
         {
             if (body == null || !body.IsDead || body.IsPendingRespawn)
@@ -78,6 +83,10 @@ public class BodyRecoveryManager : MonoBehaviour
     // always counts as abandoned, regardless of whether Town has been resolved yet.
     public void MarkLost(PlayerBody body)
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return;
+
         if (body == null || !body.IsDead || body.IsPendingRespawn)
             return;
 

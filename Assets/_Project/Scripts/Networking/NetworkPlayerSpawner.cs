@@ -57,6 +57,10 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         {
             if (spawnedPlayer != null)
             {
+                PlayerBody body = spawnedPlayer.GetComponent<PlayerBody>();
+                if (body != null && body.IsDead)
+                    BodyRecoveryManager.Instance?.MarkLost(body);
+
                 if (spawnedPlayer.TryGetComponent(out NetworkObject networkObject))
                 {
                     networkObject.Despawn();
