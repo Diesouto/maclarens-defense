@@ -217,6 +217,9 @@ Pendiente de codigo:
 
 ### Bloque 4 - Tren y dia
 
+Estado actual: base de autoridad de tren, entrega y resolucion de dia implementada en codigo;
+la sincronizacion visual y la validacion jugable requieren configuracion de prefabs/escena.
+
 #### T4.1 - Train movement autoritativo
 
 Objetivo:
@@ -227,6 +230,11 @@ Tareas:
 - `TrainStateNetworkData` sincronizado por `NetworkVariable`
 - `TrainDeparture` y `TrainSplineFollower` leyendo estado del host
 - `TownExitMarker` evento del host
+
+Implementado:
+- `NetworkTrainState` replica estacion, destino, movimiento, velocidad y distancia.
+- La salida del tren solo inicia la coroutine en el host; los clientes usan
+	`RequestDepartureServerRpc`.
 
 #### T4.2 - Cargo y entrega
 
@@ -239,6 +247,11 @@ Tareas:
 - `DeliverLootServerRpc` y `TryDeliver` idempotente
 - `MoneyManager.AddMoney` en host
 
+Implementado:
+- `NetworkLootDelivery` valida referencia de loot, distancia y entrega idempotente en el host.
+- `LootDeliveryPoint` conserva la regla existente de acreditar dinero y despacha el objeto
+	networkado mediante `NetworkObject.Despawn`.
+
 #### T4.3 - Resolucion del dia
 
 Objetivo:
@@ -249,6 +262,17 @@ Tareas:
 - validacion: `RunPhase.ResolvingDay`, dinero suficiente, no doble cierre
 - `ApplyDayResolution()` en host
 - `AdvanceDay`, `SetSuccess`, `SetFail` solo en host
+
+Implementado:
+- `FinishDayInteractable` usa `RequestFinishDayServerRpc` cuando la escena esta networkada.
+- `NetworkTrainState` valida la fase `ResolvingDay` antes de llamar a `RunManager.FinishDay`.
+
+Pendiente de codigo/editor:
+- replicar la jerarquia de cargo y parentado visual del loot en todos los clientes;
+- añadir el request/validate/apply de salida tambien a cualquier UI de tren que no pase por
+	`TrainDeparture`;
+- configurar `NetworkTransform`, `NetworkObject` y referencias serializadas en escena;
+- validar aceleracion, town exit, entrega y resolucion de dia en Play Mode.
 
 ### Bloque 5 - Enemigos y threat
 

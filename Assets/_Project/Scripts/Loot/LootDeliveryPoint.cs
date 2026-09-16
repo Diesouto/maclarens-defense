@@ -20,10 +20,20 @@ public class LootDeliveryPoint : MonoBehaviour
         if (lootItem == null)
             return;
 
+        NetworkLootDelivery networkDelivery = GetComponent<NetworkLootDelivery>();
+        if (networkDelivery != null && networkDelivery.IsSpawned && !networkDelivery.IsServer)
+        {
+            NetworkLootItem networkLoot = lootItem.GetComponent<NetworkLootItem>();
+            if (networkLoot != null && networkLoot.IsSpawned)
+                networkDelivery.RequestDeliverServerRpc(networkLoot.NetworkObject);
+
+            return;
+        }
+
         TryDeliver(lootItem);
     }
 
-    private bool TryDeliver(LootItem lootItem)
+    public bool TryDeliver(LootItem lootItem)
     {
         if (lootItem == null || lootItem.Data == null)
             return false;
@@ -39,8 +49,9 @@ public class LootDeliveryPoint : MonoBehaviour
         // Delivered loot becomes shared team money. Quota payment happens later at Finish Day.
         MoneyManager.Instance?.AddMoney(value);
 
-        // The delivered object no longer exists in the world.
-        Destroy(lootItem.gameObject);
+        // Networked loot is despawned by NetworkLootDelivery after this method returns.
+        if (lootItem.GetComponent<NetworkLootItem>() == null)
+            Destroy(lootItem.gameObject);
 
         return true;
     }

@@ -381,17 +381,19 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Sincronizar `TrainCargo`/`LootDeliveryPoint``
   Resultado: deposito fisico y entrega a `TeamMoney` resueltos en host; movimiento del tren por el spline replicado a todos.
   Aceptacion: cualquier cliente que deposite loot lo ve reflejado igual en todos los clientes y en la cuota.
-  Estado: pendiente.
+  Estado: `NetworkLootDelivery` valida y entrega loot en host; falta configurar objetos networkados
+  y validar cargo/entrega en Play Mode.
 
 - `[Network] Sincronizar `TrainDeparture` (countdown y aceleracion)`
   Resultado: decision de salida, countdown y aceleracion progresiva son un unico estado replicado, no un timer local por cliente.
   Aceptacion: todos los clientes ven el mismo countdown y el mismo instante de salida.
-  Estado: pendiente.
+  Estado: `NetworkTrainState` replica movimiento, estacion, destino, velocidad y distancia; la
+  salida usa RPC host-authoritative. Falta sincronizacion visual y Play Mode.
 
 - `[Network] Sincronizar extraccion, fog y limpieza de Town`
   Resultado: `TownExtractionResolver` corre solo en host y replica el resultado (abandonados, recuperados, limpieza de loot/enemigos).
   Aceptacion: la resolucion es identica para todos los clientes en la misma partida.
-  Estado: pendiente.
+  Estado: pendiente; `TownExit` sigue dependiendo de la integracion networkada de la escena.
 
 - `[QA] Gate de tren y extraccion`
   Resultado: validacion de salida, abandono, penalizacion y resolucion de dia durante run completa.
@@ -420,7 +422,8 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Sincronizar `GameStateManager`/`RunManager` para todos`
   Resultado: fases de `RunManager` y estados de `GameStateManager` (`Success`/`Fail`) son un unico valor replicado por el host.
   Aceptacion: todos los clientes entran y salen de `Success`/`Fail` en el mismo instante y ven la misma pantalla.
-  Estado: pendiente.
+  Estado: `FinishDayInteractable` ya envia la peticion al host mediante `NetworkTrainState`; la
+  replicacion global de `GameStateManager`/`RunManager` queda para P6.6.
 
 - `[Network] Reconexion o abandono durante la run`
   Resultado: un cliente desconectado durante `Run` no bloquea al resto; su jugador pasa a cuerpo abandonado o estado inerte segun corresponda.

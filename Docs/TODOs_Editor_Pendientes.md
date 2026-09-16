@@ -119,3 +119,14 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       `MoneyManager` y `QuotaManager` en la escena.
 - [ ] Playtest con 2 y 4 jugadores: pickup simultaneo del mismo loot, inventario lleno, muerte,
       revive y convergencia de dinero/cuota/cargo entre host y clientes.
+
+## P6 - Bloque 4 de networking
+
+- [ ] Añadir `NetworkObject`, `NetworkTransform` y `NetworkTrainState` al objeto networkado del
+      tren; asignar `TrainSplineFollower`, `TrainDeparture` y `RunManager`.
+- [ ] Configurar `NetworkObject` y `NetworkLootDelivery` en el punto de entrega, y registrar los
+      prefabs de loot networkados en `NetworkManager.NetworkPrefabs`.
+- [ ] Confirmar que `TrainCargo` y el punto de entrega usan colliders/rigidbodies compatibles con
+      la autoridad del host y que el parentado visual del cargo se replica correctamente.
+- [ ] Playtest con 2 y 4 jugadores: salida simultanea, aceleracion, town exit, entrega sin doble
+      cobro, llegada a MacLarens y `Finish Day` validado por el host.

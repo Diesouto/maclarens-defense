@@ -3,11 +3,15 @@ using UnityEngine;
 public class FinishDayInteractable : MonoBehaviour, IInteractable
 {
     [SerializeField] private RunManager runManager;
+    [SerializeField] private NetworkTrainState networkTrainState;
 
     private void Awake()
     {
         if (runManager == null)
             runManager = RunManager.Instance;
+
+        if (networkTrainState == null)
+            networkTrainState = FindFirstObjectByType<NetworkTrainState>();
     }
 
     public bool CanInteract(PlayerInteractor interactor)
@@ -28,6 +32,9 @@ public class FinishDayInteractable : MonoBehaviour, IInteractable
         if (!CanInteract(interactor))
             return;
 
-        runManager.FinishDay();
+        if (networkTrainState != null && networkTrainState.IsSpawned)
+            networkTrainState.RequestFinishDay();
+        else
+            runManager.FinishDay();
     }
 }

@@ -8,6 +8,7 @@ public class TrainDeparture : MonoBehaviour, IInteractable
     [SerializeField] private InteractUI interactUI;
     [SerializeField] private RunManager runManager;
     [SerializeField] private TrainSplineFollower trainSplineFollower;
+    [SerializeField] private NetworkTrainState networkTrainState;
 
     public bool IsDeparting { get; private set; }
     public bool HasDeparted { get; private set; }
@@ -25,6 +26,9 @@ public class TrainDeparture : MonoBehaviour, IInteractable
 
         if (trainSplineFollower == null)
             trainSplineFollower = FindFirstObjectByType<TrainSplineFollower>();
+
+        if (networkTrainState == null)
+            networkTrainState = FindFirstObjectByType<NetworkTrainState>();
     }
 
     private void OnEnable()
@@ -69,7 +73,21 @@ public class TrainDeparture : MonoBehaviour, IInteractable
         if (!CanInteract(interactor))
             return;
 
+        if (networkTrainState != null && networkTrainState.IsSpawned)
+        {
+            networkTrainState.RequestDeparture();
+            return;
+        }
+
         // Departure does not require the quota to be met; the crew can choose to leave early.
+        BeginAuthoritativeDeparture();
+    }
+
+    public void BeginAuthoritativeDeparture()
+    {
+        if (IsDeparting || HasDeparted)
+            return;
+
         StartCoroutine(DepartureRoutine());
     }
 
