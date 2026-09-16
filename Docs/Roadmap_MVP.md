@@ -391,27 +391,69 @@ Desde este punto no entran features nuevas de sistema. Solo correcciones, UX, ba
 
 ### Meta
 
-Escalar el loop ya validado a cooperativo 1-4 con NGO + Relay.
+Migrar el loop singleplayer ya validado a host-authoritative cooperativo (1-4 jugadores) con NGO + Relay, sin reimplementar reglas de gameplay: el cliente envia intencion, el host valida y aplica.
+
+### Sub-fases obligatorias, en orden
+
+1. Ownership freeze: congelar que sistema es server-owned vs client-owned (Core, Loot, Train, Enemy, GameState) antes de tocar red.
+2. Servicios + lobby: Authentication, Relay, NGO, y UI de Host/Join/Start con manejo de desconexion previa al inicio.
+3. Jugador de red: spawn, ownership por cliente, camara/animator locales, salud y cuerpo recuperable sincronizados.
+4. Inventario/loot/economia server-authoritative: pickup, drop, deposito, LootRegistry, MoneyManager, QuotaManager validados y aplicados solo en host.
+5. Tren y dia server-authoritative: TrainCargo, TrainDeparture, extraccion/fog y ResolvingDay como estado unico replicado.
+6. AI/threat server-authoritative con balance por numero de jugadores (multiplicador per-capita, no escalado lineal sin techo).
+7. GameState sincronizado: Success/Fail como unico valor de host; reconexion/abandono durante la run no bloquea al resto.
+
+### Checklist semanal
+
+#### Semana 1 - Foundation
+
+- Auditar ownership completo de sistemas existentes.
+- Configurar Authentication + Relay + NGO.
+- Crear flujo de host/join y lobby.
+- Validar desconexion antes del inicio.
+
+#### Semana 2 - Network gameplay core
+
+- Spawn de jugadores, sincronizacion de movimiento y salud.
+- Implementar propietario local de camara/animator.
+- Hacer server-authoritative inventario, loot y economia.
+- Validar pickup/drop/deposit sin duplicados.
+
+#### Semana 3 - Train + run flow
+
+- Sincronizar train movement, cargo, entrega y salida.
+- Hacer que la extraccion/fog y la resolucion del dia sean un estado unico del host.
+- Validar flow de quota y Finish Day para 2 jugadores.
+
+#### Semana 4 - Threat + final QA
+
+- Autorizar AI/threat y balance por numero de jugadores.
+- Sincronizar GameState y desconexion durante Run.
+- Ejecutar gates 1/2/3/4 con smoke tests de gameplay completo.
 
 ### Entregables
 
-- Instalar y configurar Authentication + Relay
-- Host y Join por codigo Relay
-- Jugador de red sincronizado
-- Inventario autoritativo en servidor
-- Loot, enemigos, threat, cuota y tren autoritativos en servidor
-- Final de run sincronizado para todos
+- Authentication + Relay + NGO instalados y funcionando
+- Lobby con Host/Join por codigo y lista de jugadores
+- Jugador de red sincronizado (movimiento, salud, muerte, cuerpo recuperable)
+- Inventario, loot y economia (MoneyManager/QuotaManager) autoritativos en host
+- Tren, entrega, cuota y extraccion sincronizados
+- Enemy AI y threat autoritativos en host, con balance por numero de jugadores
+- GameStateManager/RunManager sincronizados, incluida reconexion/abandono durante la run
 
-### Criterios de salida
+### Criterios de salida (gates explicitos por numero de jugadores)
 
-- 2 jugadores pueden completar la run sin desincronizaciones graves
-- 4 jugadores pueden entrar, lootear, depositar y salir
-- El servidor decide existencia de loot, AI, daño y cuota
+- 1 jugador (host-only): la run completa (Success o Fail) funciona igual que en singleplayer puro, sin regresiones de latencia ni de reglas.
+- 2 jugadores: loot, dinero, cuota, threat y tren no divergen entre host y cliente durante una run completa; un jugador puede morir y ser recuperado o abandonado sin softlock.
+- 3 jugadores: se sostiene lo anterior con una desconexion forzada en Town, en el tren y en MacLarens; el resto del equipo puede cerrar el dia.
+- 4 jugadores: la curva de threat/enemigos escala de forma jugable (ni trivial ni injusta) y no aparecen condiciones de carrera en pickup/deposito/venta simultaneos.
+- El servidor decide en todos los casos: existencia de loot, AI, daño, cuota, cargo y salida del tren.
 
 ### Si hay retraso
 
-- Se optimiza para Host + 1 primero
-- Se recortan animaciones o detalles visuales antes de tocar autoridad de servidor
+- Se prioriza el gate de host + 1 jugador; los gates de 3 y 4 jugadores se posponen sin bloquear el resto del roadmap.
+- Se recortan animaciones o detalles visuales antes de recortar autoridad de servidor o los gates de validacion.
+- No se reduce el numero de sub-fases: si falta tiempo, se corta contenido de P7/P8, no pasos de P6.
 
 ## Fase 7 - Post-MVP
 

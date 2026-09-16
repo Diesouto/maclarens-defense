@@ -90,3 +90,19 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
     solo con el cambio de estado).
   - Pulsar Restart -> la escena se recarga limpia (sin loot/enemigos/threat/dinero residual).
   - Pulsar Main Menu -> carga `MenuScene` y sale del flujo de run.
+
+
+## P6 - Bloques 0 y 1 de networking
+
+- [ ] Instalar y configurar Unity Services Authentication + Relay; anadir los paquetes necesarios
+      al proyecto y crear `RelayJoinCodeManager` con Host/Join por codigo.
+- [ ] Crear o localizar el objeto de escena con `NetworkManager`, `NetworkBootstrapper` y
+      `NetworkSessionManager`.
+- [ ] Crear el prefab networkado del jugador con `NetworkObject`, `NetworkTransform` y
+      `NetworkPlayer`; registrarlo en `NetworkManager.NetworkPrefabs`.
+- [ ] Crear un objeto con `NetworkPlayerSpawner`, asignar el prefab networkado y los puntos de
+      spawn, y comprobar que solo el propietario activa input, interaccion y camara.
+- [ ] Crear la UI de lobby para Host, Join, ready, lista de jugadores y Start solo para host.
+- [ ] Playtest de lobby en 1/2/3/4 jugadores: entradas, salidas, ready, start y host desconectado.
+- [ ] Playtest de spawn y movimiento: cada cliente controla solo su personaje y todos ven el
+      transform sincronizado.

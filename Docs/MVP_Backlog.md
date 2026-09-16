@@ -298,6 +298,171 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: vertical slice portable y demostrable.
   Aceptacion: se puede jugar de inicio a fin sin usar el editor para arreglar nada.
 
+## P6 - Multiplayer host-authoritative (despues del freeze singleplayer)
+
+Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode. Ninguna tarea de P6 reimplementa gameplay: reutiliza el mismo flujo request -> validate -> apply que ya usa singleplayer, con el host como validador unico.
+
+### Checklist ejecutable de tareas de P6
+
+#### P6.0 - Congelar ownership map
+
+- `[Network] Auditar y congelar ownership de sistemas`
+  Resultado: tabla escrita de que sistema es server-owned, client-owned o solo presentacion, cubriendo Core, Player, Loot, Train, Enemy y GameState.
+  Aceptacion: ningun sistema queda ambiguo; la tabla se usa como checklist en el resto de P6 y no se reabre salvo bloqueo real.
+  Estado: ownership congelado en [Auditoria de ownership P6](Auditorias/Auditoria_Ownership_P6.md).
+
+#### P6.1 - Servicios + lobby
+
+- `[Network] Instalar Authentication + Relay + NGO`
+  Resultado: servicios de Unity Gaming Services inicializados al arrancar el juego.
+  Aceptacion: el proyecto autentica sesion anonima y puede crear/solicitar un join code de Relay sin pasos manuales fuera del flujo previsto.
+  Estado: base NGO implementada y validada estaticamente en `NetworkBootstrapper` y `NetworkSessionManager`; Authentication/Relay pendiente por paquetes y configuracion.
+
+- `[UI] Crear flujo de lobby (Host / Join / Start)`
+  Resultado: pantalla de multijugador en el Menu Principal: crear partida (genera codigo), unirse con codigo, lista de jugadores conectados.
+  Aceptacion: el host ve entrar a cada cliente en tiempo real; `Start` solo lo puede pulsar el host y solo con al menos 1 jugador presente.
+  Estado: codigo base de lobby implementado: lista replicada, ready, start host-only y desconexion previa al inicio. Falta UI y validacion en Play Mode.
+
+- `[Network] Resolver desconexion antes de iniciar`
+  Resultado: un jugador que abandona el lobby antes de `Start` se retira sin romper el estado de los demas.
+  Aceptacion: el lobby sigue siendo usable con cualquier combinacion de entradas/salidas de 1 a 4 jugadores antes del inicio.
+  Estado: codigo de desconexion previa al inicio implementado; falta validacion jugable.
+
+- `[QA] Gate 1/2/3/4 del lobby`
+  Resultado: validacion del lobby en 1, 2, 3 y 4 jugadores (host incluido) antes de pasar a la partida.
+  Aceptacion: se puede crear, unirse, ver lista actualizada y lanzar la partida sin errores ni jugadores fantasma.
+  Estado: pendiente de Play Mode en 1/2/3/4 jugadores; no se cierra sin Editor y Relay.
+
+#### P6.2 - Jugador de red y salud
+
+- `[Network] Spawnear jugador de red con ownership por cliente`
+  Resultado: cada cliente controla su propio jugador; el host valida posicion/estado, camara y animator quedan locales.
+  Aceptacion: cada cliente ve moverse a los demas sin poder mover el personaje de otro cliente.
+  Estado: `NetworkPlayerSpawner` y `NetworkPlayer` implementados; falta prefab/scene wiring, `NetworkTransform` configurado y validacion de movimiento en Play Mode.
+
+- `[Network] Sincronizar salud, muerte y cuerpo recuperable`
+  Resultado: `Health` y muerte son autoritativos en host; el cuerpo recuperable de P5.8 se replica para todos.
+  Aceptacion: un jugador muere, todos ven el mismo cuerpo, y solo el host resuelve `Revive()` y la penalizacion al llegar a MacLarens.
+  Estado: pendiente.
+
+- `[QA] Gate de movimiento y muerte`
+  Resultado: validacion de movimiento, camara y muerte/recuperacion en sesiones de prueba.
+  Aceptacion: no hay divergencia entre clientes tras 10+ minutos de partida.
+  Estado: pendiente.
+
+#### P6.3 - Inventario, loot y economia
+
+- `[Network] Inventario server-authoritative`
+  Resultado: pickup, drop, throw y deposito viajan como intencion de cliente y se validan/aplican en host.
+  Aceptacion: ningun cliente puede duplicar loot ni superar los 4 slots manipulando su input local.
+  Estado: pendiente.
+
+- `[Network] Loot y `LootRegistry` sincronizados`
+  Resultado: existencia, spawn y ownership temporal de cada `LootItem` viven en el host y se replican a todos.
+  Aceptacion: todos los clientes ven el mismo objeto desaparecer al recogerse y reaparecer al soltarse, sin duplicados.
+  Estado: pendiente.
+
+- `[Network] `MoneyManager`/`QuotaManager` server-authoritative`
+  Resultado: `TeamMoney`, deuda, cuota efectiva y modificadores se calculan y aplican solo en host.
+  Aceptacion: venta, compra y `Finish Day` producen el mismo resultado para todos los clientes al mismo tiempo.
+  Estado: pendiente.
+
+- `[QA] Gate de inventario y economia`
+  Resultado: validacion por 2 y 4 jugadores de looteo, venta, compra y sincronizacion de inventario.
+  Aceptacion: no hay loot duplicado, dinero duplicado ni inventario desincronizado.
+  Estado: pendiente.
+
+#### P6.4 - Tren, entrega y dia
+
+- `[Network] Sincronizar `TrainCargo`/`LootDeliveryPoint``
+  Resultado: deposito fisico y entrega a `TeamMoney` resueltos en host; movimiento del tren por el spline replicado a todos.
+  Aceptacion: cualquier cliente que deposite loot lo ve reflejado igual en todos los clientes y en la cuota.
+  Estado: pendiente.
+
+- `[Network] Sincronizar `TrainDeparture` (countdown y aceleracion)`
+  Resultado: decision de salida, countdown y aceleracion progresiva son un unico estado replicado, no un timer local por cliente.
+  Aceptacion: todos los clientes ven el mismo countdown y el mismo instante de salida.
+  Estado: pendiente.
+
+- `[Network] Sincronizar extraccion, fog y limpieza de Town`
+  Resultado: `TownExtractionResolver` corre solo en host y replica el resultado (abandonados, recuperados, limpieza de loot/enemigos).
+  Aceptacion: la resolucion es identica para todos los clientes en la misma partida.
+  Estado: pendiente.
+
+- `[QA] Gate de tren y extraccion`
+  Resultado: validacion de salida, abandono, penalizacion y resolucion de dia durante run completa.
+  Aceptacion: un cliente atrapado al salir del tren no rompe la partida del resto.
+  Estado: pendiente.
+
+#### P6.5 - AI y threat
+
+- `[Network] `ThreatManager`/`EnemySpawner` autoritativos en host`
+  Resultado: threat, spawn y comportamiento de `EnemyController` se calculan solo en host; transform/estado/ataques se replican.
+  Aceptacion: ningun cliente ve enemigos o niveles de threat distintos entre si.
+  Estado: pendiente.
+
+- `[Balance] Escalar threat y densidad de enemigos por numero de jugadores`
+  Resultado: `ThreatTuningSO`/`EnemySpawner` leen un multiplicador segun jugadores conectados (1/2/3/4) en vez de un valor fijo.
+  Aceptacion: la presion por jugador se mantiene comparable entre 1 y 4 jugadores (ajuste per-capita con techo, no escalado lineal sin limite).
+  Estado: pendiente.
+
+- `[QA] Gate 1/2/3/4 de amenaza`
+  Resultado: comprobacion de la curva de threat/enemigos en las 4 configuraciones de jugadores.
+  Aceptacion: la amenaza es jugable en todas las configuraciones sin trivializar ni romper la partida.
+  Estado: pendiente.
+
+#### P6.6 - Game state y desconexiones
+
+- `[Network] Sincronizar `GameStateManager`/`RunManager` para todos`
+  Resultado: fases de `RunManager` y estados de `GameStateManager` (`Success`/`Fail`) son un unico valor replicado por el host.
+  Aceptacion: todos los clientes entran y salen de `Success`/`Fail` en el mismo instante y ven la misma pantalla.
+  Estado: pendiente.
+
+- `[Network] Reconexion o abandono durante la run`
+  Resultado: un cliente desconectado durante `Run` no bloquea al resto; su jugador pasa a cuerpo abandonado o estado inerte segun corresponda.
+  Aceptacion: la partida sigue siendo terminable por el resto del equipo con 1, 2 o 3 jugadores restantes.
+  Estado: pendiente.
+
+- `[QA] Gate de desconexion`
+  Resultado: pruebas forzadas de desconexion de cliente y host en Town, tren y MacLarens.
+  Aceptacion: el resto del equipo sigue jugando o cerrando correctamente la partida.
+  Estado: pendiente.
+
+#### P6.7 - Balance final y cierre de fase
+
+- `[Core] Crear config de balance por numero de jugadores`
+  Resultado: fuente unica (ScriptableObject o extension de los tuning existentes) que ajusta cuota base, threat y densidad de enemigos segun 1/2/3/4 jugadores.
+  Aceptacion: cambiar el numero de jugadores en el lobby ajusta estos valores automaticamente sin tocar otros sistemas.
+  Estado: pendiente.
+
+- `[QA] Gate final de P6`
+  Resultado: run completa jugada en 1, 2, 3 y 4 jugadores sin desincronizacion grave.
+  Aceptacion: sin duplicar loot/dinero, sin desincronizar cuota/threat/tren y sin softlock al desconectar un cliente.
+  Estado: pendiente.
+
+### Regla de prioridad
+
+- Primero se cierran sistemas del core loop y autoridad del host.
+- Luego se sincronizan UI y lobby.
+- Multiplayer no adelanta trabajo de singleplayer si el loop aun no esta probado.
+- Contenido extra solo entra cuando el sistema base ya es estable.
+
+## P7 - Polish posterior
+
+- `[Combat] Anadir shotgun o rifle`
+- `[Loot] Añadir un outline al apuntar a un loot item`
+  Resultado: los loot items resaltan visualmente cuando el jugador apunta hacia ellos.
+  Aceptacion: al apuntar a un loot item, este se destaca con un outline visible cuando está en rango de interacción.
+- `[Loot] Implementar abstracción de items para tener herramientas utilizables`
+  Resultado: tenemos un sistema flexible que extiende la lógica existente de LootItems para crear herramientas u objetos utilizables de uno o varios usos con distintas funcionalidades.
+  Aceptacion: se pueden crear y usar herramientas desde el inventario, y su comportamiento se refleja correctamente en el juego.
+- `[Enemy] Anadir más enemigos solo si los primeros son estables`
+  Cactus que se mueve cuando nadie lo mira, planta rodadora que persigue a los jugadores y al estar cerca explota, enano que intenta robar lootItems y llevárselos hasta su escondite, fantasma que atraviesa paredes y solo puede matarse utilizando un LootItem de una cruz??
+
+- `[UI] Crear selector de personaje en el maclarens??`
+  Resultado: El jugador puede cambiar su personaje.
+  Aceptacion: El jugador puede cambiar su personaje y todos los jugadores ven el personaje seleccionado (activar o desactivar el gameobject correspondiente, todos los personajes se encuentran dentro del root del modelo).
+  
 - `[P5.16][QoL] Cierta UI del mundo siempre apuntando al jugador`
   Resultado: crear un script que haga que ciertos elementos de la UI del mundo siempre apunten al jugador.
   Aceptacion: se pueden ver los elementos de la UI del mundo apuntando al jugador.
@@ -306,55 +471,10 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: conseguir que la cámara del jugador solo muestre las manos y pies de su personaje.
   Aceptacion: la cámara del jugador solo muestra sus propias manos y pies de su personaje, y no otras partes del cuerpo. Los demás jugadores serán siempre completamente visibles
 
-## P6 - Multiplayer despues del freeze
-
-- `[Network] Instalar Authentication + Relay`
-  Resultado: base de servicios para host y join por codigo.
-  Aceptacion: el proyecto puede crear o unirse a una sesion Relay sin pasos manuales fuera del flujo previsto.
-
-- `[UI] Crear UI para que un jugador hostee y otro pueda introducir el código para unirse + lobby con empezar partida??`
-  Resultado: UI de multijugador añadida al Menú Principal.
-  Aceptacion: .
-
-- `[Network] Host + Join con Relay`
-  Resultado: dos jugadores conectan por codigo.
-  Aceptacion: un cliente entra en la partida del host y comparte el mismo estado.
-
-- `[Network] Hacer inventario server authoritative`
-  Resultado: pickup, drop y deposit se validan en servidor.
-  Aceptacion: no se puede duplicar loot con acciones del cliente.
-
-- `[Network] Hacer loot server authoritative`
-  Resultado: existencia y ownership de loot sincronizados.
-  Aceptacion: todos ven el mismo objeto desaparecer, caer y depositarse.
-
-- `[Network] Hacer AI y threat server authoritative`
-  Resultado: enemigos y ritmo de presion unificados.
-  Aceptacion: clientes no divergen en spawns ni comportamiento.
-
-- `[Network] Sincronizar cuota, cargo y salida del tren`
-  Resultado: todos leen el mismo progreso de run.
-  Aceptacion: finalizar run funciona para host y clientes.
-
-- `[Network] Sincronizar knockback, incapacitacion y recovery basicos`
-  Resultado: el juego queda preparado para hazards fisicas simples sin estados imposibles.
-  Aceptacion: un empujon o caida controlada no desincroniza posicion ni control entre host y cliente.
-
-## P7 - Polish posterior
-
-- `[Combat] Anadir shotgun o rifle`
-- `[Enemy] Anadir más enemigos solo si los primeros son estables`
-- `[Loot] Ampliar objetos y objetos utilizables (pociones, lazo para agarrar cosas, dinamita...)`
-- `[Hazard] Añadir plantas rodadoras explosivas si la build ya es estable`
-- `[Enemy] Prototipar cactus observador solo despues de cerrar hazards simples`
 - `[Audio] Sonidos de armas, loot, enemigos y tren`
 - `[VFX] Muzzle flash, hit, blood y warning de threat`
 - `[UI] Refinar HUD final`
 - `[UI] Menú de opciones (gráficos, sonido, salir de la partida...)`
-
-- `[UI] Crear selector de personaje en el maclarens??`
-  Resultado: El jugador puede cambiar su personaje.
-  Aceptacion: El jugador puede cambiar su personaje y todos los jugadores ven el personaje seleccionado (activar o desactivar el gameobject correspondiente, todos los personajes se encuentran dentro del root del modelo).
 
 ## P8 - Post-MVP: Infinity Mode y cooperacion avanzada
 
