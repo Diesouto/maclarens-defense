@@ -81,13 +81,23 @@ public class LootItem : MonoBehaviour, IInteractable
 
     public void Interact(PlayerInteractor interactor)
     {
-        if (!CanInteract(interactor))
+        NetworkLootItem networkLoot = GetComponent<NetworkLootItem>();
+        if (networkLoot != null && networkLoot.IsSpawned && !networkLoot.IsServer)
+        {
+            networkLoot.RequestPickupServerRpc();
             return;
+        }
 
-        PlayerInventory inventory = interactor.GetComponent<PlayerInventory>();
+        TryCollect(interactor != null ? interactor.GetComponent<PlayerInventory>() : null);
+    }
 
-        if (inventory == null || !inventory.TryAdd(lootData, Instance))
-            return;
+    public bool TryCollect(PlayerInventory inventory)
+    {
+        if (inventory == null || !CanAddToInventory(inventory))
+            return false;
+
+        if (!inventory.TryAdd(lootData, Instance))
+            return false;
 
         cargo?.RemoveItem(this);
 
@@ -98,11 +108,17 @@ public class LootItem : MonoBehaviour, IInteractable
         }
 
         IsCollected = true;
-
         spawnPoint?.SetOccupied(false);
 
         if (hideOnPickup)
             gameObject.SetActive(false);
+
+        return true;
+    }
+
+    private bool CanAddToInventory(PlayerInventory inventory)
+    {
+        return inventory.CanAdd(lootData);
     }
 
     public static LootItem CreateDroppedLoot(LootDataSO data, Vector3 position, Quaternion rotation, ItemInstance itemInstance = null, Vector3? throwForce = null)

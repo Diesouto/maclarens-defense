@@ -106,3 +106,16 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 - [ ] Playtest de lobby en 1/2/3/4 jugadores: entradas, salidas, ready, start y host desconectado.
 - [ ] Playtest de spawn y movimiento: cada cliente controla solo su personaje y todos ven el
       transform sincronizado.
+
+## P6 - Bloques 2 y 3 de networking
+
+- [ ] Añadir `NetworkHealth` al prefab networkado del jugador y comprobar que `NetworkObject` y
+      ownership estan configurados; validar daño, muerte, ragdoll y revive en Play Mode.
+- [ ] Añadir `NetworkInventoryState` al prefab del jugador y comprobar que la UI puede leer los
+      slots y el valor replicado desde el host.
+- [ ] Añadir `NetworkLootItem` y `NetworkObject` a los prefabs de loot que deban existir en red;
+      registrar tambien los objetos creados dinamicamente por drops/spawns.
+- [ ] Añadir `NetworkEconomyState` al objeto de managers networkado y comprobar referencias a
+      `MoneyManager` y `QuotaManager` en la escena.
+- [ ] Playtest con 2 y 4 jugadores: pickup simultaneo del mismo loot, inventario lleno, muerte,
+      revive y convergencia de dinero/cuota/cargo entre host y clientes.

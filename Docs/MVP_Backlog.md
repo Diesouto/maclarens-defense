@@ -343,7 +343,8 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Sincronizar salud, muerte y cuerpo recuperable`
   Resultado: `Health` y muerte son autoritativos en host; el cuerpo recuperable de P5.8 se replica para todos.
   Aceptacion: un jugador muere, todos ven el mismo cuerpo, y solo el host resuelve `Revive()` y la penalizacion al llegar a MacLarens.
-  Estado: pendiente.
+  Estado: base de salud autoritativa implementada en `NetworkHealth`; falta integrar cuerpo,
+  prefab/escena y validar muerte/recuperacion en Play Mode.
 
 - `[QA] Gate de movimiento y muerte`
   Resultado: validacion de movimiento, camara y muerte/recuperacion en sesiones de prueba.
@@ -355,17 +356,20 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Inventario server-authoritative`
   Resultado: pickup, drop, throw y deposito viajan como intencion de cliente y se validan/aplican en host.
   Aceptacion: ningun cliente puede duplicar loot ni superar los 4 slots manipulando su input local.
-  Estado: pendiente.
+  Estado: `NetworkInventoryState` replica slots y valor, y el pickup networkado valida en host;
+  faltan RPCs de drop/throw y sincronizacion completa de `ItemInstance`.
 
 - `[Network] Loot y `LootRegistry` sincronizados`
   Resultado: existencia, spawn y ownership temporal de cada `LootItem` viven en el host y se replican a todos.
   Aceptacion: todos los clientes ven el mismo objeto desaparecer al recogerse y reaparecer al soltarse, sin duplicados.
-  Estado: pendiente.
+  Estado: `NetworkLootItem` implementa pickup validado por host y estado `IsCollected` replicado;
+  falta registrar spawns dinamicos y validar drop/deposito.
 
 - `[Network] `MoneyManager`/`QuotaManager` server-authoritative`
   Resultado: `TeamMoney`, deuda, cuota efectiva y modificadores se calculan y aplican solo en host.
   Aceptacion: venta, compra y `Finish Day` producen el mismo resultado para todos los clientes al mismo tiempo.
-  Estado: pendiente.
+  Estado: `NetworkEconomyState` replica dinero, deuda, cuota, cargo y entregado desde los managers;
+  faltan RPCs para deposito, compra y `Finish Day`.
 
 - `[QA] Gate de inventario y economia`
   Resultado: validacion por 2 y 4 jugadores de looteo, venta, compra y sincronizacion de inventario.

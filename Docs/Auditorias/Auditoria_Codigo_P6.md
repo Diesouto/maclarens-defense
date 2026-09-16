@@ -132,6 +132,9 @@ No se puede declarar cierre jugable hasta completar en Unity Editor:
 
 ### Bloque 2 - Estado de jugador y vida
 
+Estado actual: base de autoridad de vida implementada en codigo; cuerpo recuperable y validacion
+jugable siguen pendientes de integracion de prefab y escena.
+
 #### T2.1 - Input local, autoridad de vida
 
 Objetivo:
@@ -154,7 +157,15 @@ Tareas:
 - `BodyRecoveryManager` en host
 - penalizacion por abandono en `QuotaManager` desde host
 
+Implementado:
+- `NetworkHealth` replica `CurrentHealth` con escritura exclusiva del servidor.
+- `Health` enruta el daño del propietario a `RequestDamageServerRpc`; el host aplica daño, muerte,
+  ragdoll y revive.
+
 ### Bloque 3 - Inventario, loot y economia
+
+Estado actual: pickup y estado publico tienen base server-authoritative; drop, deposito y cierre de
+dia requieren RPCs especificos en los siguientes pasos del bloque.
 
 #### T3.1 - Inventario server-authoritative
 
@@ -191,6 +202,18 @@ Tareas:
 - `TryPayCurrentQuota` ejecutado en host
 - `OnMoneyChanged`, `OnQuotaProgressChanged` emitidos desde host
 - `FinishDay` validado solo en host
+
+Implementado:
+- `NetworkLootItem.RequestPickupServerRpc` resuelve el jugador por `SenderClientId`, valida el
+	inventario del host y evita doble pickup mediante `NetworkVariable<bool>`.
+- `NetworkInventoryState` replica slots visibles y valor total desde el inventario del servidor.
+- `NetworkEconomyState` replica dinero, deuda, cuota, cargo y valor entregado desde los managers
+	existentes sin crear una segunda fuente de verdad.
+
+Pendiente de codigo:
+- request/validate/apply de drop, throw, deposito, compras y `FinishDay`;
+- registro networkado de loot spawned dynamically y sincronizacion de inventario completo para que
+	el cliente reconstruya objetos `ItemInstance` tras pickup.
 
 ### Bloque 4 - Tren y dia
 

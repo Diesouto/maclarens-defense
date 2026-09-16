@@ -18,6 +18,7 @@ public class Health : MonoBehaviour, IDamageable
     public event Action OnDeath;
 
     private CharacterRagdollController ragdollController;
+    private NetworkHealth networkHealth;
 
     private void Awake()
     {
@@ -26,6 +27,8 @@ public class Health : MonoBehaviour, IDamageable
         ragdollController = GetComponent<CharacterRagdollController>();
         if (ragdollController == null)
             ragdollController = gameObject.AddComponent<CharacterRagdollController>();
+
+        networkHealth = GetComponent<NetworkHealth>();
     }
 
     public void TakeDamage(float damage)
@@ -34,6 +37,25 @@ public class Health : MonoBehaviour, IDamageable
     }
 
     public void TakeDamage(float damage, Vector3 hitDirection, float forceAmount)
+    {
+        if (networkHealth != null && !networkHealth.IsServer)
+        {
+            if (networkHealth.IsOwner)
+                networkHealth.RequestDamageServerRpc(damage, hitDirection, forceAmount);
+
+            return;
+        }
+
+        ApplyDamage(damage, hitDirection, forceAmount);
+    }
+
+    public void ApplyReplicatedHealth(float health)
+    {
+        CurrentHealth = Mathf.Clamp(health, 0f, maxHealth);
+        OnHealthChanged?.Invoke(CurrentHealth);
+    }
+
+    internal void ApplyDamage(float damage, Vector3 hitDirection, float forceAmount)
     {
         if (IsDead)
             return;
@@ -64,6 +86,9 @@ public class Health : MonoBehaviour, IDamageable
 
     public void Heal(float amount)
     {
+        if (networkHealth != null && !networkHealth.IsServer)
+            return;
+
         if (IsDead)
             return;
 
@@ -75,6 +100,9 @@ public class Health : MonoBehaviour, IDamageable
     // Brings a dead entity fully back; callers own repositioning and ragdoll/control reset.
     public void Revive()
     {
+        if (networkHealth != null && !networkHealth.IsServer)
+            return;
+
         if (!IsDead)
             return;
 
