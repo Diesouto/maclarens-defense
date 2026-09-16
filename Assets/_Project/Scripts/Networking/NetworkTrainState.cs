@@ -83,6 +83,23 @@ public class NetworkTrainState : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestDepartureServerRpc(ServerRpcParams rpcParams = default)
     {
+        if (NetworkManager.Singleton == null || runManager == null ||
+            !NetworkManager.Singleton.ConnectedClients.TryGetValue(
+                rpcParams.Receive.SenderClientId, out NetworkClient client) ||
+            client.PlayerObject == null)
+            return;
+
+        Health playerHealth = client.PlayerObject.GetComponent<Health>();
+        if (playerHealth != null && playerHealth.IsDead)
+            return;
+
+        if (Vector3.Distance(client.PlayerObject.transform.position, departure.transform.position) > 4f)
+            return;
+
+        if (runManager.CurrentPhase != RunPhase.Town &&
+            runManager.CurrentPhase != RunPhase.MacLarens)
+            return;
+
         BeginDeparture();
     }
 
@@ -125,10 +142,14 @@ public class NetworkTrainState : NetworkBehaviour
 
     private void SyncState()
     {
-        CurrentStation.Value = train.CurrentStation;
-        IsMoving.Value = train.IsMoving;
-        CurrentSpeed.Value = train.CurrentSpeed;
-        CurrentDistance.Value = train.CurrentDistance;
+        if (CurrentStation.Value != train.CurrentStation)
+            CurrentStation.Value = train.CurrentStation;
+        if (IsMoving.Value != train.IsMoving)
+            IsMoving.Value = train.IsMoving;
+        if (!Mathf.Approximately(CurrentSpeed.Value, train.CurrentSpeed))
+            CurrentSpeed.Value = train.CurrentSpeed;
+        if (!Mathf.Approximately(CurrentDistance.Value, train.CurrentDistance))
+            CurrentDistance.Value = train.CurrentDistance;
     }
 
     private void ApplyState()

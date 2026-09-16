@@ -28,6 +28,9 @@ public class LootRegistry : MonoBehaviour
 
     public void Register(LootItem loot)
     {
+        if (IsNetworkClient())
+            return;
+
         if (loot == null)
             return;
 
@@ -36,6 +39,9 @@ public class LootRegistry : MonoBehaviour
 
     public void Unregister(LootItem loot)
     {
+        if (IsNetworkClient())
+            return;
+
         if (loot == null)
             return;
 
@@ -56,6 +62,13 @@ public class LootRegistry : MonoBehaviour
     private void CleanupNullEntries()
     {
         registeredLoot.RemoveWhere(loot => loot == null);
+    }
+
+    private static bool IsNetworkClient()
+    {
+        return Unity.Netcode.NetworkManager.Singleton != null &&
+            Unity.Netcode.NetworkManager.Singleton.IsListening &&
+            !Unity.Netcode.NetworkManager.Singleton.IsServer;
     }
 
     public IReadOnlyCollection<LootItem> GetAllLoot()

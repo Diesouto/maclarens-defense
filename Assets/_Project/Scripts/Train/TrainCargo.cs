@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
@@ -29,6 +30,10 @@ public class TrainCargo : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return;
+
         LootItem lootItem = other.GetComponentInParent<LootItem>();
 
         if (lootItem == null)
@@ -54,6 +59,10 @@ public class TrainCargo : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return;
+
         LootItem lootItem = other.GetComponentInParent<LootItem>();
 
         if (lootItem == null)
@@ -79,6 +88,10 @@ public class TrainCargo : MonoBehaviour
 
     public bool RemoveItem(LootItem lootItem)
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return false;
+
         if (lootItem == null)
             return false;
 

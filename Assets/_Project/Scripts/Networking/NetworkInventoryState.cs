@@ -26,6 +26,14 @@ public struct NetworkInventorySlot : INetworkSerializable, IEquatable<NetworkInv
 public class NetworkInventoryState : NetworkBehaviour
 {
     public NetworkList<NetworkInventorySlot> Slots { get; private set; }
+    public NetworkVariable<int> SelectedSlotIndex = new(
+        -1,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+    public NetworkVariable<bool> HasActiveItem = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
     public NetworkVariable<int> TotalValue = new(
         0,
         NetworkVariableReadPermission.Everyone,
@@ -80,5 +88,7 @@ public class NetworkInventoryState : NetworkBehaviour
         }
 
         TotalValue.Value = inventory.TotalValue;
+        SelectedSlotIndex.Value = inventory.SelectedSlotIndex;
+        HasActiveItem.Value = inventory.ActiveItemInstance != null;
     }
 }

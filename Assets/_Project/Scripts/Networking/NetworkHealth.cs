@@ -36,9 +36,7 @@ public class NetworkHealth : NetworkBehaviour
     public void RequestDamageServerRpc(float damage, Vector3 hitDirection, float forceAmount,
         ServerRpcParams rpcParams = default)
     {
-        bool isOwnerRequest = rpcParams.Receive.SenderClientId == OwnerClientId;
-        bool isServerOwnedTarget = OwnerClientId == NetworkManager.ServerClientId;
-        if (!isOwnerRequest && !isServerOwnedTarget)
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
             return;
 
         if (damage <= 0f || health.IsDead)
@@ -46,6 +44,16 @@ public class NetworkHealth : NetworkBehaviour
 
         health.ApplyDamage(damage, hitDirection, forceAmount);
         CurrentHealth.Value = health.CurrentHealth;
+    }
+
+    public bool ApplyServerDamage(float damage, Vector3 hitDirection, float forceAmount)
+    {
+        if (!IsServer || damage <= 0f || health.IsDead)
+            return false;
+
+        health.ApplyDamage(damage, hitDirection, forceAmount);
+        CurrentHealth.Value = health.CurrentHealth;
+        return true;
     }
 
     public void SetAuthoritativeHealth(float value)

@@ -74,6 +74,9 @@ public class QuotaManager : MonoBehaviour
 
     public void SetQuota(int quota)
     {
+        if (IsNetworkClient())
+            return;
+
         currentQuota = Mathf.Max(quota, 0);
 
         DeliveredValue = 0;
@@ -88,6 +91,9 @@ public class QuotaManager : MonoBehaviour
 
     public void ResetDebt()
     {
+        if (IsNetworkClient())
+            return;
+
         DebtPaid = 0;
         ClearQuotaModifiers();
         OnDebtChanged?.Invoke();
@@ -95,6 +101,9 @@ public class QuotaManager : MonoBehaviour
 
     public bool TryPayCurrentQuota(MoneyManager moneyManager)
     {
+        if (IsNetworkClient())
+            return false;
+
         if (moneyManager == null || DebtRemaining <= 0)
             return false;
 
@@ -111,6 +120,9 @@ public class QuotaManager : MonoBehaviour
 
     public void AddQuotaModifier(int amount, string reason)
     {
+        if (IsNetworkClient())
+            return;
+
         if (amount == 0)
             return;
 
@@ -121,6 +133,9 @@ public class QuotaManager : MonoBehaviour
 
     public void ClearQuotaModifiers()
     {
+        if (IsNetworkClient())
+            return;
+
         if (modifiers.Count == 0)
             return;
 
@@ -131,6 +146,9 @@ public class QuotaManager : MonoBehaviour
 
     public void AddCargoValue(int value)
     {
+        if (IsNetworkClient())
+            return;
+
         if (value == 0)
             return;
 
@@ -141,6 +159,9 @@ public class QuotaManager : MonoBehaviour
 
     public void AddDeliveredValue(int value)
     {
+        if (IsNetworkClient())
+            return;
+
         if (value <= 0)
             return;
 
@@ -169,5 +190,11 @@ public class QuotaManager : MonoBehaviour
             total += modifier.Amount;
 
         return total;
+    }
+
+    private bool IsNetworkClient()
+    {
+        NetworkEconomyState networkState = GetComponent<NetworkEconomyState>();
+        return networkState != null && networkState.IsSpawned && !networkState.IsServer;
     }
 }

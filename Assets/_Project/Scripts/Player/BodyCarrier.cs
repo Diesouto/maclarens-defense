@@ -17,6 +17,7 @@ public class BodyCarrier : MonoBehaviour
     private bool carriedRootHadGravity;
     private CharacterRagdollController carriedRagdoll;
     private Collider[] carrierColliders;
+    private NetworkBodyCarrier networkAuthority;
 
     private void Awake()
     {
@@ -24,6 +25,7 @@ public class BodyCarrier : MonoBehaviour
             carryPoint = transform;
 
         carrierColliders = GetComponentsInChildren<Collider>();
+        networkAuthority = GetComponent<NetworkBodyCarrier>();
     }
 
     private void FixedUpdate()
@@ -36,6 +38,17 @@ public class BodyCarrier : MonoBehaviour
     }
 
     public bool TryPickUp(PlayerBody body)
+    {
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
+        {
+            networkAuthority.RequestPickupServerRpc(body.GetComponent<NetworkObject>());
+            return true;
+        }
+
+        return ApplyPickup(body);
+    }
+
+    public bool ApplyPickup(PlayerBody body)
     {
         if (body == null || IsCarryingBody || body.IsBeingCarried)
             return false;
@@ -61,10 +74,27 @@ public class BodyCarrier : MonoBehaviour
 
     public void Drop()
     {
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
+        {
+            networkAuthority.RequestDropServerRpc();
+            return;
+        }
+
         ReleaseCarry();
     }
 
     public void Throw(Vector3 force)
+    {
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
+        {
+            networkAuthority.RequestThrowServerRpc(force);
+            return;
+        }
+
+        ApplyThrow(force);
+    }
+
+    public void ApplyThrow(Vector3 force)
     {
         if (!IsCarryingBody)
             return;

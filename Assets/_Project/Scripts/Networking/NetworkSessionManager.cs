@@ -163,8 +163,8 @@ public class NetworkSessionManager : NetworkBehaviour
 
             if (nextHost != 0)
             {
-                HostClientId.Value = nextHost;
-                OnHostChanged?.Invoke();
+                SetSessionState(MultiplayerSessionState.Ended);
+                OnSessionClosed?.Invoke();
             }
             else
             {

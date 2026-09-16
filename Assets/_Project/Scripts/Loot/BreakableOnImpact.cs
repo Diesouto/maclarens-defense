@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Rigidbody))]
 public class BreakableOnImpact : MonoBehaviour
@@ -29,14 +30,50 @@ public class BreakableOnImpact : MonoBehaviour
 
     private void Break()
     {
+        NetworkBreakable networkBreakable = GetComponent<NetworkBreakable>();
+        if (networkBreakable != null && networkBreakable.IsSpawned && !networkBreakable.IsServer)
+        {
+            networkBreakable.RequestBreakServerRpc();
+            return;
+        }
+
+        ApplyBreak();
+    }
+
+    public void ApplyBreak()
+    {
+        if (hasBroken)
+            return;
+
         hasBroken = true;
 
         if (breakSound != null)
             AudioSource.PlayClipAtPoint(breakSound, transform.position);
 
         if (brokenPrefab != null)
-            Instantiate(brokenPrefab, transform.position, transform.rotation);
+        {
+            GameObject brokenInstance = Instantiate(brokenPrefab, transform.position, transform.rotation);
+            NetworkObject brokenNetworkObject = brokenInstance.GetComponent<NetworkObject>();
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+                NetworkManager.Singleton.IsServer)
+            {
+                if (brokenNetworkObject == null ||
+                    !NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(brokenNetworkObject.GlobalObjectIdHash))
+                {
+                    Destroy(brokenInstance);
+                    Debug.LogError($"BreakableOnImpact: broken prefab '{brokenPrefab.name}' is not a registered NetworkObject.", brokenPrefab);
+                }
+                else
+                {
+                    brokenNetworkObject.Spawn(true);
+                }
+            }
+        }
 
-        Destroy(gameObject);
+        NetworkObject networkObject = GetComponent<NetworkObject>();
+        if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+            networkObject.Despawn(true);
+        else
+            Destroy(gameObject);
     }
 }

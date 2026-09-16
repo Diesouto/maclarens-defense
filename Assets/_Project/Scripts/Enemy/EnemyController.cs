@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using Unity.Netcode;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -189,7 +190,19 @@ public class EnemyController : MonoBehaviour
         if (animator != null)
             animator.SetFloat("Speed", 0f);
 
-        Destroy(gameObject, 30f);
+        NetworkObject networkObject = GetComponent<NetworkObject>();
+        if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+            StartCoroutine(DespawnAfterDelay(networkObject, 30f));
+        else if (networkObject == null)
+            Destroy(gameObject, 30f);
         enabled = false;
+    }
+
+    private IEnumerator DespawnAfterDelay(NetworkObject networkObject, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+            networkObject.Despawn(true);
     }
 }

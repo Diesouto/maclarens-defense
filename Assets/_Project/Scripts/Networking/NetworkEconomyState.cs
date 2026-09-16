@@ -44,15 +44,24 @@ public class NetworkEconomyState : NetworkBehaviour
     private void SyncFromManagers()
     {
         if (MoneyManager.Instance != null)
-            TeamMoney.Value = MoneyManager.Instance.TeamMoney;
+        {
+            int teamMoney = Mathf.Max(MoneyManager.Instance.TeamMoney, 0);
+            if (TeamMoney.Value != teamMoney)
+                TeamMoney.Value = teamMoney;
+        }
 
         if (QuotaManager.Instance == null)
             return;
 
-        DebtPaid.Value = QuotaManager.Instance.DebtPaid;
-        DebtRemaining.Value = QuotaManager.Instance.DebtRemaining;
-        CurrentQuota.Value = QuotaManager.Instance.EffectiveQuota;
-        CurrentCargoValue.Value = QuotaManager.Instance.CurrentCargoValue;
-        DeliveredValue.Value = QuotaManager.Instance.DeliveredValue;
+        if (DebtPaid.Value != Mathf.Max(QuotaManager.Instance.DebtPaid, 0))
+            DebtPaid.Value = Mathf.Max(QuotaManager.Instance.DebtPaid, 0);
+        if (DebtRemaining.Value != Mathf.Max(QuotaManager.Instance.DebtRemaining, 0))
+            DebtRemaining.Value = Mathf.Max(QuotaManager.Instance.DebtRemaining, 0);
+        if (CurrentQuota.Value != Mathf.Max(QuotaManager.Instance.EffectiveQuota, 0))
+            CurrentQuota.Value = Mathf.Max(QuotaManager.Instance.EffectiveQuota, 0);
+        if (CurrentCargoValue.Value != Mathf.Max(QuotaManager.Instance.CurrentCargoValue, 0))
+            CurrentCargoValue.Value = Mathf.Max(QuotaManager.Instance.CurrentCargoValue, 0);
+        if (DeliveredValue.Value != Mathf.Max(QuotaManager.Instance.DeliveredValue, 0))
+            DeliveredValue.Value = Mathf.Max(QuotaManager.Instance.DeliveredValue, 0);
     }
 }

@@ -356,20 +356,20 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Inventario server-authoritative`
   Resultado: pickup, drop, throw y deposito viajan como intencion de cliente y se validan/aplican en host.
   Aceptacion: ningun cliente puede duplicar loot ni superar los 4 slots manipulando su input local.
-  Estado: `NetworkInventoryState` replica slots y valor, y el pickup networkado valida en host;
-  faltan RPCs de drop/throw y sincronizacion completa de `ItemInstance`.
+  Estado: `NetworkInventoryState` replica slots y valor; `NetworkInventoryAuthority` valida en host
+  seleccion, drop y throw. Falta configurar prefabs y reconstruccion visual de `ItemInstance`.
 
 - `[Network] Loot y `LootRegistry` sincronizados`
   Resultado: existencia, spawn y ownership temporal de cada `LootItem` viven en el host y se replican a todos.
   Aceptacion: todos los clientes ven el mismo objeto desaparecer al recogerse y reaparecer al soltarse, sin duplicados.
-  Estado: `NetworkLootItem` implementa pickup validado por host y estado `IsCollected` replicado;
-  falta registrar spawns dinamicos y validar drop/deposito.
+  Estado: `NetworkLootItem` valida pickup en host y `LootRegistry` bloquea mutaciones cliente;
+  los drops del servidor intentan spawnear como `NetworkObject`. Falta wiring y Play Mode.
 
 - `[Network] `MoneyManager`/`QuotaManager` server-authoritative`
   Resultado: `TeamMoney`, deuda, cuota efectiva y modificadores se calculan y aplican solo en host.
   Aceptacion: venta, compra y `Finish Day` producen el mismo resultado para todos los clientes al mismo tiempo.
-  Estado: `NetworkEconomyState` replica dinero, deuda, cuota, cargo y entregado desde los managers;
-  faltan RPCs para deposito, compra y `Finish Day`.
+  Estado: mutaciones de dinero, cuota y cargo quedan bloqueadas en clientes; compra y `Finish Day`
+  llegan al host. `NetworkEconomyState` replica el estado publico. Falta wiring y Play Mode.
 
 - `[QA] Gate de inventario y economia`
   Resultado: validacion por 2 y 4 jugadores de looteo, venta, compra y sincronizacion de inventario.
@@ -393,7 +393,8 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Sincronizar extraccion, fog y limpieza de Town`
   Resultado: `TownExtractionResolver` corre solo en host y replica el resultado (abandonados, recuperados, limpieza de loot/enemigos).
   Aceptacion: la resolucion es identica para todos los clientes en la misma partida.
-  Estado: pendiente; `TownExit` sigue dependiendo de la integracion networkada de la escena.
+  Estado: `TownExtractionResolver` y los spawns/limpieza de gameplay se ejecutan solo en host;
+  falta wiring y validacion de fog/resultado visual en Play Mode.
 
 - `[QA] Gate de tren y extraccion`
   Resultado: validacion de salida, abandono, penalizacion y resolucion de dia durante run completa.
@@ -454,7 +455,8 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 ### Regla de prioridad
 
 > **Estado de P6:** los bloques 0-6 tienen base de codigo, pero P6 no esta cerrado como milestone
-> jugable. Inventario/drop, economia, cargo completo, Relay, prefabs, escenas y QA siguen abiertos.
+> jugable. Relay, prefabs, escenas, politica de jugador vivo desconectado, presentacion visual y QA
+> siguen abiertos.
 
 - Primero se cierran sistemas del core loop y autoridad del host.
 - Luego se sincronizan UI y lobby.

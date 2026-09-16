@@ -31,6 +31,9 @@ public class MoneyManager : MonoBehaviour
 
     public void AddMoney(int amount)
     {
+        if (IsNetworkClient())
+            return;
+
         if (amount <= 0)
             return;
 
@@ -40,6 +43,9 @@ public class MoneyManager : MonoBehaviour
 
     public bool TrySpendMoney(int amount)
     {
+        if (IsNetworkClient())
+            return false;
+
         if (amount < 0 || TeamMoney < amount)
             return false;
 
@@ -53,7 +59,16 @@ public class MoneyManager : MonoBehaviour
 
     public void ResetMoney()
     {
+        if (IsNetworkClient())
+            return;
+
         TeamMoney = Mathf.Max(startingTeamMoney, 0);
         OnMoneyChanged?.Invoke();
+    }
+
+    private bool IsNetworkClient()
+    {
+        NetworkEconomyState networkState = GetComponent<NetworkEconomyState>();
+        return networkState != null && networkState.IsSpawned && !networkState.IsServer;
     }
 }

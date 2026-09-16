@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 
 public class LootItem : MonoBehaviour, IInteractable
 {
@@ -66,6 +67,10 @@ public class LootItem : MonoBehaviour, IInteractable
     {
         if (interactor == null || IsCollected || lootData == null)
             return false;
+
+        NetworkLootItem networkLoot = GetComponent<NetworkLootItem>();
+        if (networkLoot != null && networkLoot.IsSpawned && !networkLoot.IsServer)
+            return true;
 
         PlayerInventory inventory = interactor.GetComponent<PlayerInventory>();
         return inventory != null && inventory.CanAdd(lootData);
@@ -178,6 +183,12 @@ public class LootItem : MonoBehaviour, IInteractable
         lootItem.SetInstance(itemInstance ?? new ItemInstance(data));
         lootItem.IsCollected = false;
         LootRegistry.Instance?.Register(lootItem);
+
+        NetworkObject networkObject = instance.GetComponent<NetworkObject>();
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            NetworkManager.Singleton.IsServer && networkObject != null && !networkObject.IsSpawned)
+            networkObject.Spawn(true);
+
         return lootItem;
     }
 }

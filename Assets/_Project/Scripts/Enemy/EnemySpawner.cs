@@ -143,9 +143,20 @@ public class EnemySpawner : MonoBehaviour
         spawnPoint.MarkUsed();
 
         NetworkObject networkObject = instance.GetComponent<NetworkObject>();
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
-            networkObject != null && !networkObject.IsSpawned)
-            networkObject.Spawn(true);
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            if (networkObject == null ||
+                !NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(networkObject.GlobalObjectIdHash))
+            {
+                Destroy(instance);
+                aliveEnemies.Remove(enemy);
+                Debug.LogError($"{prefab.name} must have a registered NetworkObject while networking is active.", prefab);
+                return;
+            }
+
+            if (!networkObject.IsSpawned)
+                networkObject.Spawn(true);
+        }
     }
 
     // Picks the valid point farthest from any player, so enemies feel like they come from the town, not thin air.

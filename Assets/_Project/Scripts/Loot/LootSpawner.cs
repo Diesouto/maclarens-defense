@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 [DefaultExecutionOrder(20)]
@@ -79,6 +80,10 @@ public class LootSpawner : MonoBehaviour
 
     public void Restock()
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return;
+
         if (LootRegistry.Instance == null)
         {
             Debug.LogError(
@@ -175,6 +180,28 @@ public class LootSpawner : MonoBehaviour
 
         spawnedLoot.SetData(lootData);
         spawnedLoot.SetSpawnPoint(spawnPoint);
+
+        NetworkObject networkObject = instance.GetComponent<NetworkObject>();
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            NetworkManager.Singleton.IsServer)
+        {
+            if (networkObject == null)
+            {
+                Destroy(instance);
+                Debug.LogError($"[LootSpawner] Loot prefab '{lootData.WorldPrefab.name}' has no NetworkObject while networking is active.", lootData.WorldPrefab);
+                return false;
+            }
+
+            if (!NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(networkObject.GlobalObjectIdHash))
+            {
+                Destroy(instance);
+                Debug.LogError($"[LootSpawner] Loot prefab '{lootData.WorldPrefab.name}' is not registered in NetworkPrefabs.", lootData.WorldPrefab);
+                return false;
+            }
+
+            if (!networkObject.IsSpawned)
+                networkObject.Spawn(true);
+        }
 
         spawnPoint.SetOccupied(true);
 

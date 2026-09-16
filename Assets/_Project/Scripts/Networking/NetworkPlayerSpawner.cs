@@ -61,9 +61,13 @@ public class NetworkPlayerSpawner : NetworkBehaviour
                 if (body != null && body.IsDead)
                     BodyRecoveryManager.Instance?.MarkLost(body);
 
+                NetworkPlayer networkPlayer = spawnedPlayer.GetComponent<NetworkPlayer>();
+                networkPlayer?.MarkAbandoned();
+
                 if (spawnedPlayer.TryGetComponent(out NetworkObject networkObject))
                 {
-                    networkObject.Despawn();
+                    if (networkObject.IsSpawned && networkObject.IsServer)
+                        networkObject.Despawn();
                 }
                 else
                 {
@@ -98,6 +102,13 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         {
             Destroy(playerInstance);
             Debug.LogWarning("NetworkPlayerSpawner: prefab is missing NetworkObject.");
+            return;
+        }
+
+        if (!NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(networkObject.GlobalObjectIdHash))
+        {
+            Destroy(playerInstance);
+            Debug.LogError($"NetworkPlayerSpawner: prefab '{playerPrefab.name}' is not registered in NetworkPrefabs.", playerPrefab);
             return;
         }
 

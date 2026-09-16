@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 
 public class TownExtractionResolver : MonoBehaviour
 {
@@ -42,6 +43,10 @@ public class TownExtractionResolver : MonoBehaviour
 
     private void ResolveTownExit()
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return;
+
         if (extractionResolved)
             return;
 
@@ -60,6 +65,13 @@ public class TownExtractionResolver : MonoBehaviour
             return;
 
         for (int index = temporaryEntitiesRoot.childCount - 1; index >= 0; index--)
-            Destroy(temporaryEntitiesRoot.GetChild(index).gameObject);
+        {
+            GameObject entity = temporaryEntitiesRoot.GetChild(index).gameObject;
+            NetworkObject networkObject = entity.GetComponent<NetworkObject>();
+            if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+                networkObject.Despawn(true);
+            else
+                Destroy(entity);
+        }
     }
 }

@@ -388,6 +388,53 @@ Por tanto, hemos convertido la arquitectura y una parte importante del runtime, 
 funcionalidades jugables. El cierre real exige completar los RPCs de inventario/economia/cargo,
 registrar y cablear prefabs/escenas, instalar Relay/Authentication y ejecutar los gates 1/2/3/4.
 
+## Conversion de fuentes de verdad - estado actualizado
+
+Implementado en codigo desde el ultimo corte:
+- `NetworkInventoryAuthority`: seleccion, drop y throw llegan al host; el cliente no puede aplicar
+	esos cambios directamente cuando el objeto esta networkado.
+- `NetworkPurchaseAuthority`: compra validada por distancia, dinero, fase y capacidad en el host.
+- `TrainCargo`: entrada, salida y eliminacion de cargo solo modifican cuota en el host.
+- `NetworkCargoState`: replica ids de objetos en cargo y valor acumulado.
+- `MoneyManager`, `QuotaManager` y `LootRegistry`: bloquean mutaciones de clientes networkados.
+- `LootItem.CreateDroppedLoot`: los drops creados por el servidor se registran y spawnean como
+	`NetworkObject` cuando el prefab lo permite.
+
+La fuente de verdad del core loop queda asi:
+
+```text
+Cliente -> RPC de intencion
+Host -> valida distancia, fase, capacidad y propiedad
+Host -> modifica Inventory/Loot/Cargo/Money/Quota
+Host -> replica snapshot y referencias NetworkObject
+Clientes -> presentan el estado recibido
+```
+
+Limitaciones que no se pueden cerrar sin Editor/Play Mode:
+- los prefabs deben incluir los componentes NetworkObject requeridos y estar registrados;
+- los drops dinamicos solo pueden spawnear si su prefab tiene NetworkObject;
+- la reconstruccion visual completa de `ItemInstance` y held items necesita referencias de prefab;
+- Relay, Authentication, UI de lobby, escenas y pruebas reales siguen pendientes.
+
+Funcionalidades que aun requieren una conversion de codigo posterior:
+- sincronizacion visual de held items, animadores, ragdoll y efectos sigue siendo local/presentacion;
+- el estado de abandono se replica antes del despawn, pero la politica de sustitucion/penalizacion
+	de un jugador vivo durante `Run` aun necesita una decision de diseño y Play Mode.
+
+Implementado desde este corte:
+- `NetworkWeaponAuthority` enruta fire/reload al host; ammo, raycast y dano se aplican en el arma
+	server-owned del jugador.
+- `NetworkBodyCarrier` enruta pickup, drop y throw; `BodyCarrier` ejecuta fisica solo en host.
+- `NetworkPlayer.IsAbandoned` marca desconexiones antes del despawn.
+- `LootSpawner` y `TownExtractionResolver` ejecutan spawn y limpieza solo en el host.
+- `NetworkBreakable` y `BreakableOnImpact` despawnean destruibles networkados desde el host.
+- `NetworkPlayer` aplica una validacion basica de desplazamiento maximo para detectar teleports o
+	velocidades imposibles.
+
+Conclusion: las fuentes de verdad del core loop economico, armas, cuerpos, spawn, extraccion y
+destruibles ya estan conectadas al host. El trabajo restante es de integracion y validacion, salvo
+la politica de abandono de jugadores vivos y la sincronizacion visual de presentacion.
+
 ## Principios de implementacion para codigo
 
 ### 1. Request / Validate / Apply

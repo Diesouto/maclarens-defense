@@ -155,7 +155,26 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 
 ## P6 - Cierre de conversion pendiente
 
-- [ ] Completar RPCs de `PlayerInventory` para drop/throw y sincronizacion de `ItemInstance`.
-- [ ] Completar autoridad de `TrainCargo`, `MoneyManager`, `QuotaManager`, compras y pago de cuota.
-- [ ] Completar registro networkado de loot creado dinamicamente y parentado de cargo.
+- [ ] Añadir `NetworkInventoryAuthority` al prefab del jugador y validar drop/throw con 2 y 4
+      jugadores; conectar visualmente los `ItemInstance` replicados.
+- [ ] Añadir `NetworkCargoState` al tren y validar parentado, salida y valor de cargo.
+- [ ] Añadir `NetworkPurchaseAuthority` a cada `ShopStand` networkado y validar compras simultaneas.
+- [ ] Registrar prefabs de loot dinamico con `NetworkObject`; validar drop, pickup, entrega y
+      despawn sin duplicados.
+- [ ] Confirmar en Play Mode que `MoneyManager`, `QuotaManager` y `LootRegistry` solo mutan en host.
 - [ ] Instalar Authentication + Relay y crear Host/Join por codigo.
+- [ ] Validar movimiento server-authoritative: velocidad, colisiones, teleport y desync durante
+      una run con latencia real.
+- [ ] Añadir `NetworkWeaponAuthority` al prefab del jugador y validar disparo, ammo, reload y
+      hitbox; mantener muzzle/hit effects como presentacion local.
+- [ ] Añadir `NetworkBodyCarrier` al prefab del jugador y validar carry/drop/throw y recuperacion
+      de cuerpos entre clientes.
+- [ ] Verificar el raycast server-authoritative de armas: linea de vision, alcance, ammo y headshot
+      deben coincidir entre host y clientes.
+- [ ] Verificar que los objetos networkados se despawnean con NGO y que ningun `Destroy` local deja
+      fantasmas tras extraccion, muerte, entrega o desconexion.
+- [ ] Validar pose y desparentado de cargo en clientes cuando el loot entra y sale del tren.
+- [ ] Añadir `NetworkBreakable` a los prefabs destruibles que formen parte del gameplay y validar
+      que el host produce el reemplazo roto y los clientes reciben el despawn.
+- [ ] Confirmar que `LootSpawner` y `TownExtractionResolver` existen en un objeto networkado o en
+      la escena host-authoritative y que no se ejecutan duplicados en clientes.

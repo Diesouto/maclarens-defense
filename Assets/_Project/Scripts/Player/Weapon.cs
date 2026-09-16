@@ -22,6 +22,7 @@ public class Weapon : MonoBehaviour
     private bool isReloading;
     private float reloadTimer;
     private ItemInstance equippedInstance;
+    private NetworkWeaponAuthority networkAuthority;
 
     private void Awake()
     {
@@ -29,6 +30,7 @@ public class Weapon : MonoBehaviour
             inputHandler = GetComponentInParent<PlayerInputHandler>();
 
         inventory = GetComponentInParent<PlayerInventory>();
+        networkAuthority = GetComponentInParent<NetworkWeaponAuthority>();
 
         if (playerCamera == null)
             playerCamera = FindFirstObjectByType<Camera>();
@@ -108,6 +110,12 @@ public class Weapon : MonoBehaviour
     {
         if (!SyncWithActiveItemInternal())
             return;
+
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
+        {
+            networkAuthority.RequestWeaponInputServerRpc(firePressed, fireHeld, reloadPressed);
+            return;
+        }
 
         if (isReloading)
             return;
@@ -230,10 +238,19 @@ public class Weapon : MonoBehaviour
 
             if (damageable != null)
             {
-                damageable.TakeDamage(
-                    damage,
-                    hitDirection,
-                    hitForce);
+                NetworkHealth networkTarget = hit.collider.GetComponentInParent<NetworkHealth>();
+                if (networkAuthority != null && networkAuthority.IsSpawned &&
+                    !networkAuthority.IsServer && networkTarget != null)
+                {
+                    networkAuthority.RequestHitServerRpc(
+                        networkTarget.NetworkObject,
+                        hitDirection,
+                        hitForce);
+                }
+                else
+                {
+                    damageable.TakeDamage(damage, hitDirection, hitForce);
+                }
             }
 
             SpawnHitEffect(hit);
@@ -278,6 +295,25 @@ public class Weapon : MonoBehaviour
         isReloading = true;
         reloadTimer = Mathf.Max(weaponData.reloadTime, 0f);
         interactUI?.StartProgress(reloadTimer, "Reloading...");
+    }
+
+    public void ApplyServerInput(bool firePressed, bool fireHeld, bool reloadPressed)
+    {
+        if (!SyncWithActiveItemInternal())
+            return;
+
+        if (isReloading)
+            return;
+
+        if (reloadPressed)
+        {
+            TryStartReload();
+            return;
+        }
+
+        bool shouldFire = weaponData != null && (weaponData.automatic ? fireHeld : firePressed);
+        if (shouldFire)
+            TryFire();
     }
 
     private void FinishReload()

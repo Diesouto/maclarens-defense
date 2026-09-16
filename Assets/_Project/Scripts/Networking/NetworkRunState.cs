@@ -46,8 +46,10 @@ public class NetworkRunState : NetworkBehaviour
 
     private void SyncFromManager()
     {
-        CurrentDay.Value = runManager.CurrentDay;
-        CurrentPhase.Value = runManager.CurrentPhase;
+        if (CurrentDay.Value != runManager.CurrentDay)
+            CurrentDay.Value = runManager.CurrentDay;
+        if (CurrentPhase.Value != runManager.CurrentPhase)
+            CurrentPhase.Value = runManager.CurrentPhase;
     }
 
     private void HandleDayChanged(int previous, int current)

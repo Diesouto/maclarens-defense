@@ -46,8 +46,10 @@ public class NetworkGameState : NetworkBehaviour
 
     private void SyncFromManager()
     {
-        CurrentState.Value = gameStateManager.CurrentState;
-        LastFailCause.Value = gameStateManager.LastFailCause;
+        if (CurrentState.Value != gameStateManager.CurrentState)
+            CurrentState.Value = gameStateManager.CurrentState;
+        if (LastFailCause.Value != gameStateManager.LastFailCause)
+            LastFailCause.Value = gameStateManager.LastFailCause;
     }
 
     private void HandleStateChanged(GameState previous, GameState current)

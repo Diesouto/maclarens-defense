@@ -6,6 +6,7 @@ public class ShopStand : MonoBehaviour, IInteractable
     [SerializeField] private LootDataSO lootData;
     [SerializeField] private RunManager runManager;
     [SerializeField] private MoneyManager moneyManager;
+    [SerializeField] private NetworkPurchaseAuthority networkPurchaseAuthority;
 
     private void Awake()
     {
@@ -14,6 +15,9 @@ public class ShopStand : MonoBehaviour, IInteractable
 
         if (moneyManager == null)
             moneyManager = MoneyManager.Instance;
+
+        if (networkPurchaseAuthority == null)
+            networkPurchaseAuthority = GetComponent<NetworkPurchaseAuthority>();
     }
 
     public bool CanInteract(PlayerInteractor interactor)
@@ -48,17 +52,40 @@ public class ShopStand : MonoBehaviour, IInteractable
 
     public void Interact(PlayerInteractor interactor)
     {
+        if (networkPurchaseAuthority != null && networkPurchaseAuthority.IsSpawned &&
+            !networkPurchaseAuthority.IsServer)
+        {
+            networkPurchaseAuthority.RequestPurchaseServerRpc();
+            return;
+        }
+
         if (!CanInteract(interactor))
             return;
 
-        PlayerInventory inventory = interactor.GetComponent<PlayerInventory>();
+        TryPurchase(interactor != null ? interactor.GetComponent<PlayerInventory>() : null);
+    }
+
+    public bool TryPurchase(PlayerInventory inventory)
+    {
+        if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
+            return false;
+
+        if (runManager != null && runManager.CurrentPhase != RunPhase.MacLarens &&
+            runManager.CurrentPhase != RunPhase.ResolvingDay)
+            return false;
+
         if (inventory == null || !inventory.CanAdd(lootData))
-            return;
+            return false;
 
         if (!moneyManager.TrySpendMoney(lootData.Price))
-            return;
+            return false;
 
         if (!inventory.TryAdd(lootData))
+        {
             moneyManager.AddMoney(lootData.Price);
+            return false;
+        }
+
+        return true;
     }
 }

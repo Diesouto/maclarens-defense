@@ -17,6 +17,7 @@ public class PlayerInventory : MonoBehaviour
     private readonly ItemInstance[] backpackSlots = new ItemInstance[BackpackSlotsCount];
     private ItemInstance activeHeldItem;
     private int selectedSlotIndex = -1;
+    private NetworkInventoryAuthority networkAuthority;
 
     public int MaxSlots => maxSlots;
     public int BackpackCount => backpackSlots.Count(slot => slot != null && slot.Data != null);
@@ -45,6 +46,7 @@ public class PlayerInventory : MonoBehaviour
             dropOrigin = transform;
 
         maxSlots = Mathf.Clamp(maxSlots, 1, BackpackSlotsCount);
+        networkAuthority = GetComponent<NetworkInventoryAuthority>();
     }
 
     private void OnDestroy()
@@ -122,6 +124,12 @@ public class PlayerInventory : MonoBehaviour
         if (slotIndex < 0 || slotIndex >= backpackSlots.Length)
             return false;
 
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
+        {
+            networkAuthority.RequestSelectSlotServerRpc(slotIndex);
+            return true;
+        }
+
         if (activeHeldItem != null)
             DropHeldItem();
 
@@ -156,6 +164,12 @@ public class PlayerInventory : MonoBehaviour
 
     public bool TryThrowSelected(Vector3? worldPosition, Vector3 throwForce)
     {
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
+        {
+            networkAuthority.RequestDropServerRpc(throwForce);
+            return true;
+        }
+
         if (activeHeldItem != null)
         {
             Vector3 dropPosition = worldPosition ?? transform.position + transform.forward * 1.5f;
@@ -299,6 +313,12 @@ public class PlayerInventory : MonoBehaviour
     {
         if (activeHeldItem == null)
             return;
+
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
+        {
+            networkAuthority.RequestDropServerRpc(Vector3.zero);
+            return;
+        }
 
         Vector3 dropPosition = transform.position + transform.forward * 1.5f;
         DropItem(activeHeldItem, dropPosition, Quaternion.LookRotation(transform.forward), Vector3.zero);

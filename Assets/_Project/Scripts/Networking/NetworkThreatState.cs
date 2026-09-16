@@ -63,17 +63,24 @@ public class NetworkThreatState : NetworkBehaviour
         if (!IsServer || NetworkManager.Singleton == null)
             return;
 
-        PlayerCount.Value = Mathf.Clamp(NetworkManager.Singleton.ConnectedClientsIds.Count, 1, 4);
+        int playerCount = Mathf.Clamp(NetworkManager.Singleton.ConnectedClientsIds.Count, 1, 4);
+        if (PlayerCount.Value != playerCount)
+            PlayerCount.Value = playerCount;
         CurrentThreatMultiplier = ResolveMultiplier(PlayerCount.Value);
 
         if (threatManager != null)
         {
-            CurrentThreat.Value = threatManager.CurrentThreat;
-            CurrentLevel.Value = threatManager.CurrentLevel;
+            if (!Mathf.Approximately(CurrentThreat.Value, threatManager.CurrentThreat))
+                CurrentThreat.Value = threatManager.CurrentThreat;
+            if (CurrentLevel.Value != threatManager.CurrentLevel)
+                CurrentLevel.Value = threatManager.CurrentLevel;
         }
 
         if (enemySpawner != null)
-            AliveEnemyCount.Value = enemySpawner.AliveEnemyCount;
+        {
+            if (AliveEnemyCount.Value != enemySpawner.AliveEnemyCount)
+                AliveEnemyCount.Value = enemySpawner.AliveEnemyCount;
+        }
     }
 
     public float ResolveMultiplier(int connectedPlayers)
