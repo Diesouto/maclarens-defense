@@ -74,11 +74,6 @@ public class MultiplayerMenuController : MonoBehaviour
             RefreshLobby();
     }
 
-    private void OnDestroy()
-    {
-        UnbindSession();
-    }
-
     private void BindButtons()
     {
         AddListener(singlePlayerButton, LoadSinglePlayer);
