@@ -2774,6 +2774,7 @@ GameObject:
   - component: {fileID: 9179750907243030846}
   - component: {fileID: 4815162342108151624}
   - component: {fileID: 4815162342108151626}
+  - component: {fileID: 4815162342108151628}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -2781,6 +2782,35 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &4815162342108151628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5860787695679847855}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb7a04faa191a848b3820b7d0f767a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LassoTool
+  ShowTopMostFoldoutHeaderGroup: 1
+  range: 15
+  cooldown: 1.5
+  playerPullForce: 12
+  playerKnockdownDuration: 2.5
+  objectFlightTime: 0.6
+  eyeHeight: 1.6
+  hitPointTolerance: 1.5
+  ropeMaterial: {fileID: 0}
+  ropeColor: {r: 0.55, g: 0.4, b: 0.22, a: 1}
+  ropeWidth: 0.03
+  ropeOrigin: {fileID: 0}
+  ropeSegments: 20
+  ropeSag: 1.5
+  ropeDuration: 0.6
+  loopRadius: 0.45
+  loopSegments: 20
 --- !u!4 &4691649494528451186
 Transform:
   m_ObjectHideFlags: 0

@@ -7,7 +7,7 @@ public class BreakableOnImpact : MonoBehaviour
     [SerializeField] private float breakVelocity = 6f;
     [Tooltip("Legacy single replacement; kept so existing prefabs keep working. Spawned alongside brokenPrefabs.")]
     [SerializeField] private GameObject brokenPrefab;
-    [Tooltip("Pieces spawned when it breaks (e.g. top and bottom halves of a bottle). Pieces without a NetworkObject are local debris on every peer.")]
+    [Tooltip("Pieces spawned when it breaks (e.g. top and bottom halves of a bottle). Always local debris on every peer; network components are stripped.")]
     [SerializeField] private GameObject[] brokenPrefabs;
     [Tooltip("Seconds before local debris is cleaned up; 0 keeps it forever.")]
     [SerializeField, Min(0f)] private float debrisLifetime = 20f;
@@ -78,8 +78,6 @@ public class BreakableOnImpact : MonoBehaviour
         Quaternion rotation = transform.rotation;
         Vector3 velocity = TryGetComponent(out Rigidbody body) ? body.linearVelocity : Vector3.zero;
 
-        SpawnNetworkedPieces(position, rotation);
-
         if (TryGetComponent(out NetworkBreakable networkBreakable) && networkBreakable.IsSpawned)
             networkBreakable.PlayBreakEffects(position, rotation, velocity);
         else
@@ -107,10 +105,10 @@ public class BreakableOnImpact : MonoBehaviour
 
         foreach (GameObject piecePrefab in GetBrokenPrefabs())
         {
-            if (piecePrefab == null || piecePrefab.GetComponent<NetworkObject>() != null)
+            if (piecePrefab == null)
                 continue;
 
-            GameObject piece = Instantiate(piecePrefab, position, rotation);
+            GameObject piece = InstantiateDebris(piecePrefab, position, rotation);
             foreach (Rigidbody pieceBody in piece.GetComponentsInChildren<Rigidbody>())
                 pieceBody.linearVelocity = velocity;
 
@@ -119,27 +117,26 @@ public class BreakableOnImpact : MonoBehaviour
         }
     }
 
-    // Pieces that carry a NetworkObject (e.g. a broken bottle that is still loot) are spawned by the host.
-    private void SpawnNetworkedPieces(Vector3 position, Quaternion rotation)
+    // Staged under an inactive parent so network components are removed before their Awake runs.
+    private static GameObject InstantiateDebris(GameObject prefab, Vector3 position, Quaternion rotation)
     {
-        NetworkManager networkManager = NetworkManager.Singleton;
-        bool isNetworked = networkManager != null && networkManager.IsListening;
+        GameObject staging = new GameObject("DebrisStaging");
+        staging.SetActive(false);
 
-        foreach (GameObject piecePrefab in GetBrokenPrefabs())
-        {
-            if (piecePrefab == null || piecePrefab.GetComponent<NetworkObject>() == null)
-                continue;
+        GameObject piece = Instantiate(prefab, position, rotation, staging.transform);
+        StripComponents<Unity.Netcode.Components.NetworkRigidbodyBase>(piece);
+        StripComponents<NetworkBehaviour>(piece);
+        StripComponents<NetworkObject>(piece);
 
-            if (isNetworked && !networkManager.NetworkConfig.Prefabs.Contains(piecePrefab))
-            {
-                Debug.LogError($"BreakableOnImpact: broken piece '{piecePrefab.name}' has a NetworkObject but isn't registered in NetworkPrefabs.", piecePrefab);
-                continue;
-            }
+        piece.transform.SetParent(null, true);
+        Destroy(staging);
+        return piece;
+    }
 
-            GameObject piece = Instantiate(piecePrefab, position, rotation);
-            if (isNetworked)
-                piece.GetComponent<NetworkObject>().Spawn(true);
-        }
+    private static void StripComponents<T>(GameObject root) where T : Component
+    {
+        foreach (T component in root.GetComponentsInChildren<T>(true))
+            DestroyImmediate(component);
     }
 
     private System.Collections.Generic.IEnumerable<GameObject> GetBrokenPrefabs()

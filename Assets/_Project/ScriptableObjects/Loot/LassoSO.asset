@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74711b29da55cb7428b3ce78dbd34b28, type: 3}
+  m_Name: LassoSO
+  m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
+  itemId: Lasso
+  displayName: Lazo
+  icon: {fileID: 0}
+  value: 20
+  price: 75
+  spawnWeight: 30
+  itemType: 3
+  isHeavy: 0
+  isTwoHanded: 0
+  animationProfile: 0
+  weaponData: {fileID: 0}
+  drinkHealPercent: 0
+  drunkDuration: 0
+  breakHealPercent: 0
+  breakHealRadius: 3
+  worldPrefab: {fileID: 8832045668336854980, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+  heldPrefab: {fileID: 8832045668336854980, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+  rigidbodyMass: 1
+  heldPositionOffset: {x: 0, y: 0, z: 0}
+  heldRotationOffset: {x: 0, y: 0, z: 0}

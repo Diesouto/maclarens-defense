@@ -74,8 +74,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   searchInterval: 0.2
-  attackDistance: 0.5
-  attackVerticalReach: 0.5
+  attackDistance: 1.2
+  attackVerticalReach: 1.5
   attackDamage: 0
   attackForce: 0
   runSpeed: 2

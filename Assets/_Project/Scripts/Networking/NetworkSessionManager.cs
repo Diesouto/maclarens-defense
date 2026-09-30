@@ -327,8 +327,18 @@ public class NetworkSessionManager : NetworkBehaviour
 
     private void ApplyPlayerProfile(ulong clientId, FixedString64Bytes playerName, int characterIndex)
     {
-        if (!IsServer || !playerLookup.TryGetValue(clientId, out LobbyPlayerEntry entry))
+        if (!IsServer)
             return;
+
+        // The client's profile RPC can arrive before OnClientConnectedCallback registers it.
+        if (!playerLookup.TryGetValue(clientId, out LobbyPlayerEntry entry))
+        {
+            if (SessionState.Value != MultiplayerSessionState.Lobby)
+                return;
+
+            bool isHost = clientId == HostClientId.Value;
+            entry = new LobbyPlayerEntry { ClientId = clientId, IsHost = isHost, IsReady = isHost };
+        }
 
         string cleanedName = playerName.ToString().Trim();
         if (string.IsNullOrWhiteSpace(cleanedName))

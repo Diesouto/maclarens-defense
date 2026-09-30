@@ -18,14 +18,21 @@ public class LassoTool : NetworkBehaviour
     [SerializeField, Min(0f)] private float hitPointTolerance = 1.5f;
 
     [Header("Rope")]
-    [SerializeField] private LineRenderer rope;
+    [Tooltip("Optional; defaults to an unlit material tinted with ropeColor.")]
+    [SerializeField] private Material ropeMaterial;
+    [SerializeField] private Color ropeColor = new Color(0.55f, 0.4f, 0.22f);
+    [SerializeField, Min(0.001f)] private float ropeWidth = 0.03f;
     [Tooltip("Where the rope leaves the hand; defaults to the ItemHolder throw point.")]
     [SerializeField] private Transform ropeOrigin;
     [SerializeField, Range(4, 64)] private int ropeSegments = 20;
     [SerializeField, Min(0f)] private float ropeSag = 1.5f;
     [SerializeField, Min(0.05f)] private float ropeDuration = 0.6f;
+    [SerializeField, Min(0.05f)] private float loopRadius = 0.45f;
+    [SerializeField, Range(6, 48)] private int loopSegments = 20;
 
     private PlayerInventory inventory;
+    private LineRenderer rope;
+    private LineRenderer loop;
     private float lastThrowTime = float.NegativeInfinity;
     private float lastServerThrowTime = float.NegativeInfinity;
     private Coroutine ropeRoutine;
@@ -37,11 +44,28 @@ public class LassoTool : NetworkBehaviour
         if (ropeOrigin == null && TryGetComponent(out ItemHolder holder))
             ropeOrigin = holder.ThrowPoint;
 
-        if (rope != null)
-        {
-            rope.useWorldSpace = true;
-            rope.enabled = false;
-        }
+        Material material = ropeMaterial != null ? ropeMaterial : new Material(Shader.Find("Sprites/Default"));
+        rope = CreateLine("LassoRope", material, ropeSegments + 1, false);
+        loop = CreateLine("LassoLoop", material, loopSegments, true);
+    }
+
+    private LineRenderer CreateLine(string lineName, Material material, int points, bool closed)
+    {
+        var lineObject = new GameObject(lineName);
+        lineObject.transform.SetParent(transform, false);
+
+        LineRenderer line = lineObject.AddComponent<LineRenderer>();
+        line.sharedMaterial = material;
+        line.startColor = ropeColor;
+        line.endColor = ropeColor;
+        line.widthMultiplier = ropeWidth;
+        line.useWorldSpace = true;
+        line.loop = closed;
+        line.positionCount = points;
+        line.numCornerVertices = 2;
+        line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        line.enabled = false;
+        return line;
     }
 
     public void TryThrow(Ray aim)
@@ -169,7 +193,7 @@ public class LassoTool : NetworkBehaviour
 
     private void PlayRope(Vector3 endPoint, Transform endTarget)
     {
-        if (rope == null || ropeOrigin == null)
+        if (ropeOrigin == null)
             return;
 
         if (ropeRoutine != null)
@@ -179,11 +203,11 @@ public class LassoTool : NetworkBehaviour
         ropeRoutine = StartCoroutine(AnimateRope(endTarget, localEnd, endPoint));
     }
 
-    // Flies out over the first third, then reels back in while the slack tightens.
+    // Flies out over the first third, then reels back in while the slack and the loop tighten.
     private IEnumerator AnimateRope(Transform endTarget, Vector3 localEnd, Vector3 worldEnd)
     {
-        rope.positionCount = ropeSegments + 1;
         rope.enabled = true;
+        loop.enabled = true;
 
         for (float elapsed = 0f; elapsed < ropeDuration; elapsed += Time.deltaTime)
         {
@@ -198,6 +222,7 @@ public class LassoTool : NetworkBehaviour
         }
 
         rope.enabled = false;
+        loop.enabled = false;
         ropeRoutine = null;
     }
 
@@ -211,6 +236,26 @@ public class LassoTool : NetworkBehaviour
             float t = (float)i / ropeSegments;
             float u = 1f - t;
             rope.SetPosition(i, u * u * start + 2f * u * t * control + t * t * end);
+        }
+
+        DrawLoop(end, end - control, Mathf.Lerp(0.3f, 1f, slack) * loopRadius);
+    }
+
+    // The loop hangs off the rope's tip, facing along the rope's final direction.
+    private void DrawLoop(Vector3 tip, Vector3 tangent, float radius)
+    {
+        Vector3 forward = tangent.sqrMagnitude > 0.0001f ? tangent.normalized : transform.forward;
+        Vector3 side = Vector3.Cross(forward, Vector3.up);
+        if (side.sqrMagnitude < 0.0001f)
+            side = Vector3.Cross(forward, Vector3.right);
+        side.Normalize();
+        Vector3 up = Vector3.Cross(side, forward);
+        Vector3 center = tip - up * radius;
+
+        for (int i = 0; i < loopSegments; i++)
+        {
+            float angle = (float)i / loopSegments * Mathf.PI * 2f;
+            loop.SetPosition(i, center + (up * Mathf.Cos(angle) + side * Mathf.Sin(angle)) * radius);
         }
     }
 }
