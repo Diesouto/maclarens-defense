@@ -1,4 +1,5 @@
 using System;
+using Unity.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -11,19 +12,28 @@ public enum MultiplayerSessionState
     Ended
 }
 
-public struct LobbyPlayerEntry : INetworkSerializable
+public struct LobbyPlayerEntry : INetworkSerializable, IEquatable<LobbyPlayerEntry>
 {
     public ulong ClientId;
-    public string PlayerName;
+    public FixedString64Bytes PlayerName;
     public bool IsReady;
     public bool IsHost;
 
-    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer)
+        where T : IReaderWriter
     {
         serializer.SerializeValue(ref ClientId);
+        serializer.SerializeValue(ref PlayerName);
         serializer.SerializeValue(ref IsReady);
         serializer.SerializeValue(ref IsHost);
-        serializer.SerializeValue(ref PlayerName);
+    }
+
+    public bool Equals(LobbyPlayerEntry other)
+    {
+        return ClientId == other.ClientId &&
+               PlayerName == other.PlayerName &&
+               IsReady == other.IsReady &&
+               IsHost == other.IsHost;
     }
 }
 

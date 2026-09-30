@@ -1,11 +1,12 @@
 using System;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
 public struct NetworkInventorySlot : INetworkSerializable, IEquatable<NetworkInventorySlot>
 {
     public int SlotIndex;
-    public string ItemName;
+    public FixedString64Bytes ItemName;
     public int ItemValue;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
