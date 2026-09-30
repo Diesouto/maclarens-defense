@@ -55,6 +55,7 @@ public class TownExtractionResolver : MonoBehaviour
         BodyRecoveryManager.Instance?.ResolveBodiesAtTownExit();
         InTownTrigger.Instance?.DestroyLootInsideTown();
         EnemyController.DespawnAll();
+        GhostController.DespawnAll();
         ThreatManager.Instance?.ResetThreat();
         DestroyTemporaryEntities();
     }

@@ -68,42 +68,44 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 
 ## P5.18 - Consumibles y recarga de municion
 
-- [ ] Pasar `LiquorSO` (y variantes) a `ItemType = Consumable` con `drinkHealPercent = 0.1` y
-      `drunkDuration ~ 8`. Beber se hace con `Fire` teniendo el item seleccionado.
-- [ ] Crear `PotionSO` (`Consumable`, `drinkHealPercent = 1`, `breakHealPercent = 0.5`,
-      `breakHealRadius ~ 3`) y su prefab de mundo con `LootItem`, `NetworkLootItem`, `NetworkObject`,
-      `NetworkTransform`, `NetworkRigidbody`, `Rigidbody`, `Collider` y `BreakableOnImpact`;
-      registrarlo en `DefaultNetworkPrefabs` y ponerlo en `LootSpawnPoint`s o en un `ShopStand`.
+- [x] `Liquor(S/M/L)SO` como `Consumable` (cura 10/15/20% + camara borracha 8/12/20 s).
+- [x] `PotionSO` y prefab `Potion` (con `NetworkLootItem` y `NetworkRigidbody` añadidos en la revision del 2026-10-01).
+- [ ] Poner la pocion en `LootSpawnPoint`s o en un `ShopStand` (ahora mismo nada la referencia).
 - [ ] Playtest: beber pocion/booze (host y cliente), lanzar y romper pocion junto a otro jugador,
       comprar municion con el arma en mano en su `ShopStand`.
 
 ## P7 - Explosivos y botellas rotas
 
-- [ ] Crear dos `ExplosionEffectSO` (Create > MacLarens > Explosion Effect): nitro y polvora, con
-      su VFX de particulas (prefab sin `NetworkObject`) y SFX.
-- [ ] Prefab `NitroglicerinBottle`: `LootItem` + `LootDataSO`, `NetworkObject`, `NetworkTransform`,
-      `NetworkRigidbody`, `Rigidbody`, `Collider`, `BreakableOnImpact` (sin piezas) y `Explosive`
-      (`explodeWhenShot = true`). Registrar en `DefaultNetworkPrefabs`.
-- [ ] Prefab `GunpowderBarrel`: `NetworkObject`, `NetworkTransform`, `NetworkRigidbody`,
-      `Rigidbody`, `Collider` y `Explosive`. Colocarlo en escena o en spawn points; registrar si se
-      spawnea en runtime.
-- [ ] Comprobar que `PlayerKnockdown` aparece en la raiz de `Player.prefab` (añadido por YAML).
-- [ ] Botellas de licor: rellenar `BreakableOnImpact.brokenPrefabs` con las dos mitades (sin
-      `NetworkObject`, con `Rigidbody` + `Collider`) y vaciar `brokenPrefab` si ya no se usa.
-      `LiquorL1`/`LiquorL2` no tienen `NetworkBreakable`: añadirlo para que los clientes vean las mitades.
+- [x] `NitroExplosion` y `GunpowderBarrelExplosion` creados con VFX.
+- [ ] Añadir `sfx` a ambos `ExplosionEffectSO`.
+- [ ] Revisar `GunpowderBarrelExplosion.radius` (ahora 20: tumba a medio pueblo; recomendado 6-8).
+- [x] Prefab `NitroglicerinBottle` (añadidos `BreakableOnImpact` y `NetworkLootItem` en la revision).
+- [x] Prefab `GunpowderBarrel` (añadidos `NetworkLootItem` y `NetworkRigidbody`). Tiene
+      `BreakableOnImpact`: explota si se lanza o cae fuerte; quitarlo si no se quiere.
+- [ ] Poner nitro y barril en `LootSpawnPoint`s o colocarlos en escena (nada los referencia).
+- [x] Botellas de licor con dos mitades (`brokenPrefab` + `brokenPrefabs`). Las piezas se crean ahora
+      siempre como debris local y se les quitan los componentes de red al instanciarlas.
+- [ ] Opcional: quitar `NetworkObject`/`NetworkTransform`/`NetworkRigidbody` de `BottleBroken*` y
+      sacarlos de `DefaultNetworkPrefabs` (ya no hacen falta).
 - [ ] Playtest: disparar el barril (host y cliente), lanzar nitro, cadena de barriles, enemigos
       muertos por la explosion, jugador tumbado que se levanta y jugador que muere tumbado.
 
-## P7 - Rodadora y lazo
+## P7 - Rodadora, lazo y fantasma
 
-- [ ] Prefab `Tumbleweed`: raiz con `NavMeshAgent`, `EnemyController` (`selfDestruct` = su `Explosive`,
-      `searchInterval` ~0.2, `attackDistance` ~1.5), `Explosive` + `ExplosionEffectSO` propio
-      (`threatAdded` 0), `Collider`, `NetworkObject`, `NetworkTransform`, `NetworkEnemyState` y
-      `RollingVisual` con el modelo como hijo en `visual`. Sin `Health`. Registrar en
-      `DefaultNetworkPrefabs` y añadir a `EnemySpawner.enemyPrefabs`.
-- [ ] `LootDataSO` del lazo con `ItemType = Tool` y su `heldPrefab`/`worldPrefab`; añadirlo a un `ShopStand` o al loot.
-- [ ] `Player.prefab`: añadir `LassoTool` a la raiz y un `LineRenderer` (ancho ~0.03, material de cuerda) asignado en `rope`.
-- [ ] Playtest: lazar loot, un barril y a otro jugador (host y cliente).
+- [x] Prefab `Tumbleweed` (`attackDistance` 1.2, `attackVerticalReach` 1.5), registrado en red.
+- [ ] Añadir `Tumbleweed` a `EnemySpawner.enemyPrefabs` en `MainScene`.
+- [ ] Darle a la rodadora su propio `ExplosionEffectSO` con `threatAdded` 0 (ahora usa `NitroExplosion`).
+- [x] `LassoTool` en la raiz de `Player.prefab`; cuerda y lazo final se crean en runtime con `LineRenderer`.
+- [x] `Weapons/Lasso.prefab` como prefab de mundo y mano (`LootItem`, `NetworkLootItem`,
+      `NetworkTransform`, `Rigidbody`, `NetworkRigidbody`) y `LassoSO` (`Tool`, precio 75).
+- [ ] Poner `LassoSO` en un `ShopStand`/`LootSpawnPoint` y ajustar `heldPositionOffset`/`heldRotationOffset`.
+- [ ] Borrar `Loot/Lasso.prefab` (sin uso).
+- [ ] Prefab `Ghost`: `NetworkObject`, `NetworkTransform`, `Rigidbody`, `GhostController`
+      (`banishItem` = `CrossSO`), collider (se convierte a trigger) y modelo semitransparente.
+      Registrar en `DefaultNetworkPrefabs` y asignarlo en `EnemySpawner.ghostPrefab`.
+- [ ] Asegurar que la cruz aparece en algun `LootSpawnPoint`.
+- [ ] Playtest: lazar loot, un barril y a otro jugador; rodadora explotando; fantasma atravesando
+      paredes, ignorando balas y muriendo solo al lanzarle la cruz (host y cliente).
 
 ## P5.9 - Team wipe y cuota fallida / P5.10 - Deuda pagada
 

@@ -67,8 +67,12 @@ Conclusión practica:
 | Idea | Impacto en core loop | Coste tecnico | Coste de red | Decision |
 | --- | --- | --- | --- | --- |
 | Tren que tarda en acelerar | Alto | Bajo | Bajo | Entra antes del freeze |
-| Plantas rodadoras explosivas | Medio-Alto | Medio | Medio | Solo despues del freeze si la build es estable |
+| Plantas rodadoras explosivas | Medio-Alto | Medio | Medio | Codigo hecho (P7); validar tras el freeze |
+| Explosivos (nitro, barril) y knockdown | Medio-Alto | Medio | Medio | Codigo hecho (P7); validar tras el freeze |
+| Lazo | Medio | Medio | Medio | Codigo hecho (P7); validar tras el freeze |
+| Fantasma que atraviesa paredes (muere con la cruz) | Medio | Bajo-Medio | Bajo | Codigo hecho (P7); validar tras el freeze |
 | Enemigo cactus que se mueve si no lo miras | Alto | Alto | Alto | No entra en MVP base |
+| Zombie enano que roba loot del tren | Medio | Alto | Alto | No entra en MVP base |
 | Fisicas complejas para mucho loot | Bajo-Medio | Alto | Alto | Fuera del MVP |
 
 ## Presupuesto de contenido del MVP

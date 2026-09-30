@@ -141,9 +141,12 @@ Motivo: mejora directamente la tension del escape, es legible, barata y no exige
 
 Motivo: aporta caos y humor al loop, pero introduce fisicas, knockback, recuperacion y luego sincronizacion online.
 
+Estado (2026-10-01): ya hay codigo para rodadora, nitroglicerina, barril de polvora, knockdown con ragdoll, lazo y fantasma (solo muere con la cruz). Todo queda como P7: no se valida ni se pule antes de cerrar P5 y el gate host + 1 cliente.
+
 ### No debe entrar en el MVP base
 
 - Enemigos tipo cactus que solo se mueven cuando no los miras.
+- Zombie enano que roba loot del tren.
 
 Motivo: es una idea buena, pero no es un primer enemigo. Requiere reglas de line-of-sight, feedback claro, casos borde en multijugador y mas coste de red que un bandido basico.
 

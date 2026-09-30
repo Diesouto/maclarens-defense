@@ -35,6 +35,16 @@ public class EnemySpawner : MonoBehaviour
     [Tooltip("Enemies placed across town when the train heads there (same moment loot restocks); they don't count toward the threat cap.")]
     [SerializeField, Min(0)] private int townResidentEnemies = 6;
 
+    [Header("Ghost")]
+    [Tooltip("Immortal ghost (GhostController) that only appears once threat is high; only a thrown cross banishes it.")]
+    [SerializeField] private GameObject ghostPrefab;
+    [SerializeField] private ThreatLevel ghostMinimumLevel = ThreatLevel.High;
+    [SerializeField, Min(0)] private int maxGhosts = 1;
+    [Tooltip("Seconds at or above the minimum threat level before each ghost appears.")]
+    [SerializeField, Min(0f)] private float ghostSpawnDelay = 30f;
+    [SerializeField] private float ghostSpawnHeight = 1f;
+
+    private float ghostTimer;
     private readonly List<EnemyController> aliveEnemies = new();
     private readonly HashSet<EnemyController> residentEnemies = new();
     private RunManager runManager;
@@ -45,6 +55,8 @@ public class EnemySpawner : MonoBehaviour
     {
         if (spawnOnStart)
             spawnTimer = GetCurrentSettings().spawnInterval;
+
+        ghostTimer = ghostSpawnDelay;
 
         runManager = RunManager.Instance;
         if (runManager != null)
@@ -103,6 +115,7 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         CleanupDeadEnemies();
+        UpdateGhostSpawning();
 
         ThreatSpawnSettings settings = GetCurrentSettings();
 
@@ -116,6 +129,44 @@ public class EnemySpawner : MonoBehaviour
             TrySpawnEnemy();
             spawnTimer = settings.spawnInterval;
         }
+    }
+
+    private void UpdateGhostSpawning()
+    {
+        if (ghostPrefab == null || GhostController.ActiveCount >= maxGhosts)
+            return;
+
+        ThreatLevel level = ThreatManager.Instance != null ? ThreatManager.Instance.CurrentLevel : ThreatLevel.Calm;
+        if (level < ghostMinimumLevel)
+        {
+            ghostTimer = ghostSpawnDelay;
+            return;
+        }
+
+        ghostTimer -= Time.deltaTime;
+        if (ghostTimer > 0f)
+            return;
+
+        EnemySpawnPoint point = GetBestSpawnPoint();
+        if (point == null)
+            return;
+
+        ghostTimer = ghostSpawnDelay;
+        GameObject ghost = Instantiate(ghostPrefab, point.Position + Vector3.up * ghostSpawnHeight, point.transform.rotation);
+        point.MarkUsed();
+
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
+            return;
+
+        if (!ghost.TryGetComponent(out NetworkObject networkObject) ||
+            !NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(ghostPrefab))
+        {
+            Destroy(ghost);
+            Debug.LogError($"{ghostPrefab.name} must have a registered NetworkObject while networking is active.", ghostPrefab);
+            return;
+        }
+
+        networkObject.Spawn(true);
     }
 
     private ThreatSpawnSettings GetCurrentSettings()

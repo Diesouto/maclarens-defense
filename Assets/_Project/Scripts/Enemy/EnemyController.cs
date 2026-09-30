@@ -18,6 +18,8 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float attackCooldown = 2f;
     [Tooltip("Town residents only notice players within this range; threat-spawned enemies hunt anywhere.")]
     [SerializeField, Min(0f)] private float residentDetectionRange = 20f;
+    [Tooltip("Another player must be this much closer (metres) than the current target to steal the enemy's attention.")]
+    [SerializeField, Min(0f)] private float retargetMargin = 2f;
     [Tooltip("Kamikaze enemies (tumbleweed): detonate this instead of attacking once in reach.")]
     [SerializeField] private Explosive selfDestruct;
     [SerializeField, Min(0f)] private float selfDestructFuse = 0.3f;
@@ -26,6 +28,7 @@ public class EnemyController : MonoBehaviour
     private Health health;
     private Animator animator;
     private Transform target;
+    private PlayerController targetPlayer;
     private bool isDead;
     private bool isAttacking;
     private NetworkEnemyState networkState;
@@ -97,8 +100,7 @@ public class EnemyController : MonoBehaviour
     {
         while (!isDead)
         {
-            if (target == null)
-                FindNearestPlayer();
+            FindNearestPlayer();
 
             if (target != null && agent != null)
             {
@@ -115,9 +117,12 @@ public class EnemyController : MonoBehaviour
                     else
                     {
                         StartAttack(target);
-                        target = null;
                     }
                 }
+            }
+            else if (IsAgentUsable() && agent.hasPath)
+            {
+                agent.ResetPath();
             }
 
             yield return new WaitForSeconds(searchInterval);
@@ -164,11 +169,16 @@ public class EnemyController : MonoBehaviour
     // Clients disable the agent (the host drives enemies), but OnHit still fires there from replicated health.
     private bool IsAgentUsable() => agent != null && agent.enabled && agent.isOnNavMesh && !isDead;
 
+    // Re-evaluated every tick so the enemy switches to whoever is closest; the margin stops flip-flopping
+    // between two players at similar distances.
     void FindNearestPlayer()
     {
-        float bestSqr = IsResident ? residentDetectionRange * residentDetectionRange : Mathf.Infinity;
-        Transform best = null;
         Vector3 pos = transform.position;
+        bool hasTarget = targetPlayer != null && targetPlayer.IsAlive;
+        float currentSqr = hasTarget ? (targetPlayer.transform.position - pos).sqrMagnitude : Mathf.Infinity;
+
+        float bestSqr = IsResident && !hasTarget ? residentDetectionRange * residentDetectionRange : Mathf.Infinity;
+        PlayerController best = null;
 
         foreach (PlayerController player in PlayerController.ActivePlayers)
         {
@@ -179,11 +189,19 @@ public class EnemyController : MonoBehaviour
             if (d < bestSqr)
             {
                 bestSqr = d;
-                best = player.transform;
+                best = player;
             }
         }
 
-        target = best;
+        if (hasTarget && best != targetPlayer)
+        {
+            float currentDistance = Mathf.Sqrt(currentSqr);
+            if (best == null || Mathf.Sqrt(bestSqr) > currentDistance - retargetMargin)
+                best = targetPlayer;
+        }
+
+        targetPlayer = best;
+        target = best != null ? best.transform : null;
 
         // Once a resident spots someone it stays alerted and hunts like any threat spawn.
         if (best != null)
