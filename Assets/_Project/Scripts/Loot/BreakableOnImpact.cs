@@ -22,7 +22,7 @@ public class BreakableOnImpact : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (hasBroken || collision.relativeVelocity.magnitude < breakVelocity)
+        if (NetworkRole.IsClientOnly || hasBroken || collision.relativeVelocity.magnitude < breakVelocity)
             return;
 
         Break();
@@ -30,19 +30,12 @@ public class BreakableOnImpact : MonoBehaviour
 
     private void Break()
     {
-        NetworkBreakable networkBreakable = GetComponent<NetworkBreakable>();
-        if (networkBreakable != null && networkBreakable.IsSpawned && !networkBreakable.IsServer)
-        {
-            networkBreakable.RequestBreakServerRpc();
-            return;
-        }
-
         ApplyBreak();
     }
 
     public void ApplyBreak()
     {
-        if (hasBroken)
+        if (NetworkRole.IsClientOnly || hasBroken)
             return;
 
         hasBroken = true;

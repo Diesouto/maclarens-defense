@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
@@ -15,27 +16,21 @@ public class LootDeliveryPoint : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        // Loot physics is host-authoritative; clients only see replicated copies.
+        if (NetworkRole.IsClientOnly)
+            return;
+
         LootItem lootItem = other.GetComponentInParent<LootItem>();
 
         if (lootItem == null)
             return;
-
-        NetworkLootDelivery networkDelivery = GetComponent<NetworkLootDelivery>();
-        if (networkDelivery != null && networkDelivery.IsSpawned && !networkDelivery.IsServer)
-        {
-            NetworkLootItem networkLoot = lootItem.GetComponent<NetworkLootItem>();
-            if (networkLoot != null && networkLoot.IsSpawned)
-                networkDelivery.RequestDeliverServerRpc(networkLoot.NetworkObject);
-
-            return;
-        }
 
         TryDeliver(lootItem);
     }
 
     public bool TryDeliver(LootItem lootItem)
     {
-        if (lootItem == null || lootItem.Data == null)
+        if (NetworkRole.IsClientOnly || lootItem == null || lootItem.Data == null)
             return false;
 
         int value = lootItem.Data.Value;
@@ -49,8 +44,11 @@ public class LootDeliveryPoint : MonoBehaviour
         // Delivered loot becomes shared team money. Quota payment happens later at Finish Day.
         MoneyManager.Instance?.AddMoney(value);
 
-        // Networked loot is despawned by NetworkLootDelivery after this method returns.
-        if (lootItem.GetComponent<NetworkLootItem>() == null)
+        // Networked loot must be despawned (not destroyed) so every peer removes it.
+        NetworkObject networkObject = lootItem.GetComponent<NetworkObject>();
+        if (networkObject != null && networkObject.IsSpawned)
+            networkObject.Despawn(true);
+        else
             Destroy(lootItem.gameObject);
 
         return true;

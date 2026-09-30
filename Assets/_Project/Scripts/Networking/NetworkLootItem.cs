@@ -45,10 +45,14 @@ public class NetworkLootItem : NetworkBehaviour
             return;
 
         PlayerInventory inventory = client.PlayerObject.GetComponent<PlayerInventory>();
-        if (inventory == null || !lootItem.TryCollect(inventory))
-            return;
+        if (inventory != null)
+            lootItem.TryCollect(inventory);
+    }
 
-        IsCollected.Value = true;
+    public void SetCollectedOnServer(bool collected)
+    {
+        if (IsServer && IsSpawned && IsCollected.Value != collected)
+            IsCollected.Value = collected;
     }
 
     private void HandleCollectedChanged(bool previous, bool current)

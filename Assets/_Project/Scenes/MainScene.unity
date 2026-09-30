@@ -68142,6 +68142,8 @@ GameObject:
   - component: {fileID: 1527900784}
   - component: {fileID: 1527900785}
   - component: {fileID: 1527900786}
+  - component: {fileID: 1527900787}
+  - component: {fileID: 1527900788}
   m_Layer: 0
   m_Name: NetworkEconomyState
   m_TagString: Untagged
@@ -68234,6 +68236,34 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
+--- !u!114 &1527900787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1527900783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9eedf35fde3c484dafe74b7b00aebc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkThreatState
+  ShowTopMostFoldoutHeaderGroup: 1
+  threatManager: {fileID: 1797093154}
+  enemySpawner: {fileID: 0}
+--- !u!114 &1527900788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1527900783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74ed3f0f87b9fe049a86c252a2ccc900, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkGameState
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1001 &1528189219
 PrefabInstance:
   m_ObjectHideFlags: 0

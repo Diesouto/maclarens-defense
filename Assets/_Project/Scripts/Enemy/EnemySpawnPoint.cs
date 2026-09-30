@@ -35,7 +35,7 @@ public class EnemySpawnPoint : MonoBehaviour
 
         foreach (PlayerController player in PlayerController.ActivePlayers)
         {
-            if (player == null)
+            if (player == null || !player.IsAlive)
                 continue;
 
             float sqrDistance = (player.transform.position - transform.position).sqrMagnitude;
@@ -57,7 +57,7 @@ public class EnemySpawnPoint : MonoBehaviour
 
         foreach (PlayerController player in PlayerController.ActivePlayers)
         {
-            if (player == null)
+            if (player == null || !player.IsAlive)
                 continue;
 
             float sqrDistance = (player.transform.position - transform.position).sqrMagnitude;

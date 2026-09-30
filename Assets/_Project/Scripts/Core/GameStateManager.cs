@@ -51,8 +51,7 @@ public class GameStateManager : MonoBehaviour
 
     public bool TrySetState(GameState nextState)
     {
-        NetworkGameState networkState = GetComponent<NetworkGameState>();
-        if (networkState != null && networkState.IsSpawned && !networkState.IsServer)
+        if (NetworkRole.IsClientOnly)
             return false;
 
         if (CurrentState == nextState)

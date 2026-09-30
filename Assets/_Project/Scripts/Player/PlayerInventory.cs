@@ -25,6 +25,7 @@ public class PlayerInventory : MonoBehaviour
     public bool HasAnyLoot => Count > 0;
     public bool HasActiveItem => ActiveItem != null;
     public ItemInstance ActiveItemInstance => activeHeldItem ?? GetInstanceAtSlot(selectedSlotIndex);
+    public ItemInstance HeldItemInstance => activeHeldItem;
     public LootDataSO ActiveItem => ActiveItemInstance?.Data;
     public ItemAnimationProfile CurrentAnimationProfile => ActiveItem != null ? ActiveItem.AnimationProfile : ItemAnimationProfile.Carry;
     public int SelectedSlotIndex => selectedSlotIndex;
@@ -150,7 +151,7 @@ public class PlayerInventory : MonoBehaviour
     {
         if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
         {
-            networkAuthority.RequestDropServerRpc(throwForce);
+            networkAuthority.RequestDropServerRpc(worldPosition ?? transform.position + transform.forward * 1.5f, throwForce);
             return true;
         }
 
@@ -300,7 +301,7 @@ public class PlayerInventory : MonoBehaviour
 
         if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
         {
-            networkAuthority.RequestDropServerRpc(Vector3.zero);
+            networkAuthority.RequestDropServerRpc(transform.position + transform.forward * 1.5f, Vector3.zero);
             return;
         }
 
@@ -348,6 +349,17 @@ public class PlayerInventory : MonoBehaviour
             return;
 
         LootItem.CreateDroppedLoot(item.Data, position, rotation, item, throwForce);
+    }
+
+    // Client-side mirror of the host's inventory (see NetworkInventoryState); never re-sent upstream.
+    public void ApplyReplicatedState(ItemInstance[] backpack, ItemInstance held, int selectedSlot)
+    {
+        for (int i = 0; i < backpackSlots.Length; i++)
+            backpackSlots[i] = backpack != null && i < backpack.Length ? backpack[i] : null;
+
+        activeHeldItem = held;
+        selectedSlotIndex = selectedSlot;
+        NotifyChanged();
     }
 
     private void NotifyChanged()

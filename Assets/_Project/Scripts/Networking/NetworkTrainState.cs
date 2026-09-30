@@ -153,6 +153,11 @@ public class NetworkTrainState : NetworkBehaviour
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestFinishDayServerRpc(RpcParams rpcParams = default)
     {
+        if (!NetworkManager.ConnectedClients.TryGetValue(rpcParams.Receive.SenderClientId, out NetworkClient client) ||
+            client.PlayerObject == null ||
+            (client.PlayerObject.TryGetComponent(out Health playerHealth) && playerHealth.IsDead))
+            return;
+
         ApplyFinishDay();
     }
 

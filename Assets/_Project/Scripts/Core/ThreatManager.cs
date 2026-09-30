@@ -61,6 +61,9 @@ public class ThreatManager : MonoBehaviour
 
     private void Update()
     {
+        if (NetworkRole.IsClientOnly)
+            return;
+
         if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
             return;
 
@@ -91,11 +94,11 @@ public class ThreatManager : MonoBehaviour
 
     private void AddThreat(float amount)
     {
-        NetworkThreatState networkState = GetComponent<NetworkThreatState>();
-        if (networkState != null && networkState.IsSpawned && !networkState.IsServer)
+        if (NetworkRole.IsClientOnly)
             return;
 
-        if (networkState != null && networkState.IsServer)
+        NetworkThreatState networkState = NetworkThreatState.Instance;
+        if (networkState != null && networkState.IsSpawned)
             amount *= networkState.CurrentThreatMultiplier;
 
         if (amount == 0f)
@@ -113,12 +116,30 @@ public class ThreatManager : MonoBehaviour
 
     public void ResetThreat()
     {
+        if (NetworkRole.IsClientOnly)
+            return;
+
         if (CurrentThreat == 0f && CurrentLevel == ThreatLevel.Calm)
             return;
 
         CurrentThreat = 0f;
         OnThreatChanged?.Invoke();
         UpdateLevel();
+    }
+
+    public void ApplyReplicatedThreat(float threat, ThreatLevel level)
+    {
+        if (!Mathf.Approximately(CurrentThreat, threat))
+        {
+            CurrentThreat = threat;
+            OnThreatChanged?.Invoke();
+        }
+
+        if (CurrentLevel == level)
+            return;
+
+        CurrentLevel = level;
+        OnThreatLevelChanged?.Invoke(CurrentLevel);
     }
 
     private void HandlePhaseChanged(RunPhase phase)

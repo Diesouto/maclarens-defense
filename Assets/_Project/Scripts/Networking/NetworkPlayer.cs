@@ -27,6 +27,10 @@ public class NetworkPlayer : NetworkBehaviour
         false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    public NetworkVariable<bool> IsBodyHidden = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
     [SerializeField] private PlayerController playerController;
     [SerializeField] private PlayerInputHandler playerInputHandler;
     [SerializeField] private PlayerInteractor playerInteractor;
@@ -43,11 +47,43 @@ public class NetworkPlayer : NetworkBehaviour
     private Transform[] characterModels;
     private WorldSpaceBillboard nameplateBillboard;
     private Coroutine outputCameraSearch;
+    private PlayerBody playerBody;
 
     public void MarkAbandoned()
     {
         if (IsServer)
             IsAbandoned.Value = true;
+    }
+
+    public void SetBodyHiddenOnServer(bool hidden)
+    {
+        if (IsServer && IsSpawned)
+            IsBodyHidden.Value = hidden;
+    }
+
+    // Movement is owner-authoritative, so a host-side teleport must be performed by the owner.
+    public void TeleportFromServer(Vector3 position, Quaternion rotation)
+    {
+        if (!IsServer)
+            return;
+
+        if (IsOwner)
+        {
+            if (playerMotor != null)
+                playerMotor.Teleport(position, rotation);
+            return;
+        }
+
+        transform.SetPositionAndRotation(position, rotation);
+        lastServerPosition = position;
+        TeleportOwnerRpc(position, rotation);
+    }
+
+    [Rpc(SendTo.Owner)]
+    private void TeleportOwnerRpc(Vector3 position, Quaternion rotation)
+    {
+        if (playerMotor != null)
+            playerMotor.Teleport(position, rotation);
     }
 
     private void Awake()
@@ -68,6 +104,7 @@ public class NetworkPlayer : NetworkBehaviour
             playerMotor = GetComponent<PlayerMotor>();
 
         trainPassenger = GetComponent<TrainPassenger>();
+        playerBody = GetComponent<PlayerBody>();
 
         if (playerCameras == null || playerCameras.Length == 0)
             playerCameras = GetComponentsInChildren<Camera>(true);
@@ -98,6 +135,9 @@ public class NetworkPlayer : NetworkBehaviour
         lastServerPosition = transform.position;
         DisplayName.OnValueChanged += HandleDisplayNameChanged;
         CharacterIndex.OnValueChanged += HandleCharacterIndexChanged;
+        IsBodyHidden.OnValueChanged += HandleBodyHiddenChanged;
+        if (!IsServer && playerBody != null && IsBodyHidden.Value)
+            playerBody.ApplyHidden(true);
         ApplyLocalOwnership(IsOwner);
         ApplyCharacterSelection(CharacterIndex.Value);
         UpdateNameplate(DisplayName.Value);
@@ -119,6 +159,7 @@ public class NetworkPlayer : NetworkBehaviour
     {
         DisplayName.OnValueChanged -= HandleDisplayNameChanged;
         CharacterIndex.OnValueChanged -= HandleCharacterIndexChanged;
+        IsBodyHidden.OnValueChanged -= HandleBodyHiddenChanged;
         ApplyLocalOwnership(false);
         if (Local == this)
             SetLocal(null);
@@ -223,6 +264,12 @@ public class NetworkPlayer : NetworkBehaviour
     private void HandleCharacterIndexChanged(int previousValue, int newValue)
     {
         ApplyCharacterSelection(newValue);
+    }
+
+    private void HandleBodyHiddenChanged(bool previousValue, bool newValue)
+    {
+        if (!IsServer && playerBody != null)
+            playerBody.ApplyHidden(newValue);
     }
 
     private int NormalizeCharacterIndex(int index)

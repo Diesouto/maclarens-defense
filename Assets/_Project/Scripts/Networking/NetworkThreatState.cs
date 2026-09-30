@@ -44,12 +44,42 @@ public class NetworkThreatState : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
+    }
 
+    public override void OnNetworkSpawn()
+    {
         if (threatManager == null)
             threatManager = ThreatManager.Instance;
 
-        if (enemySpawner == null)
-            enemySpawner = FindFirstObjectByType<EnemySpawner>();
+        if (IsServer)
+        {
+            if (enemySpawner == null)
+                enemySpawner = FindFirstObjectByType<EnemySpawner>();
+            return;
+        }
+
+        CurrentThreat.OnValueChanged += HandleThreatChanged;
+        CurrentLevel.OnValueChanged += HandleLevelChanged;
+        ApplyToManager();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        CurrentThreat.OnValueChanged -= HandleThreatChanged;
+        CurrentLevel.OnValueChanged -= HandleLevelChanged;
+    }
+
+    private void HandleThreatChanged(float previous, float current) => ApplyToManager();
+
+    private void HandleLevelChanged(ThreatLevel previous, ThreatLevel current) => ApplyToManager();
+
+    private void ApplyToManager()
+    {
+        if (threatManager == null)
+            threatManager = ThreatManager.Instance;
+
+        if (threatManager != null)
+            threatManager.ApplyReplicatedThreat(CurrentThreat.Value, CurrentLevel.Value);
     }
 
     public override void OnDestroy()

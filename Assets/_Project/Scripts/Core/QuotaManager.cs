@@ -192,9 +192,23 @@ public class QuotaManager : MonoBehaviour
         return total;
     }
 
-    private bool IsNetworkClient()
+    // Clients mirror the host's effective quota directly; modifiers themselves stay host-side.
+    public void ApplyReplicatedState(int effectiveQuota, int debtPaid, int cargoValue, int deliveredValue)
     {
-        NetworkEconomyState networkState = GetComponent<NetworkEconomyState>();
-        return networkState != null && networkState.IsSpawned && !networkState.IsServer;
+        bool debtChanged = DebtPaid != debtPaid;
+
+        currentQuota = Mathf.Max(effectiveQuota, 0);
+        DebtPaid = debtPaid;
+        CurrentCargoValue = cargoValue;
+        DeliveredValue = deliveredValue;
+
+        OnQuotaProgressChanged?.Invoke();
+        if (debtChanged)
+            OnDebtChanged?.Invoke();
+
+        if (!quotaWasMet && currentQuota > 0 && DeliveredValue >= currentQuota)
+            SetQuotaMet();
     }
+
+    private static bool IsNetworkClient() => NetworkRole.IsClientOnly;
 }

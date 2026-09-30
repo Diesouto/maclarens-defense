@@ -122,8 +122,16 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       hay camaras.
 - [ ] Playtest de spawn y movimiento: cada cliente controla solo su personaje y todos ven el
       transform sincronizado, el modelo elegido y el nombre del Canvas `PlayerName` sobre cada jugador.
-- [ ] Añadir `OwnerNetworkAnimator` a la raíz de `Player.prefab` y asignar su campo `Animator` al
+- [x] Añadir `OwnerNetworkAnimator` a la raíz de `Player.prefab` y asignar su campo `Animator` al
       Animator del rig (sincroniza `Speed` y los bools de pose desde el owner).
+- [ ] Ragdoll de `Player.prefab`: el prefab no tiene Rigidbodies ni Joints en los huesos. Usar el
+      Ragdoll Wizard sobre el rig (Hips, Spine, Head, brazos, piernas). `CharacterRagdollController`
+      los pone kinematic al arrancar e ignora colisiones con el `CharacterController`.
+- [ ] Loot en red: en los 20 prefabs de `Prefabs/Loot/` añadir `NetworkTransform` (autoridad server)
+      y `NetworkRigidbody`, y desactivar `AutoObjectParentSync` en su `NetworkObject` (si no, NGO
+      revierte el parenting de `TrainCargo` y los clientes no ven caídas ni lanzamientos).
+- [ ] Verificar en `MainScene` que el GameObject `NetworkEconomyState` tiene ahora también
+      `NetworkThreatState` y `NetworkGameState` (añadidos por YAML).
 - [ ] Opcional: quitar el `NetworkTransform` redundante de la raíz de `Train_3.prefab` (la raíz no se
       mueve; los clientes siguen el tren vía `NetworkTrainState.CurrentDistance`) y el que hay en el
       GameObject de `RunManager` en `MainScene`.

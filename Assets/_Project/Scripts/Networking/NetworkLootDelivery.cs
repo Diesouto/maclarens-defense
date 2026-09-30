@@ -35,7 +35,5 @@ public class NetworkLootDelivery : NetworkBehaviour
 
         if (!deliveryPoint.TryDeliver(lootItem))
             return;
-
-        lootObject.Despawn(true);
     }
 }

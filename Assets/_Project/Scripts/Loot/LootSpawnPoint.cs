@@ -9,6 +9,12 @@ public class LootSpawnPoint : MonoBehaviour
 
     public bool IsOccupied { get; private set; }
 
+    private void Awake()
+    {
+        foreach (LootDataSO lootData in lootOptions)
+            LootCatalog.Register(lootData);
+    }
+
     public bool HasLootOptions()
     {
         return lootOptions != null && lootOptions.Count > 0;

@@ -43,6 +43,9 @@ public class HUD : MonoBehaviour
 
         PlayerInventory inventory = localPlayer.GetComponent<PlayerInventory>();
 
+        Debug.Log($"HUD: binding to '{localPlayer.name}' (health UI: {healthUI != null}, inventory UI: {inventoryUI != null}, " +
+            $"bullets UI: {bulletsUI != null}, interact UI: {interactUI != null}, inventory: {inventory != null}).", this);
+
         healthUI?.Bind(localPlayer.GetComponent<Health>());
         inventoryUI?.Bind(inventory);
         bulletsUI?.Bind(inventory);

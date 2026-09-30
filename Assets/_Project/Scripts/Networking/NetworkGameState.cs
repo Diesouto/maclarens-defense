@@ -2,7 +2,6 @@ using Unity.Netcode;
 using UnityEngine;
 
 [RequireComponent(typeof(NetworkObject))]
-[RequireComponent(typeof(GameStateManager))]
 public class NetworkGameState : NetworkBehaviour
 {
     public NetworkVariable<GameState> CurrentState = new(
@@ -16,13 +15,15 @@ public class NetworkGameState : NetworkBehaviour
 
     private GameStateManager gameStateManager;
 
-    private void Awake()
-    {
-        gameStateManager = GetComponent<GameStateManager>();
-    }
-
     public override void OnNetworkSpawn()
     {
+        gameStateManager = GameStateManager.Instance;
+        if (gameStateManager == null)
+        {
+            Debug.LogError("NetworkGameState: no GameStateManager in the scene.", this);
+            return;
+        }
+
         CurrentState.OnValueChanged += HandleStateChanged;
         LastFailCause.OnValueChanged += HandleFailCauseChanged;
 
@@ -40,7 +41,7 @@ public class NetworkGameState : NetworkBehaviour
 
     private void Update()
     {
-        if (IsServer)
+        if (IsServer && gameStateManager != null)
             SyncFromManager();
     }
 

@@ -66,9 +66,14 @@ public class MoneyManager : MonoBehaviour
         OnMoneyChanged?.Invoke();
     }
 
-    private bool IsNetworkClient()
+    public void ApplyReplicatedMoney(int teamMoney)
     {
-        NetworkEconomyState networkState = GetComponent<NetworkEconomyState>();
-        return networkState != null && networkState.IsSpawned && !networkState.IsServer;
+        if (TeamMoney == teamMoney)
+            return;
+
+        TeamMoney = teamMoney;
+        OnMoneyChanged?.Invoke();
     }
+
+    private static bool IsNetworkClient() => NetworkRole.IsClientOnly;
 }

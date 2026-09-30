@@ -25,7 +25,29 @@ public class CharacterRagdollController : MonoBehaviour
     {
         animator = GetChildComponent<Animator>();
         CacheRagdollParts();
-        // SetRagdollState(false);
+        PrepareAliveBones();
+    }
+
+    // Bone colliders stay enabled (hitboxes) but must not simulate or push the root CharacterController.
+    private void PrepareAliveBones()
+    {
+        Rigidbody rootRb = GetComponent<Rigidbody>();
+        Collider rootCollider = GetComponent<Collider>();
+
+        foreach (Rigidbody rb in ragdollRigidbodies)
+        {
+            if (rb != null && rb != rootRb)
+                rb.isKinematic = true;
+        }
+
+        if (rootCollider == null)
+            return;
+
+        foreach (Collider boneCollider in ragdollColliders)
+        {
+            if (boneCollider != null && boneCollider != rootCollider)
+                Physics.IgnoreCollision(rootCollider, boneCollider, true);
+        }
     }
 
     private void Start()
@@ -154,10 +176,11 @@ public class CharacterRagdollController : MonoBehaviour
         bindLocalPositions.Clear();
         bindLocalRotations.Clear();
 
-        Rigidbody[] rigidbodies = GetComponentsInChildren<Rigidbody>();
+        Rigidbody ownRigidbody = GetComponent<Rigidbody>();
+        Rigidbody[] rigidbodies = GetComponentsInChildren<Rigidbody>(true);
         foreach (var rigidbody in rigidbodies)
         {
-            if (rigidbody == null)
+            if (rigidbody == null || rigidbody == ownRigidbody)
                 continue;
 
             ragdollRigidbodies.Add(rigidbody);

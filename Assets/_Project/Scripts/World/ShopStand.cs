@@ -10,6 +10,8 @@ public class ShopStand : MonoBehaviour, IInteractable
 
     private void Awake()
     {
+        LootCatalog.Register(lootData);
+
         if (runManager == null)
             runManager = RunManager.Instance;
 

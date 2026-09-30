@@ -169,10 +169,6 @@ public class RunManager : MonoBehaviour
         SetPhase(phase);
     }
 
-    private bool IsNetworkClient()
-    {
-        NetworkRunState networkState = GetComponent<NetworkRunState>();
-        return networkState != null && networkState.IsSpawned && !networkState.IsServer;
-    }
+    private static bool IsNetworkClient() => NetworkRole.IsClientOnly;
 
 }

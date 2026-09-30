@@ -116,6 +116,9 @@ public class LootSpawner : MonoBehaviour
 
     private bool TrySpawnLoot()
     {
+        if (NetworkRole.IsClientOnly)
+            return false;
+
         List<LootSpawnPoint> availablePoints =
             GetAvailableSpawnPoints();
 

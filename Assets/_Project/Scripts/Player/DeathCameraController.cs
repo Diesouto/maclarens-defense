@@ -13,6 +13,9 @@ public class DeathCameraController : MonoBehaviour
 {
     public static DeathCameraController Instance { get; private set; }
 
+    // NetworkPlayer raises the local player's virtual camera to 1000; the death camera must beat it.
+    private const int ActivePriority = 2000;
+
     [SerializeField] private float activationDelay = 3f;
     [SerializeField] private CinemachineCamera deathCamera;
 
@@ -57,7 +60,7 @@ public class DeathCameraController : MonoBehaviour
 
         foreach (PlayerController player in PlayerController.ActivePlayers)
         {
-            if (player != null)
+            if (player != null && player.IsAlive && player.transform != corpse)
                 spectateTargets.Add(player.transform);
         }
 
@@ -109,7 +112,14 @@ public class DeathCameraController : MonoBehaviour
 
     private void SetActiveCamera(bool active)
     {
-        if (deathCamera != null)
-            deathCamera.gameObject.SetActive(active);
+        if (deathCamera == null)
+            return;
+
+        deathCamera.gameObject.SetActive(active);
+        if (!active)
+            return;
+
+        deathCamera.Priority = ActivePriority;
+        deathCamera.Prioritize();
     }
 }

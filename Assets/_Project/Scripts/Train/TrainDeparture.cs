@@ -115,11 +115,7 @@ public class TrainDeparture : MonoBehaviour, IInteractable
         countdownRoutine = null;
     }
 
-    private static bool IsNetworkClient()
-    {
-        NetworkManager networkManager = NetworkManager.Singleton;
-        return networkManager != null && networkManager.IsListening && !networkManager.IsServer;
-    }
+    private static bool IsNetworkClient() => NetworkRole.IsClientOnly;
 
     public void BeginAuthoritativeDeparture()
     {

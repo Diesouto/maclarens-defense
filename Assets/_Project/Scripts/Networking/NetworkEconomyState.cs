@@ -32,7 +32,40 @@ public class NetworkEconomyState : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (IsServer)
+        {
             SyncFromManagers();
+            return;
+        }
+
+        TeamMoney.OnValueChanged += HandleValueChanged;
+        DebtPaid.OnValueChanged += HandleValueChanged;
+        DebtRemaining.OnValueChanged += HandleValueChanged;
+        CurrentQuota.OnValueChanged += HandleValueChanged;
+        CurrentCargoValue.OnValueChanged += HandleValueChanged;
+        DeliveredValue.OnValueChanged += HandleValueChanged;
+        ApplyToManagers();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        TeamMoney.OnValueChanged -= HandleValueChanged;
+        DebtPaid.OnValueChanged -= HandleValueChanged;
+        DebtRemaining.OnValueChanged -= HandleValueChanged;
+        CurrentQuota.OnValueChanged -= HandleValueChanged;
+        CurrentCargoValue.OnValueChanged -= HandleValueChanged;
+        DeliveredValue.OnValueChanged -= HandleValueChanged;
+    }
+
+    private void HandleValueChanged(int previous, int current) => ApplyToManagers();
+
+    private void ApplyToManagers()
+    {
+        MoneyManager.Instance?.ApplyReplicatedMoney(TeamMoney.Value);
+        QuotaManager.Instance?.ApplyReplicatedState(
+            CurrentQuota.Value,
+            DebtPaid.Value,
+            CurrentCargoValue.Value,
+            DeliveredValue.Value);
     }
 
     private void LateUpdate()

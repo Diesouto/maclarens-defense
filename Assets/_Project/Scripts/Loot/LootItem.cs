@@ -16,6 +16,8 @@ public class LootItem : MonoBehaviour, IInteractable
 
     private void Awake()
     {
+        LootCatalog.Register(lootData);
+
         if (lootData != null && Instance == null)
             Instance = new ItemInstance(lootData);
 
@@ -114,6 +116,8 @@ public class LootItem : MonoBehaviour, IInteractable
 
         IsCollected = true;
         spawnPoint?.SetOccupied(false);
+        if (TryGetComponent(out NetworkLootItem networkLoot))
+            networkLoot.SetCollectedOnServer(true);
 
         if (hideOnPickup)
             gameObject.SetActive(false);
@@ -188,6 +192,9 @@ public class LootItem : MonoBehaviour, IInteractable
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
             NetworkManager.Singleton.IsServer && networkObject != null && !networkObject.IsSpawned)
             networkObject.Spawn(true);
+
+        if (instance.TryGetComponent(out NetworkLootItem networkLoot))
+            networkLoot.SetCollectedOnServer(false);
 
         return lootItem;
     }

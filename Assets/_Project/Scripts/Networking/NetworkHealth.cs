@@ -56,6 +56,12 @@ public class NetworkHealth : NetworkBehaviour
         return true;
     }
 
+    public void SyncFromHealth()
+    {
+        if (IsServer && IsSpawned)
+            CurrentHealth.Value = health.CurrentHealth;
+    }
+
     public void SetAuthoritativeHealth(float value)
     {
         if (!IsServer)

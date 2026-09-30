@@ -7,9 +7,13 @@ using UnityEngine;
 [RequireComponent(typeof(ItemHolder))]
 public class PlayerController : MonoBehaviour
 {
-    // Lets gameplay code (e.g. enemy targeting) find players without FindGameObjectsWithTag.
+    // Every spawned player (local and remote copies); remote PlayerControllers are disabled, so this
+    // registers in Awake/OnDestroy. Consumers must filter with IsAlive.
     private static readonly List<PlayerController> activePlayers = new();
     public static IReadOnlyList<PlayerController> ActivePlayers => activePlayers;
+
+    public bool IsAlive => gameObject.activeInHierarchy && (health == null || !health.IsDead) &&
+        (body == null || !body.IsHidden);
 
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private Camera mainCamera;
@@ -33,6 +37,7 @@ public class PlayerController : MonoBehaviour
     private BodyCarrier bodyCarrier;
     private Weapon weapon;
     private Health health;
+    private PlayerBody body;
     private Animator animator;
     private float yaw;
     private float pitch;
@@ -61,7 +66,9 @@ public class PlayerController : MonoBehaviour
         itemHolder = GetComponent<ItemHolder>();
         weapon = itemHolder != null ? itemHolder.RuntimeWeapon : GetComponentInChildren<Weapon>(true);
         health = GetComponent<Health>();
+        body = GetComponent<PlayerBody>();
         animator = GetComponentInChildren<Animator>();
+        activePlayers.Add(this);
 
         if (interactUI == null)
             interactUI = FindFirstObjectByType<InteractUI>();
@@ -109,16 +116,6 @@ public class PlayerController : MonoBehaviour
 
         mainCamera = outputCamera;
         currentFov = mainCamera.fieldOfView;
-    }
-
-    private void OnEnable()
-    {
-        activePlayers.Add(this);
-    }
-
-    private void OnDisable()
-    {
-        activePlayers.Remove(this);
     }
 
     private void Update()
@@ -328,6 +325,7 @@ public class PlayerController : MonoBehaviour
 
     private void OnDestroy()
     {
+        activePlayers.Remove(this);
         if (health != null)
         {
             health.OnHit -= OnHit;

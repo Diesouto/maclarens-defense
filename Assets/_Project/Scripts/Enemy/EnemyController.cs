@@ -135,7 +135,7 @@ public class EnemyController : MonoBehaviour
 
         foreach (PlayerController player in PlayerController.ActivePlayers)
         {
-            if (player == null)
+            if (player == null || !player.IsAlive)
                 continue;
 
             float d = (player.transform.position - pos).sqrMagnitude;

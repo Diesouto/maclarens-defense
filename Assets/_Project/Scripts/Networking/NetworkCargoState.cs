@@ -25,6 +25,9 @@ public struct NetworkCargoEntry : INetworkSerializable, System.IEquatable<Networ
     }
 }
 
+// Clients never reparent loot NetworkObjects (server-only in NGO); they pin cargo items to this
+// carriage every LateUpdate instead, overriding the world-space NetworkTransform that would lag behind.
+[DefaultExecutionOrder(1000)]
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(TrainCargo))]
 public class NetworkCargoState : NetworkBehaviour
@@ -47,23 +50,32 @@ public class NetworkCargoState : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        Items.OnListChanged += HandleCargoChanged;
-
         if (IsServer)
             SyncFromCargo();
-        else
-            ApplyClientCargo();
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        Items.OnListChanged -= HandleCargoChanged;
     }
 
     private void Update()
     {
         if (IsServer)
             SyncFromCargo();
+    }
+
+    private void LateUpdate()
+    {
+        if (!IsSpawned || IsServer)
+            return;
+
+        foreach (NetworkCargoEntry item in Items)
+        {
+            if (!NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
+                    item.NetworkObjectId, out NetworkObject networkObject) ||
+                !networkObject.gameObject.activeInHierarchy)
+                continue;
+
+            networkObject.transform.SetPositionAndRotation(
+                transform.TransformPoint(item.LocalPosition),
+                transform.rotation * item.LocalRotation);
+        }
     }
 
     private void SyncFromCargo()
@@ -83,8 +95,8 @@ public class NetworkCargoState : NetworkBehaviour
             currentItems.Add(new NetworkCargoEntry
             {
                 NetworkObjectId = networkObject.NetworkObjectId,
-                LocalPosition = item.transform.localPosition,
-                LocalRotation = item.transform.localRotation
+                LocalPosition = transform.InverseTransformPoint(item.transform.position),
+                LocalRotation = Quaternion.Inverse(transform.rotation) * item.transform.rotation
             });
             if (item.Data != null)
                 value += item.Data.Value;
@@ -104,40 +116,5 @@ public class NetworkCargoState : NetworkBehaviour
 
         if (CargoValue.Value != value)
             CargoValue.Value = value;
-    }
-
-    private void HandleCargoChanged(NetworkListEvent<NetworkCargoEntry> changeEvent)
-    {
-        if (!IsServer)
-            ApplyClientCargo();
-    }
-
-    private void ApplyClientCargo()
-    {
-        foreach (NetworkCargoEntry previousItem in cachedItems)
-        {
-            if (Items.Contains(previousItem))
-                continue;
-
-            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(
-                    previousItem.NetworkObjectId, out NetworkObject previousObject) &&
-                previousObject.transform.parent == transform)
-                previousObject.transform.SetParent(null, true);
-        }
-
-        foreach (NetworkCargoEntry item in Items)
-        {
-            if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(
-                    item.NetworkObjectId, out NetworkObject networkObject))
-                continue;
-
-            networkObject.transform.SetParent(transform, false);
-            networkObject.transform.localPosition = item.LocalPosition;
-            networkObject.transform.localRotation = item.LocalRotation;
-        }
-
-        cachedItems.Clear();
-        foreach (NetworkCargoEntry item in Items)
-            cachedItems.Add(item);
     }
 }

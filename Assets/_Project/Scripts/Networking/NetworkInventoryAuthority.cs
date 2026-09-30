@@ -5,6 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerInventory))]
 public class NetworkInventoryAuthority : NetworkBehaviour
 {
+    [SerializeField, Min(0.5f)] private float maxDropDistance = 3f;
+
     private PlayerInventory inventory;
 
     private void Awake()
@@ -22,13 +24,15 @@ public class NetworkInventoryAuthority : NetworkBehaviour
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
-    public void RequestDropServerRpc(Vector3 throwForce, RpcParams rpcParams = default)
+    public void RequestDropServerRpc(Vector3 dropPosition, Vector3 throwForce, RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId)
             return;
 
-        inventory.TryThrowSelected(
-            inventory.transform.position + inventory.transform.forward * 1.5f,
-            throwForce);
+        Vector3 fallback = inventory.transform.position + inventory.transform.forward * 1.5f;
+        if (Vector3.Distance(dropPosition, inventory.transform.position) > maxDropDistance)
+            dropPosition = fallback;
+
+        inventory.TryThrowSelected(dropPosition, throwForce);
     }
 }

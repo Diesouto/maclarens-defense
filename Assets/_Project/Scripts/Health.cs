@@ -16,6 +16,7 @@ public class Health : MonoBehaviour, IDamageable
     public event Action<float> OnHealthChanged;
     public event Action OnHit;
     public event Action OnDeath;
+    public event Action OnRevived;
 
     private CharacterRagdollController ragdollController;
     private NetworkHealth networkHealth;
@@ -58,6 +59,12 @@ public class Health : MonoBehaviour, IDamageable
         CurrentHealth = Mathf.Clamp(health, 0f, maxHealth);
         OnHealthChanged?.Invoke(CurrentHealth);
 
+        if (previousHealth <= 0f && CurrentHealth > 0f)
+        {
+            OnRevived?.Invoke();
+            return;
+        }
+
         if (CurrentHealth >= previousHealth)
             return;
 
@@ -98,7 +105,7 @@ public class Health : MonoBehaviour, IDamageable
 
     public void Heal(float amount)
     {
-        if (networkHealth != null && !networkHealth.IsServer)
+        if (NetworkRole.IsClientOnly)
             return;
 
         if (IsDead)
@@ -107,12 +114,14 @@ public class Health : MonoBehaviour, IDamageable
         CurrentHealth = Mathf.Min(CurrentHealth + amount, maxHealth);
 
         OnHealthChanged?.Invoke(CurrentHealth);
+        if (networkHealth != null)
+            networkHealth.SyncFromHealth();
     }
 
     // Brings a dead entity fully back; callers own repositioning and ragdoll/control reset.
     public void Revive()
     {
-        if (networkHealth != null && !networkHealth.IsServer)
+        if (NetworkRole.IsClientOnly)
             return;
 
         if (!IsDead)
@@ -120,6 +129,9 @@ public class Health : MonoBehaviour, IDamageable
 
         CurrentHealth = maxHealth;
         OnHealthChanged?.Invoke(CurrentHealth);
+        if (networkHealth != null)
+            networkHealth.SyncFromHealth();
+        OnRevived?.Invoke();
     }
 
     private void Die()

@@ -89,7 +89,7 @@ public class ItemHolder : MonoBehaviour
         if (visualPrefab == null)
             return;
 
-        currentHeldVisual = Instantiate(visualPrefab, holdPoint);
+        currentHeldVisual = InstantiateHeldVisual(visualPrefab, holdPoint);
         currentHeldVisual.transform.localPosition = item.HeldPositionOffset;
         currentHeldVisual.transform.localRotation = Quaternion.Euler(item.HeldRotationOffset);
         currentHeldVisual.transform.localScale = Vector3.one;
@@ -123,6 +123,34 @@ public class ItemHolder : MonoBehaviour
 
         foreach (LootItem lootItem in currentHeldVisual.GetComponentsInChildren<LootItem>())
             lootItem.enabled = false;
+    }
+
+    // Instantiated under an inactive parent so Awake is deferred until world-only components are gone:
+    // a WorldPrefab carries a NetworkObject, LootItem and physics that must never live in a player's hand.
+    private static GameObject InstantiateHeldVisual(GameObject prefab, Transform holdPoint)
+    {
+        GameObject staging = new GameObject("HeldVisualStaging");
+        staging.SetActive(false);
+
+        GameObject visual = Instantiate(prefab, staging.transform);
+        StripWorldComponents<Unity.Netcode.NetworkBehaviour>(visual);
+        StripWorldComponents<Unity.Netcode.NetworkObject>(visual);
+        StripWorldComponents<BreakableOnImpact>(visual);
+        StripWorldComponents<LootItem>(visual);
+        StripWorldComponents<TrainPassenger>(visual);
+        StripWorldComponents<Joint>(visual);
+        StripWorldComponents<Rigidbody>(visual);
+        StripWorldComponents<Collider>(visual);
+
+        visual.transform.SetParent(holdPoint, false);
+        Destroy(staging);
+        return visual;
+    }
+
+    private static void StripWorldComponents<T>(GameObject root) where T : Component
+    {
+        foreach (T component in root.GetComponentsInChildren<T>(true))
+            DestroyImmediate(component);
     }
 
     private void DestroyCurrentVisual()

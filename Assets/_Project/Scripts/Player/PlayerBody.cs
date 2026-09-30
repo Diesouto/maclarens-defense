@@ -33,8 +33,12 @@ public class PlayerBody : MonoBehaviour, IInteractable
     private Health health;
     private PlayerController playerController;
     private CharacterRagdollController ragdollController;
+    private NetworkPlayer networkPlayer;
+    private readonly List<Renderer> hiddenRenderers = new();
+    private readonly List<Collider> hiddenColliders = new();
 
     public bool IsDead => health != null && health.IsDead;
+    public bool IsHidden { get; private set; }
     public BodyCarrier Carrier { get; private set; }
     public bool IsBeingCarried => Carrier != null;
 
@@ -47,6 +51,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
         health = GetComponent<Health>();
         playerController = GetComponent<PlayerController>();
         ragdollController = GetComponent<CharacterRagdollController>();
+        networkPlayer = GetComponent<NetworkPlayer>();
 
         allBodies.Add(this);
     }
@@ -54,13 +59,19 @@ public class PlayerBody : MonoBehaviour, IInteractable
     private void OnEnable()
     {
         if (health != null)
+        {
             health.OnDeath += HandleDeath;
+            health.OnRevived += HandleRevived;
+        }
     }
 
     private void OnDisable()
     {
         if (health != null)
+        {
             health.OnDeath -= HandleDeath;
+            health.OnRevived -= HandleRevived;
+        }
     }
 
     private void OnDestroy()
@@ -76,7 +87,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     public bool CanInteract(PlayerInteractor interactor)
     {
-        if (!IsDead || IsBeingCarried || interactor == null)
+        if (!IsDead || IsHidden || IsBeingCarried || interactor == null)
             return false;
 
         Health interactorHealth = interactor.GetComponent<Health>();
@@ -122,7 +133,58 @@ public class PlayerBody : MonoBehaviour, IInteractable
         if (Carrier != null)
             Carrier.Drop();
 
-        gameObject.SetActive(false);
+        ApplyHidden(true);
+        if (networkPlayer != null)
+            networkPlayer.SetBodyHiddenOnServer(true);
+    }
+
+    // Hides visuals/colliders instead of deactivating: a disabled NetworkObject stops replicating.
+    public void ApplyHidden(bool hidden)
+    {
+        if (IsHidden == hidden)
+            return;
+
+        IsHidden = hidden;
+
+        if (hidden)
+        {
+            hiddenRenderers.Clear();
+            foreach (Renderer bodyRenderer in GetComponentsInChildren<Renderer>(true))
+            {
+                if (!bodyRenderer.enabled)
+                    continue;
+
+                hiddenRenderers.Add(bodyRenderer);
+                bodyRenderer.enabled = false;
+            }
+
+            hiddenColliders.Clear();
+            foreach (Collider bodyCollider in GetComponentsInChildren<Collider>(true))
+            {
+                if (!bodyCollider.enabled)
+                    continue;
+
+                hiddenColliders.Add(bodyCollider);
+                bodyCollider.enabled = false;
+            }
+
+            return;
+        }
+
+        foreach (Renderer bodyRenderer in hiddenRenderers)
+        {
+            if (bodyRenderer != null)
+                bodyRenderer.enabled = true;
+        }
+
+        foreach (Collider bodyCollider in hiddenColliders)
+        {
+            if (bodyCollider != null)
+                bodyCollider.enabled = true;
+        }
+
+        hiddenRenderers.Clear();
+        hiddenColliders.Clear();
     }
 
     // Revives this body back into a playable state. A recovered body (never hidden) revives
@@ -130,25 +192,53 @@ public class PlayerBody : MonoBehaviour, IInteractable
     // snaps to the fallback spawn point instead, since its last position is meaningless.
     public void Revive(Transform fallbackSpawnPoint)
     {
-        if (!IsDead)
+        if (!IsDead || NetworkRole.IsClientOnly)
             return;
 
-        bool wasHidden = !gameObject.activeSelf;
+        bool wasHidden = IsHidden;
 
         if (Carrier != null)
             Carrier.Drop();
 
         if (wasHidden)
         {
-            gameObject.SetActive(true);
-
-            if (fallbackSpawnPoint != null)
-                transform.SetPositionAndRotation(fallbackSpawnPoint.position, fallbackSpawnPoint.rotation);
+            ApplyHidden(false);
+            if (networkPlayer != null)
+                networkPlayer.SetBodyHiddenOnServer(false);
         }
 
         IsPendingRespawn = false;
-        ragdollController?.DisableRagdoll();
+        if (ragdollController != null)
+            ragdollController.DisableRagdoll();
+
+        if (wasHidden && fallbackSpawnPoint != null)
+            TeleportTo(fallbackSpawnPoint);
+
         health.Revive();
-        playerController?.Revive();
+        if (playerController != null)
+            playerController.Revive();
+    }
+
+    private void TeleportTo(Transform target)
+    {
+        if (networkPlayer != null && networkPlayer.IsSpawned)
+            networkPlayer.TeleportFromServer(target.position, target.rotation);
+        else if (TryGetComponent(out PlayerMotor motor))
+            motor.Teleport(target.position, target.rotation);
+        else
+            transform.SetPositionAndRotation(target.position, target.rotation);
+    }
+
+    // Remote peers only see the replicated health come back; mirror the host-side revive locally.
+    private void HandleRevived()
+    {
+        if (!NetworkRole.IsClientOnly)
+            return;
+
+        IsPendingRespawn = false;
+        if (ragdollController != null)
+            ragdollController.DisableRagdoll();
+        if (playerController != null)
+            playerController.Revive();
     }
 }
