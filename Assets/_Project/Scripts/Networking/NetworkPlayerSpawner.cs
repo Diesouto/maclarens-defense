@@ -3,34 +3,56 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class NetworkPlayerSpawner : NetworkBehaviour
+public class NetworkPlayerSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private Transform[] spawnPoints;
     [SerializeField] private bool autoSpawnOnClientConnect = true;
 
     private readonly Dictionary<ulong, GameObject> spawnedPlayers = new();
+    private NetworkManager networkManager;
+    private GameObject offlinePlayer;
+    private bool callbacksRegistered;
 
-    public override void OnNetworkSpawn()
+    private void Start()
     {
-        if (!IsServer)
+        if (playerPrefab == null)
+        {
+            Debug.LogError("NetworkPlayerSpawner: assign the Player prefab.", this);
+            return;
+        }
+
+        networkManager = NetworkManager.Singleton;
+        if (networkManager == null || !networkManager.IsListening)
+        {
+            SpawnOfflinePlayer();
+            return;
+        }
+
+        if (!networkManager.IsServer)
             return;
 
-        NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
-        NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnected;
-        NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += HandleLoadEventCompleted;
+        networkManager.OnClientConnectedCallback += HandleClientConnected;
+        networkManager.OnClientDisconnectCallback += HandleClientDisconnected;
+        networkManager.SceneManager.OnLoadEventCompleted += HandleLoadEventCompleted;
+        callbacksRegistered = true;
+
+        if (SceneManager.GetActiveScene().name == "MainScene")
+            BeginGameplaySpawns();
     }
 
-    public override void OnNetworkDespawn()
+    private void OnDestroy()
     {
-        if (NetworkManager.Singleton == null)
-            return;
+        if (callbacksRegistered && networkManager != null)
+        {
+            networkManager.OnClientConnectedCallback -= HandleClientConnected;
+            networkManager.OnClientDisconnectCallback -= HandleClientDisconnected;
+            if (networkManager.SceneManager != null)
+                networkManager.SceneManager.OnLoadEventCompleted -= HandleLoadEventCompleted;
+        }
 
-        NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
-        NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnected;
-        if (NetworkManager.Singleton.SceneManager != null)
-            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= HandleLoadEventCompleted;
-        spawnedPlayers.Clear();
+        if (offlinePlayer != null)
+            Destroy(offlinePlayer);
     }
 
     public void SetPlayerPrefab(GameObject prefab)
@@ -43,106 +65,111 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         spawnPoints = points;
     }
 
+    private void SpawnOfflinePlayer()
+    {
+        if (offlinePlayer != null)
+            return;
+
+        offlinePlayer = Instantiate(playerPrefab, GetSpawnPosition(0), Quaternion.identity);
+        if (offlinePlayer.TryGetComponent(out NetworkPlayer player))
+        {
+            player.ConfigureOfflinePlayer(
+                PlayerPrefs.GetString("PlayerName", "Player"),
+                PlayerPrefs.GetInt("PlayerCharacterIndex", 0));
+        }
+        else
+        {
+            Debug.LogError("NetworkPlayerSpawner: Player prefab is missing NetworkPlayer.", offlinePlayer);
+        }
+    }
+
+    private void BeginGameplaySpawns()
+    {
+        if (networkManager == null || !networkManager.IsServer)
+            return;
+
+        NetworkSessionManager.Instance?.MarkRunInProgress();
+        foreach (ulong clientId in networkManager.ConnectedClientsIds)
+            SpawnForClient(clientId);
+    }
+
+    private void HandleLoadEventCompleted(
+        string sceneName,
+        LoadSceneMode loadSceneMode,
+        List<ulong> clientsCompleted,
+        List<ulong> clientsTimedOut)
+    {
+        if (sceneName == "MainScene")
+            BeginGameplaySpawns();
+    }
+
     private void HandleClientConnected(ulong clientId)
     {
-        if (!autoSpawnOnClientConnect || NetworkSessionManager.Instance == null ||
-            NetworkSessionManager.Instance.SessionState.Value != MultiplayerSessionState.InProgress ||
-            SceneManager.GetActiveScene().name != "MainScene")
+        if (!autoSpawnOnClientConnect || SceneManager.GetActiveScene().name != "MainScene")
+            return;
+
+        if (NetworkSessionManager.Instance != null &&
+            NetworkSessionManager.Instance.SessionState.Value != MultiplayerSessionState.InProgress)
             return;
 
         SpawnForClient(clientId);
     }
 
-    private void HandleLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
-    {
-        if (!IsServer || sceneName != "MainScene")
-            return;
-
-        NetworkSessionManager.Instance?.MarkRunInProgress();
-        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
-            SpawnForClient(clientId);
-    }
-
     private void HandleClientDisconnected(ulong clientId)
     {
-        if (spawnedPlayers.TryGetValue(clientId, out GameObject spawnedPlayer))
+        if (!spawnedPlayers.TryGetValue(clientId, out GameObject playerObject))
+            return;
+
+        if (playerObject != null)
         {
-            if (spawnedPlayer != null)
-            {
-                PlayerBody body = spawnedPlayer.GetComponent<PlayerBody>();
-                if (body != null && body.IsDead)
-                    BodyRecoveryManager.Instance?.MarkLost(body);
+            PlayerBody body = playerObject.GetComponent<PlayerBody>();
+            if (body != null && body.IsDead)
+                BodyRecoveryManager.Instance?.MarkLost(body);
 
-                NetworkPlayer networkPlayer = spawnedPlayer.GetComponent<NetworkPlayer>();
-                networkPlayer?.MarkAbandoned();
+            NetworkPlayer networkPlayer = playerObject.GetComponent<NetworkPlayer>();
+            networkPlayer?.MarkAbandoned();
 
-                if (spawnedPlayer.TryGetComponent(out NetworkObject networkObject))
-                {
-                    if (networkObject.IsSpawned && NetworkManager.Singleton != null &&
-                        NetworkManager.Singleton.IsServer)
-                        networkObject.Despawn();
-                }
-                else
-                {
-                    Destroy(spawnedPlayer);
-                }
-            }
-
-            spawnedPlayers.Remove(clientId);
+            if (playerObject.TryGetComponent(out NetworkObject networkObject) &&
+                networkObject.IsSpawned && networkManager != null && networkManager.IsServer)
+                networkObject.Despawn();
         }
 
+        spawnedPlayers.Remove(clientId);
     }
 
     private void SpawnForClient(ulong clientId)
     {
-        if (!IsServer)
+        if (networkManager == null || !networkManager.IsServer || playerPrefab == null || spawnedPlayers.ContainsKey(clientId))
             return;
 
-        if (playerPrefab == null)
+        if (!networkManager.NetworkConfig.Prefabs.Contains(playerPrefab))
         {
-            Debug.LogWarning("NetworkPlayerSpawner: missing player prefab.");
+            Debug.LogError($"NetworkPlayerSpawner: Player prefab '{playerPrefab.name}' is not registered in NetworkPrefabs.", playerPrefab);
             return;
         }
 
-        if (spawnedPlayers.ContainsKey(clientId))
-            return;
-
         Vector3 spawnPosition = GetSpawnPosition(spawnedPlayers.Count);
-        GameObject playerInstance = Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
-        NetworkObject networkObject = playerInstance.GetComponent<NetworkObject>();
-
-        if (networkObject == null)
+        GameObject playerObject = Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
+        if (!playerObject.TryGetComponent(out NetworkObject networkObject))
         {
-            Destroy(playerInstance);
-            Debug.LogWarning("NetworkPlayerSpawner: prefab is missing NetworkObject.");
+            Destroy(playerObject);
+            Debug.LogError("NetworkPlayerSpawner: Player prefab is missing NetworkObject.", playerPrefab);
             return;
         }
 
         string playerName = $"Player_{clientId}";
         int characterIndex = 0;
-        NetworkSessionManager sessionManager = NetworkSessionManager.Instance;
-        if (sessionManager != null && !sessionManager.TryGetPlayerProfile(clientId, out playerName, out characterIndex))
+        NetworkSessionManager session = NetworkSessionManager.Instance;
+        if (session != null && !session.TryGetPlayerProfile(clientId, out playerName, out characterIndex))
         {
-            sessionManager.AddOrUpdatePlayer(
-                clientId,
-                playerName,
-                sessionManager.HostClientId.Value == clientId,
-                false,
-                characterIndex);
-        }
-
-        if (playerInstance.TryGetComponent(out NetworkPlayer networkPlayer))
-            networkPlayer.SetServerProfile(playerName, characterIndex);
-
-        if (!NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(playerPrefab))
-        {
-            Destroy(playerInstance);
-            Debug.LogError($"NetworkPlayerSpawner: prefab '{playerPrefab.name}' is not registered in NetworkPrefabs.", playerPrefab);
-            return;
+            session.AddOrUpdatePlayer(clientId, playerName, session.HostClientId.Value == clientId, false, characterIndex);
         }
 
         networkObject.SpawnAsPlayerObject(clientId, true);
-        spawnedPlayers[clientId] = playerInstance;
+        spawnedPlayers[clientId] = playerObject;
+
+        if (playerObject.TryGetComponent(out NetworkPlayer networkPlayer))
+            networkPlayer.SetServerProfile(playerName, characterIndex);
     }
 
     private Vector3 GetSpawnPosition(int playerIndex)
@@ -150,7 +177,8 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         if (spawnPoints != null && spawnPoints.Length > 0)
         {
             int index = playerIndex % spawnPoints.Length;
-            return spawnPoints[index].position;
+            if (spawnPoints[index] != null)
+                return spawnPoints[index].position;
         }
 
         GameObject respawnPoint = GameObject.Find("RespawnPoint");

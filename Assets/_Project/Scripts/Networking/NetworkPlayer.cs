@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using TMPro;
+using Unity.Cinemachine;
 using Unity.Collections;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -26,12 +27,14 @@ public class NetworkPlayer : NetworkBehaviour
     [SerializeField] private PlayerInteractor playerInteractor;
     [SerializeField] private NetworkWeaponAuthority weaponAuthority;
     [SerializeField] private Camera[] playerCameras;
+    [SerializeField] private CinemachineCamera[] playerVirtualCameras;
+    [SerializeField] private TMP_Text playerNameLabel;
     [SerializeField, Min(1f)] private float maximumMovementSpeed = 12f;
     [SerializeField, Min(0f)] private float movementValidationTolerance = 0.75f;
 
     private Vector3 lastServerPosition;
     private Transform[] characterModels;
-    private TextMeshPro nameplate;
+    private WorldSpaceBillboard nameplateBillboard;
 
     public void MarkAbandoned()
     {
@@ -56,6 +59,24 @@ public class NetworkPlayer : NetworkBehaviour
         if (playerCameras == null || playerCameras.Length == 0)
             playerCameras = GetComponentsInChildren<Camera>(true);
 
+        if (playerVirtualCameras == null || playerVirtualCameras.Length == 0)
+            playerVirtualCameras = GetComponentsInChildren<CinemachineCamera>(true);
+
+        if (playerNameLabel == null)
+        {
+            foreach (TMP_Text label in GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (label.gameObject.name == "PlayerName")
+                {
+                    playerNameLabel = label;
+                    break;
+                }
+            }
+        }
+
+        if (playerNameLabel != null)
+            nameplateBillboard = playerNameLabel.GetComponentInParent<WorldSpaceBillboard>();
+
         characterModels = FindCharacterModels(transform);
     }
 
@@ -66,8 +87,8 @@ public class NetworkPlayer : NetworkBehaviour
         CharacterIndex.OnValueChanged += HandleCharacterIndexChanged;
         ApplyLocalOwnership(IsOwner);
         ApplyCharacterSelection(CharacterIndex.Value);
-        EnsureNameplate();
         UpdateNameplate(DisplayName.Value);
+        BindNameplateToOutputCamera();
     }
 
     public override void OnNetworkDespawn()
@@ -89,8 +110,19 @@ public class NetworkPlayer : NetworkBehaviour
         DisplayName.Value = new FixedString64Bytes(safeName);
         CharacterIndex.Value = NormalizeCharacterIndex(characterIndex);
         ApplyCharacterSelection(CharacterIndex.Value);
-        EnsureNameplate();
         UpdateNameplate(DisplayName.Value);
+    }
+
+    public void ConfigureOfflinePlayer(string playerName, int characterIndex)
+    {
+        string safeName = string.IsNullOrWhiteSpace(playerName) ? "Player" : playerName.Trim();
+        if (safeName.Length > 24)
+            safeName = safeName.Substring(0, 24);
+
+        ApplyLocalOwnership(true);
+        ApplyCharacterSelection(characterIndex);
+        SetPlayerNameLabel(safeName);
+        BindNameplateToOutputCamera();
     }
 
     private void Update()
@@ -120,13 +152,24 @@ public class NetworkPlayer : NetworkBehaviour
         if (playerInteractor != null)
             playerInteractor.enabled = isLocal;
 
-        if (playerCameras == null)
+        if (playerCameras != null)
+        {
+            foreach (Camera playerCamera in playerCameras)
+            {
+                if (playerCamera != null)
+                    playerCamera.enabled = isLocal;
+            }
+        }
+
+        if (playerVirtualCameras == null)
             return;
 
-        foreach (Camera playerCamera in playerCameras)
+        foreach (CinemachineCamera virtualCamera in playerVirtualCameras)
         {
-            if (playerCamera != null)
-                playerCamera.enabled = isLocal;
+            if (virtualCamera == null)
+                continue;
+
+            virtualCamera.enabled = isLocal;
         }
     }
 
@@ -160,38 +203,26 @@ public class NetworkPlayer : NetworkBehaviour
             characterModels[i].gameObject.SetActive(i == selectedIndex);
     }
 
-    private void EnsureNameplate()
-    {
-        if (nameplate != null)
-            return;
-
-        GameObject nameplateObject = new GameObject("PlayerNameplate");
-        nameplateObject.transform.SetParent(transform, false);
-        nameplateObject.transform.localPosition = Vector3.up * 2.6f;
-        nameplate = nameplateObject.AddComponent<TextMeshPro>();
-        nameplate.fontSize = 3f;
-        nameplate.alignment = TextAlignmentOptions.Center;
-        nameplate.color = Color.white;
-        nameplate.outlineWidth = 0.12f;
-        nameplate.outlineColor = Color.black;
-        nameplate.rectTransform.sizeDelta = new Vector2(4f, 0.6f);
-    }
-
     private void UpdateNameplate(FixedString64Bytes playerName)
     {
-        EnsureNameplate();
-        nameplate.text = playerName.ToString();
+        SetPlayerNameLabel(playerName.ToString());
     }
 
-    private void LateUpdate()
+    private void BindNameplateToOutputCamera()
     {
-        if (nameplate == null || Camera.main == null)
-            return;
+        if (nameplateBillboard != null && Camera.main != null)
+            nameplateBillboard.SetTargetCamera(Camera.main);
+    }
 
-        Vector3 toCamera = Camera.main.transform.position - nameplate.transform.position;
-        toCamera.y = 0f;
-        if (toCamera.sqrMagnitude > 0.001f)
-            nameplate.transform.rotation = Quaternion.LookRotation(toCamera);
+    private void SetPlayerNameLabel(string value)
+    {
+        if (playerNameLabel == null)
+        {
+            Debug.LogWarning("NetworkPlayer: PlayerName TMP label is not assigned or present under the player prefab.", this);
+            return;
+        }
+
+        playerNameLabel.text = value;
     }
 
     private static Transform[] FindCharacterModels(Transform root)

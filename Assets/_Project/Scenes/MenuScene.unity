@@ -5689,6 +5689,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MultiplayerMenuController
   mainMenuScreen: {fileID: 1946443080}
   multiplayerScreen: {fileID: 999178447}
+  characterScreen: {fileID: 1913465134}
   joinScreen: {fileID: 1276008167}
   lobbyScreen: {fileID: 1939262286}
   singlePlayerButton: {fileID: 263119976}
@@ -5697,30 +5698,25 @@ MonoBehaviour:
   previousCharacterButton: {fileID: 899415399}
   characterIndexText: {fileID: 1184045829}
   nextCharacterButton: {fileID: 1184440261}
-  characterPreviewModels:
-  - {fileID: 1942289980213182, guid: 085e53ee40ad24b40a83bd90705ad460, type: 3}
-  - {fileID: 1214723647702548, guid: e85f10072d335224984d9b8ae2e93843, type: 3}
-  - {fileID: 1800371080893130, guid: e169e4d9dbd157b498e582065a5f9302, type: 3}
-  - {fileID: 1506550050545096, guid: 24362449162558a49bc6904c0fda923a, type: 3}
-  - {fileID: 1964704263138806, guid: e3d9a5b7a19f9684d9b63308cdfa95bd, type: 3}
-  - {fileID: 1819260798650952, guid: 96256c2234452c641863ebbc421be660, type: 3}
-  - {fileID: 1040643676778012, guid: 15a550206f811c346b37f3a3f4495178, type: 3}
-  - {fileID: 1876497922086962, guid: 7aad5b0274fd2894eafec31a58e26a32, type: 3}
+  playerPreviewPrefab: {fileID: 5860787695679847855, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
+  modelPosition: {fileID: 782766354}
   hostButton: {fileID: 601393655}
   joinButton: {fileID: 526469879}
+  openCharacterScreenButton: {fileID: 375080314}
   multiplayerBackButton: {fileID: 2088056338}
+  characterBackButton: {fileID: 1434103317}
   joinCodeInput: {fileID: 729221492}
   connectButton: {fileID: 512469895}
   joinBackButton: {fileID: 684625253}
-  lobbyStatusText: {fileID: 0}
-  lobbyJoinCodeText: {fileID: 0}
-  lobbyPlayerCountText: {fileID: 0}
-  lobbyPlayerListText: {fileID: 0}
+  lobbyStatusText: {fileID: 955923666}
+  lobbyJoinCodeText: {fileID: 1200005354}
+  lobbyPlayerCountText: {fileID: 878922750}
+  lobbyPlayerListText: {fileID: 192990326}
   readyButton: {fileID: 237070617}
   readyButtonText: {fileID: 1387216183}
   startGameButton: {fileID: 490096570}
   leaveLobbyButton: {fileID: 675516208}
-  relayManager: {fileID: 0}
+  relayManager: {fileID: 541775354}
 --- !u!1 &955923663
 GameObject:
   m_ObjectHideFlags: 0
@@ -11232,7 +11228,6 @@ GameObject:
   - component: {fileID: 2126928679}
   - component: {fileID: 2126928678}
   - component: {fileID: 912440119}
-  - component: {fileID: 2126928682}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -11312,7 +11307,7 @@ RectTransform:
   m_GameObject: {fileID: 2126928677}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1946443081}
@@ -11328,52 +11323,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &2126928682
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2126928677}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4448c57c507618e4f8bad4eb3bb2511a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MultiplayerMenuController
-  mainMenuScreen: {fileID: 1946443080}
-  multiplayerScreen: {fileID: 999178447}
-  joinScreen: {fileID: 1276008167}
-  lobbyScreen: {fileID: 1939262286}
-  singlePlayerButton: {fileID: 263119976}
-  openMultiplayerButton: {fileID: 737056505}
-  playerNameInput: {fileID: 746772800}
-  previousCharacterButton: {fileID: 899415399}
-  characterIndexText: {fileID: 1184045829}
-  nextCharacterButton: {fileID: 1184440261}
-  characterPreviewModels:
-  - {fileID: 1942289980213182, guid: 085e53ee40ad24b40a83bd90705ad460, type: 3}
-  - {fileID: 1214723647702548, guid: e85f10072d335224984d9b8ae2e93843, type: 3}
-  - {fileID: 1800371080893130, guid: e169e4d9dbd157b498e582065a5f9302, type: 3}
-  - {fileID: 1506550050545096, guid: 24362449162558a49bc6904c0fda923a, type: 3}
-  - {fileID: 1964704263138806, guid: e3d9a5b7a19f9684d9b63308cdfa95bd, type: 3}
-  - {fileID: 1819260798650952, guid: 96256c2234452c641863ebbc421be660, type: 3}
-  - {fileID: 1040643676778012, guid: 15a550206f811c346b37f3a3f4495178, type: 3}
-  - {fileID: 1876497922086962, guid: 7aad5b0274fd2894eafec31a58e26a32, type: 3}
-  hostButton: {fileID: 601393655}
-  joinButton: {fileID: 526469879}
-  multiplayerBackButton: {fileID: 2088056338}
-  joinCodeInput: {fileID: 729221492}
-  connectButton: {fileID: 512469895}
-  joinBackButton: {fileID: 684625253}
-  lobbyStatusText: {fileID: 955923666}
-  lobbyJoinCodeText: {fileID: 1200005354}
-  lobbyPlayerCountText: {fileID: 878922750}
-  lobbyPlayerListText: {fileID: 192990326}
-  readyButton: {fileID: 237070617}
-  readyButtonText: {fileID: 1387216183}
-  startGameButton: {fileID: 490096570}
-  leaveLobbyButton: {fileID: 675516208}
-  relayManager: {fileID: 541775354}
 --- !u!1001 &2143280979
 PrefabInstance:
   m_ObjectHideFlags: 0

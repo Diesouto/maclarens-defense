@@ -2446,6 +2446,9 @@ MonoBehaviour:
   playerInteractor: {fileID: 0}
   weaponAuthority: {fileID: 0}
   playerCameras: []
+  playerVirtualCameras:
+  - {fileID: 439476528600918084}
+  playerNameLabel: {fileID: 6220596868538030514}
   maximumMovementSpeed: 12
   movementValidationTolerance: 0.75
 --- !u!114 &4472667063155451942

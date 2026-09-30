@@ -15,6 +15,11 @@ public class WorldSpaceBillboard : MonoBehaviour
             targetCamera = Camera.main;
     }
 
+    public void SetTargetCamera(Camera cameraToFace)
+    {
+        targetCamera = cameraToFace;
+    }
+
     private void LateUpdate()
     {
         if (targetCamera == null)
