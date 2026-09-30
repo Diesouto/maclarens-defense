@@ -12,8 +12,8 @@ public class NetworkInventoryAuthority : NetworkBehaviour
         inventory = GetComponent<PlayerInventory>();
     }
 
-    [ServerRpc]
-    public void RequestSelectSlotServerRpc(int slotIndex, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    public void RequestSelectSlotServerRpc(int slotIndex, RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId)
             return;
@@ -21,8 +21,8 @@ public class NetworkInventoryAuthority : NetworkBehaviour
         inventory.TrySelectSlot(slotIndex);
     }
 
-    [ServerRpc]
-    public void RequestDropServerRpc(Vector3 throwForce, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    public void RequestDropServerRpc(Vector3 throwForce, RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId)
             return;

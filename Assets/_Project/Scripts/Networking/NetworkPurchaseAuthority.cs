@@ -14,8 +14,8 @@ public class NetworkPurchaseAuthority : NetworkBehaviour
         shopStand = GetComponent<ShopStand>();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestPurchaseServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestPurchaseServerRpc(RpcParams rpcParams = default)
     {
         if (NetworkManager.Singleton == null ||
             !NetworkManager.Singleton.ConnectedClients.TryGetValue(

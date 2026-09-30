@@ -11,9 +11,9 @@ public class NetworkWeaponAuthority : NetworkBehaviour
         weapon = GetComponentInChildren<Weapon>(true);
     }
 
-    [ServerRpc]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
     public void RequestWeaponInputServerRpc(bool firePressed, bool fireHeld, bool reloadPressed,
-        ServerRpcParams rpcParams = default)
+        RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId || weapon == null)
             return;
@@ -21,9 +21,9 @@ public class NetworkWeaponAuthority : NetworkBehaviour
         weapon.ApplyServerInput(firePressed, fireHeld, reloadPressed);
     }
 
-    [ServerRpc]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
     public void RequestHitServerRpc(NetworkObjectReference targetReference, Vector3 hitDirection,
-        float hitForce, ServerRpcParams rpcParams = default)
+        float hitForce, RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId ||
             !targetReference.TryGet(out NetworkObject targetObject) || targetObject == null)

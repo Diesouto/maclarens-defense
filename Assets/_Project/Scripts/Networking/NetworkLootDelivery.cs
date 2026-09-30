@@ -14,9 +14,9 @@ public class NetworkLootDelivery : NetworkBehaviour
         deliveryPoint = GetComponent<LootDeliveryPoint>();
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void RequestDeliverServerRpc(NetworkObjectReference lootReference,
-        ServerRpcParams rpcParams = default)
+        RpcParams rpcParams = default)
     {
         if (!lootReference.TryGet(out NetworkObject lootObject) || lootObject == null)
             return;

@@ -14,9 +14,9 @@ public class NetworkBodyCarrier : NetworkBehaviour
         carrier = GetComponent<BodyCarrier>();
     }
 
-    [ServerRpc]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
     public void RequestPickupServerRpc(NetworkObjectReference bodyReference,
-        ServerRpcParams rpcParams = default)
+        RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId ||
             !bodyReference.TryGet(out NetworkObject bodyObject))
@@ -32,15 +32,15 @@ public class NetworkBodyCarrier : NetworkBehaviour
         carrier.ApplyPickup(body);
     }
 
-    [ServerRpc]
-    public void RequestDropServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    public void RequestDropServerRpc(RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId == OwnerClientId)
             carrier.Drop();
     }
 
-    [ServerRpc]
-    public void RequestThrowServerRpc(Vector3 force, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    public void RequestThrowServerRpc(Vector3 force, RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId == OwnerClientId)
             carrier.ApplyThrow(Vector3.ClampMagnitude(force, 20f));

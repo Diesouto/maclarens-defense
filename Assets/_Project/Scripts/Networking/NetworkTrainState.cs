@@ -80,8 +80,8 @@ public class NetworkTrainState : NetworkBehaviour
             RequestDepartureServerRpc();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestDepartureServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestDepartureServerRpc(RpcParams rpcParams = default)
     {
         if (NetworkManager.Singleton == null || runManager == null ||
             !NetworkManager.Singleton.ConnectedClients.TryGetValue(
@@ -114,8 +114,8 @@ public class NetworkTrainState : NetworkBehaviour
             RequestFinishDayServerRpc();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestFinishDayServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestFinishDayServerRpc(RpcParams rpcParams = default)
     {
         ApplyFinishDay();
     }

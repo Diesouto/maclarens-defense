@@ -32,9 +32,9 @@ public class NetworkHealth : NetworkBehaviour
         CurrentHealth.OnValueChanged -= HandleHealthChanged;
     }
 
-    [ServerRpc]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
     public void RequestDamageServerRpc(float damage, Vector3 hitDirection, float forceAmount,
-        ServerRpcParams rpcParams = default)
+        RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId)
             return;

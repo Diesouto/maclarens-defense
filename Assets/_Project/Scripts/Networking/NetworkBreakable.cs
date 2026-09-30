@@ -12,8 +12,8 @@ public class NetworkBreakable : NetworkBehaviour
         breakable = GetComponent<BreakableOnImpact>();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestBreakServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestBreakServerRpc(RpcParams rpcParams = default)
     {
         if (!IsServer)
             return;

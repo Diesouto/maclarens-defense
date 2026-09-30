@@ -69,10 +69,12 @@ public class NetworkSessionManager : NetworkBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
         if (Instance == this)
             Instance = null;
+
+        base.OnDestroy();
     }
 
     public override void OnNetworkSpawn()
@@ -203,8 +205,8 @@ public class NetworkSessionManager : NetworkBehaviour
         SetSessionState(MultiplayerSessionState.Starting);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RegisterLocalPlayerServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RegisterLocalPlayerServerRpc(RpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
         string playerName = $"Player_{clientId}";
@@ -216,14 +218,14 @@ public class NetworkSessionManager : NetworkBehaviour
         AddOrUpdatePlayer(clientId, playerName, isHost, false);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void SetReadyServerRpc(bool isReady, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void SetReadyServerRpc(bool isReady, RpcParams rpcParams = default)
     {
         SetReady(rpcParams.Receive.SenderClientId, isReady);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void StartRunServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void StartRunServerRpc(RpcParams rpcParams = default)
     {
         if (!IsServer || !IsHostClient(rpcParams.Receive.SenderClientId))
             return;

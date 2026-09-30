@@ -52,10 +52,12 @@ public class NetworkThreatState : NetworkBehaviour
             enemySpawner = FindFirstObjectByType<EnemySpawner>();
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
         if (Instance == this)
             Instance = null;
+
+        base.OnDestroy();
     }
 
     private void Update()

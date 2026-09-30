@@ -30,8 +30,8 @@ public class NetworkLootItem : NetworkBehaviour
         IsCollected.OnValueChanged -= HandleCollectedChanged;
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestPickupServerRpc(ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestPickupServerRpc(RpcParams rpcParams = default)
     {
         if (IsCollected.Value || NetworkManager.Singleton == null)
             return;
