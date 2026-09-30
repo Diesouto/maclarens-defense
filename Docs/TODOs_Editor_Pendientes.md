@@ -6,14 +6,15 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 
 ## P5.8 - Cuerpo recuperable y penalizacion
 
-- [ ] Añadir `PlayerBody` y `BodyCarrier` al prefab `Assets/_Project/Prefabs/Player.prefab`.
-- [ ] Asignar `BodyCarrier.carryPoint` a un socket de manos/pecho del rig (con offset razonable
+- [x] Añadir `PlayerBody` y `BodyCarrier` al prefab `Assets/_Project/Prefabs/Player.prefab`.
+- [x] Asignar `BodyCarrier.carryPoint` a un socket de manos/pecho del rig (con offset razonable
       para que el cuerpo cargado no atraviese al jugador ni la camara).
-- [ ] Ajustar `BodyCarrier.followSpeed` en Play Mode (valor por defecto 12; si el cuerpo cargado
+- [ ] Ajustar `BodyCarrier.followSpeed` en Play Mode (el prefab conserva el valor por defecto 12; si el cuerpo cargado
       vibra o se queda muy atras al girar rapido, tunear aqui).
-- [ ] Crear un `BodyRecoveryManager` en la jerarquia de managers de `MainScene`.
-  - Asignar `macLarensRespawnPoint` (transform en la zona segura de MacLarens).
-  - Ajustar `abandonedBodyQuotaPenalty` (valor por defecto 500).
+- [x] Crear un `BodyRecoveryManager` en la jerarquia de managers de `MainScene` y asignar
+      `macLarensRespawnPoint` (la instancia de escena apunta a `RespawnPoint`).
+- [ ] Confirmar en el Editor que `RespawnPoint` esta dentro de la zona segura de MacLarens.
+- [x] Configurar `abandonedBodyQuotaPenalty` en 500.
 - [ ] Confirmar que `DeathFloor` (y cualquier otra instancia en escena) sigue teniendo su
       `BoxCollider` marcado como Trigger; el script ahora tambien marca cuerpos como perdidos.
 - [ ] Revisar los `Rigidbody`/`Joint` (`CharacterJoint`/`ConfigurableJoint`) del rig de ragdoll del
@@ -40,9 +41,10 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 
 - Script listo: `Assets/_Project/UI/WorldSpaceBillboard.cs`. Rota el transform hacia la camara en
   `LateUpdate` (mismo orden que usa `PlayerController` para su propia camara).
-- [ ] Añadir el componente a los Canvas world-space que se quieran (prompts sobre NPCs, dialogo de
-      `MacLarensOwner`, nameplates, etc.) y comprobar que `targetCamera` resuelve bien (por defecto
-      usa `Camera.main`; solo hace falta asignarlo a mano si hay varias camaras activas a la vez).
+- [x] Añadir el componente a los elementos world-space elegidos: `MacLarensOwner`, tren y punto de
+      entrega de loot.
+- [ ] Comprobar en Play Mode que `targetCamera` resuelve bien (por defecto usa `Camera.main`; solo
+      hace falta asignarlo a mano si hay varias camaras activas a la vez).
 - [ ] Ajustar `lockYAxisOnly` por elemento: activado (por defecto) mantiene el elemento vertical;
       desactivarlo si se quiere un billboard que tambien incline segun la altura de la camara.
 
@@ -71,10 +73,8 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
   por defecto `"MenuScene"`). `RunManager` tiene un nuevo toggle `failOnAnyMissedQuota`: en `false`
   (por defecto) solo falla en el ultimo dia sin cuota pagada; en `true` falla inmediatamente el
   primer dia que no se alcance, para poder probar cual es mas divertido sin tocar codigo.
-- [ ] **Importante**: `Assets/_Project/Scenes/MainScene.unity` y `MenuScene.unity` no estan en
-      `Build Settings` (solo aparece `SampleScene`). `SceneManager.LoadScene` falla si la escena no
-      esta en la lista, incluso en el Editor. Añadir ambas escenas en
-      `File > Build Profiles > Scene List` (o el menu equivalente) antes de probar Restart/Main Menu.
+- [x] `MainScene` y `MenuScene` estan incluidas y habilitadas en `EditorBuildSettings`. Mantener
+      `MainScene` como escena de gameplay y `MenuScene` como selector Single/Multiplayer y lobby.
 - [ ] Crear el panel de `GameStateUI` (`Assets/_Project/UI/GameStateUI.cs`) en el Canvas principal:
       un `panelRoot` desactivado por defecto, texto de titulo, texto de causa y dos botones
       (Restart -> `RestartRun()`, Main Menu -> `ReturnToMainMenu()`, ya conectados via `onClick` en
@@ -94,38 +94,46 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 
 ## P6 - Bloques 0 y 1 de networking
 
-- [ ] Instalar y configurar Unity Services Authentication + Relay; anadir los paquetes necesarios
-      al proyecto y crear `RelayJoinCodeManager` con Host/Join por codigo.
-- [ ] Crear o localizar el objeto de escena con `NetworkManager`, `NetworkBootstrapper` y
-      `NetworkSessionManager`.
-- [ ] Crear el prefab networkado del jugador con `NetworkObject`, `NetworkTransform` y
-      `NetworkPlayer`; registrarlo en `NetworkManager.NetworkPrefabs`.
-- [ ] Crear un objeto con `NetworkPlayerSpawner`, asignar el prefab networkado y los puntos de
-      spawn, y comprobar que solo el propietario activa input, interaccion y camara.
-- [ ] Crear la UI de lobby para Host, Join, ready, lista de jugadores y Start solo para host.
+- [x] Instalar los paquetes de Netcode for GameObjects, Authentication y Multiplayer/Relay.
+- [x] Implementar Host/Join por codigo con Authentication, Relay y `UnityTransport` en
+      `RelayJoinCodeManager`.
+- [ ] Vincular el proyecto a Unity Services y configurar/verificar el entorno de Relay en Dashboard.
+- [x] Configurar el objeto persistente de red de `MenuScene`: `NetworkManager`/`UnityTransport`
+      se configuran en `NetworkBootstrapper`; comparte `NetworkObject` con
+      `NetworkSessionManager` y `NetworkPlayerSpawner`.
+- [x] Añadir `NetworkObject`, `NetworkTransform` y `NetworkPlayer` a `Player.prefab` y registrar
+      el prefab en `DefaultNetworkPrefabs`.
+- [x] Configurar `NetworkPlayerSpawner` en el objeto persistente; registra `Player.prefab` y espera
+      a que NGO cargue `MainScene` para hacer spawn desde `RespawnPoint`.
+- [x] Conectar `Jugar`, Host y Cliente de `MenuScene`; implementar join code, lista/conteo, Ready,
+      Start solo para host y salida de lobby. `MainScene` queda como escena de gameplay.
+- [ ] Verificar en Play Mode que solo el propietario activa input, interaccion y camara.
 - [ ] Playtest de lobby en 1/2/3/4 jugadores: entradas, salidas, ready, start y host desconectado.
+- [ ] En `MenuScene`, cambiar nombre y personaje desde Multiplayer; comprobar que el perfil aparece
+      correctamente en la lista de jugadores y se conserva al iniciar la partida.
 - [ ] Playtest de spawn y movimiento: cada cliente controla solo su personaje y todos ven el
-      transform sincronizado.
+      transform sincronizado, el modelo elegido y el nameplate sobre cada jugador.
 
 ## P6 - Bloques 2 y 3 de networking
 
-- [ ] Añadir `NetworkHealth` al prefab networkado del jugador y comprobar que `NetworkObject` y
-      ownership estan configurados; validar daño, muerte, ragdoll y revive en Play Mode.
-- [ ] Añadir `NetworkInventoryState` al prefab del jugador y comprobar que la UI puede leer los
-      slots y el valor replicado desde el host.
-- [ ] Añadir `NetworkLootItem` y `NetworkObject` a los prefabs de loot que deban existir en red;
-      registrar tambien los objetos creados dinamicamente por drops/spawns.
-- [ ] Añadir `NetworkEconomyState` al objeto de managers networkado y comprobar referencias a
-      `MoneyManager` y `QuotaManager` en la escena.
+- [x] Añadir `NetworkHealth` y `NetworkInventoryState` al prefab del jugador.
+- [ ] Validar ownership y lectura de slots/valor replicados por la UI; probar daño, muerte, ragdoll
+      y revive en Play Mode.
+- [x] Añadir `NetworkLootItem` a los prefabs de loot existentes.
+- [ ] Confirmar `NetworkObject` y registro de prefabs de loot, incluidos objetos creados
+      dinamicamente por drops/spawns.
+- [x] Añadir `NetworkEconomyState` a `MainScene`.
+- [ ] Confirmar referencias de `NetworkEconomyState` a `MoneyManager` y `QuotaManager` y validar
+      convergencia de estado en Play Mode.
 - [ ] Playtest con 2 y 4 jugadores: pickup simultaneo del mismo loot, inventario lleno, muerte,
       revive y convergencia de dinero/cuota/cargo entre host y clientes.
 
 ## P6 - Bloque 4 de networking
 
-- [ ] Añadir `NetworkObject`, `NetworkTransform` y `NetworkTrainState` al objeto networkado del
-      tren; asignar `TrainSplineFollower`, `TrainDeparture` y `RunManager`.
-- [ ] Configurar `NetworkObject` y `NetworkLootDelivery` en el punto de entrega, y registrar los
-      prefabs de loot networkados en `NetworkManager.NetworkPrefabs`.
+- [x] Añadir `NetworkTrainState` y `NetworkCargoState` al prefab `Train_3`.
+- [x] Añadir `NetworkLootDelivery` al prefab del punto de entrega.
+- [ ] Confirmar `NetworkObject`/`NetworkTransform`, referencias a `TrainSplineFollower`,
+      `TrainDeparture` y `RunManager`, y registro de prefabs networkados en `NetworkManager`.
 - [ ] Confirmar que `TrainCargo` y el punto de entrega usan colliders/rigidbodies compatibles con
       la autoridad del host y que el parentado visual del cargo se replica correctamente.
 - [ ] Playtest con 2 y 4 jugadores: salida simultanea, aceleracion, town exit, entrega sin doble
@@ -133,8 +141,10 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 
 ## P6 - Bloque 5 de networking
 
-- [ ] Añadir `NetworkObject`, `NetworkTransform`, `NetworkEnemyState` y `NetworkHealth` a cada
-      prefab de enemigo que pueda spawnear `EnemySpawner`; registrarlos en NetworkPrefabs.
+- [x] Añadir `NetworkEnemyState` y `NetworkHealth` a los prefabs actuales `Bandit`, `Skeleton` y
+      `Zombie`.
+- [ ] Confirmar `NetworkObject`, `NetworkTransform` y registro en NetworkPrefabs para cada prefab
+      de enemigo que pueda spawnear `EnemySpawner`.
 - [ ] Añadir `NetworkThreatState` al objeto de managers networkado y comprobar referencias a
       `ThreatManager` y `EnemySpawner`.
 - [ ] Confirmar que los enemigos dinamicos se crean solo desde el host y que el NavMesh, capas,
@@ -144,10 +154,10 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 
 ## P6 - Bloque 6 de networking
 
-- [ ] Añadir `NetworkObject`, `NetworkGameState` y `NetworkRunState` al objeto de managers; validar
-      que solo el host cambia `GameState`, `FailCause`, dia y fase.
-- [ ] Configurar `BodyRecoveryManager` en escena y confirmar que la desconexion de un jugador
-      muerto aplica abandono/penalizacion solo una vez.
+- [x] Añadir `NetworkRunState` y `NetworkEconomyState` a `MainScene`.
+- [ ] Añadir `NetworkGameState` al objeto de managers y validar que solo el host cambia
+      `GameState`, `FailCause`, dia y fase.
+- [ ] Confirmar que la desconexion de un jugador muerto aplica abandono/penalizacion solo una vez.
 - [ ] Definir y probar el contrato de un jugador vivo desconectado durante `Run` y el retorno al
       menu cuando se pierde el host.
 - [ ] Ejecutar QA final de P6 con 1/2/3/4 jugadores y registrar los resultados antes de marcar la
@@ -155,26 +165,27 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 
 ## P6 - Cierre de conversion pendiente
 
-- [ ] Añadir `NetworkInventoryAuthority` al prefab del jugador y validar drop/throw con 2 y 4
-      jugadores; conectar visualmente los `ItemInstance` replicados.
-- [ ] Añadir `NetworkCargoState` al tren y validar parentado, salida y valor de cargo.
-- [ ] Añadir `NetworkPurchaseAuthority` a cada `ShopStand` networkado y validar compras simultaneas.
+- [x] Añadir `NetworkInventoryAuthority` al prefab del jugador.
+- [ ] Validar drop/throw con 2 y 4 jugadores y conectar visualmente los `ItemInstance` replicados.
+- [ ] Validar parentado, salida y valor del cargo en red.
+- [x] Añadir `NetworkPurchaseAuthority` a los prefabs actuales de `ShopStand`.
+- [ ] Validar compras simultaneas.
 - [ ] Registrar prefabs de loot dinamico con `NetworkObject`; validar drop, pickup, entrega y
       despawn sin duplicados.
 - [ ] Confirmar en Play Mode que `MoneyManager`, `QuotaManager` y `LootRegistry` solo mutan en host.
-- [ ] Instalar Authentication + Relay y crear Host/Join por codigo.
 - [ ] Validar movimiento server-authoritative: velocidad, colisiones, teleport y desync durante
       una run con latencia real.
-- [ ] Añadir `NetworkWeaponAuthority` al prefab del jugador y validar disparo, ammo, reload y
-      hitbox; mantener muzzle/hit effects como presentacion local.
-- [ ] Añadir `NetworkBodyCarrier` al prefab del jugador y validar carry/drop/throw y recuperacion
-      de cuerpos entre clientes.
+- [x] Añadir `NetworkWeaponAuthority` al prefab del jugador.
+- [ ] Validar disparo, ammo, reload y hitbox; mantener muzzle/hit effects como presentacion local.
+- [x] Añadir `NetworkBodyCarrier` al prefab del jugador.
+- [ ] Validar carry/drop/throw y recuperacion de cuerpos entre clientes.
 - [ ] Verificar el raycast server-authoritative de armas: linea de vision, alcance, ammo y headshot
       deben coincidir entre host y clientes.
 - [ ] Verificar que los objetos networkados se despawnean con NGO y que ningun `Destroy` local deja
       fantasmas tras extraccion, muerte, entrega o desconexion.
 - [ ] Validar pose y desparentado de cargo en clientes cuando el loot entra y sale del tren.
-- [ ] Añadir `NetworkBreakable` a los prefabs destruibles que formen parte del gameplay y validar
-      que el host produce el reemplazo roto y los clientes reciben el despawn.
+- [x] Añadir `NetworkBreakable` a algunos prefabs destructibles actuales de loot.
+- [ ] Revisar si falta algun prefab destructible y validar que el host produce el reemplazo roto y
+      los clientes reciben el despawn.
 - [ ] Confirmar que `LootSpawner` y `TownExtractionResolver` existen en un objeto networkado o en
       la escena host-authoritative y que no se ejecutan duplicados en clientes.

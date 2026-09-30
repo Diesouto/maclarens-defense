@@ -1,5 +1,6 @@
 using System;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 
 public class NetworkBootstrapper : MonoBehaviour
@@ -8,6 +9,7 @@ public class NetworkBootstrapper : MonoBehaviour
 
     [SerializeField] private bool autoStartServer = false;
     [SerializeField] private int maxPlayers = 4;
+    [SerializeField] private GameObject playerPrefab;
 
     private NetworkManager networkManager;
 
@@ -28,9 +30,19 @@ public class NetworkBootstrapper : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        UnityTransport transport = GetComponent<UnityTransport>();
+        if (transport == null)
+            transport = gameObject.AddComponent<UnityTransport>();
+
         networkManager = GetComponent<NetworkManager>();
         if (networkManager == null)
             networkManager = gameObject.AddComponent<NetworkManager>();
+
+        networkManager.NetworkConfig.NetworkTransport = transport;
+        networkManager.NetworkConfig.EnableSceneManagement = true;
+        networkManager.NetworkConfig.ConnectionApproval = true;
+        if (playerPrefab != null)
+            networkManager.AddNetworkPrefab(playerPrefab);
 
         networkManager.ConnectionApprovalCallback = ApprovalCheck;
         networkManager.OnClientDisconnectCallback += HandleClientDisconnected;
@@ -53,22 +65,26 @@ public class NetworkBootstrapper : MonoBehaviour
             Instance = null;
     }
 
-    public void StartHost()
+    public bool StartHost()
     {
         if (networkManager == null)
-            return;
+            return false;
 
-        networkManager.StartHost();
-        OnConnectionChanged?.Invoke(true);
+        bool started = networkManager.StartHost();
+        if (started)
+            OnConnectionChanged?.Invoke(true);
+        return started;
     }
 
-    public void StartClient()
+    public bool StartClient()
     {
         if (networkManager == null)
-            return;
+            return false;
 
-        networkManager.StartClient();
-        OnConnectionChanged?.Invoke(true);
+        bool started = networkManager.StartClient();
+        if (started)
+            OnConnectionChanged?.Invoke(true);
+        return started;
     }
 
     public void Shutdown()

@@ -1,8 +1,9 @@
 using System;
-using Unity.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public enum MultiplayerSessionState
 {
@@ -18,6 +19,7 @@ public struct LobbyPlayerEntry : INetworkSerializable, IEquatable<LobbyPlayerEnt
     public FixedString64Bytes PlayerName;
     public bool IsReady;
     public bool IsHost;
+    public int CharacterIndex;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer)
         where T : IReaderWriter
@@ -26,6 +28,7 @@ public struct LobbyPlayerEntry : INetworkSerializable, IEquatable<LobbyPlayerEnt
         serializer.SerializeValue(ref PlayerName);
         serializer.SerializeValue(ref IsReady);
         serializer.SerializeValue(ref IsHost);
+        serializer.SerializeValue(ref CharacterIndex);
     }
 
     public bool Equals(LobbyPlayerEntry other)
@@ -33,7 +36,8 @@ public struct LobbyPlayerEntry : INetworkSerializable, IEquatable<LobbyPlayerEnt
         return ClientId == other.ClientId &&
                PlayerName == other.PlayerName &&
                IsReady == other.IsReady &&
-               IsHost == other.IsHost;
+               IsHost == other.IsHost &&
+               CharacterIndex == other.CharacterIndex;
     }
 }
 
@@ -86,12 +90,20 @@ public class NetworkSessionManager : NetworkBehaviour
         NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnected;
 
         if (!IsServer)
+        {
+            SubmitLocalProfileServerRpc(
+                new FixedString64Bytes(MultiplayerProfilePanel.LocalPlayerName),
+                MultiplayerProfilePanel.LocalCharacterIndex);
             return;
+        }
 
+        playerLookup.Clear();
+        Players.Clear();
         MaxPlayers.Value = maxPlayers;
         SetSessionState(MultiplayerSessionState.Lobby);
         HostClientId.Value = NetworkManager.Singleton.LocalClientId;
-        AddOrUpdatePlayer(NetworkManager.Singleton.LocalClientId, "Host", true, false);
+        AddOrUpdatePlayer(HostClientId.Value, "Host", true, true);
+        SubmitLocalProfile(MultiplayerProfilePanel.LocalPlayerName, MultiplayerProfilePanel.LocalCharacterIndex);
     }
 
     public override void OnNetworkDespawn()
@@ -122,7 +134,7 @@ public class NetworkSessionManager : NetworkBehaviour
         MaxPlayers.Value = maxPlayers;
     }
 
-    public void AddOrUpdatePlayer(ulong clientId, string playerName, bool isHost, bool isReady)
+    public void AddOrUpdatePlayer(ulong clientId, string playerName, bool isHost, bool isReady, int characterIndex = 0)
     {
         if (!IsServer)
             return;
@@ -134,7 +146,8 @@ public class NetworkSessionManager : NetworkBehaviour
             ClientId = clientId,
             PlayerName = playerName,
             IsReady = isReady,
-            IsHost = isHost
+            IsHost = isHost,
+            CharacterIndex = characterIndex
         };
 
         playerLookup[clientId] = entry;
@@ -197,12 +210,47 @@ public class NetworkSessionManager : NetworkBehaviour
         OnPlayersChanged?.Invoke();
     }
 
+    public bool TryGetPlayerProfile(ulong clientId, out string playerName, out int characterIndex)
+    {
+        foreach (LobbyPlayerEntry entry in Players)
+        {
+            if (entry.ClientId != clientId)
+                continue;
+
+            playerName = entry.PlayerName.ToString();
+            characterIndex = entry.CharacterIndex;
+            return true;
+        }
+
+        playerName = $"Player_{clientId}";
+        characterIndex = 0;
+        return false;
+    }
+
+    public void SubmitLocalProfile(string playerName, int characterIndex)
+    {
+        FixedString64Bytes fixedName = new FixedString64Bytes(string.IsNullOrWhiteSpace(playerName) ? "Player" : playerName.Trim());
+        if (IsServer)
+            ApplyPlayerProfile(NetworkManager.Singleton.LocalClientId, fixedName, characterIndex);
+        else if (IsSpawned)
+            SubmitLocalProfileServerRpc(fixedName, characterIndex);
+    }
+
     public void StartRun()
     {
         if (!CanStartRun())
             return;
 
         SetSessionState(MultiplayerSessionState.Starting);
+        SceneEventProgressStatus loadStatus = NetworkManager.Singleton.SceneManager.LoadScene("MainScene", LoadSceneMode.Single);
+        if (loadStatus != SceneEventProgressStatus.Started)
+            SetSessionState(MultiplayerSessionState.Lobby);
+    }
+
+    public void MarkRunInProgress()
+    {
+        if (IsServer && SessionState.Value == MultiplayerSessionState.Starting)
+            SetSessionState(MultiplayerSessionState.InProgress);
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -222,6 +270,12 @@ public class NetworkSessionManager : NetworkBehaviour
     public void SetReadyServerRpc(bool isReady, RpcParams rpcParams = default)
     {
         SetReady(rpcParams.Receive.SenderClientId, isReady);
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void SubmitLocalProfileServerRpc(FixedString64Bytes playerName, int characterIndex, RpcParams rpcParams = default)
+    {
+        ApplyPlayerProfile(rpcParams.Receive.SenderClientId, playerName, characterIndex);
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -263,7 +317,28 @@ public class NetworkSessionManager : NetworkBehaviour
             return;
 
         bool isHost = clientId == HostClientId.Value;
+        if (playerLookup.ContainsKey(clientId))
+            return;
+
         AddOrUpdatePlayer(clientId, isHost ? "Host" : $"Player_{clientId}", isHost, false);
+    }
+
+    private void ApplyPlayerProfile(ulong clientId, FixedString64Bytes playerName, int characterIndex)
+    {
+        if (!IsServer || !playerLookup.TryGetValue(clientId, out LobbyPlayerEntry entry))
+            return;
+
+        string cleanedName = playerName.ToString().Trim();
+        if (string.IsNullOrWhiteSpace(cleanedName))
+            cleanedName = $"Player_{clientId}";
+        if (cleanedName.Length > 24)
+            cleanedName = cleanedName.Substring(0, 24);
+
+        entry.PlayerName = new FixedString64Bytes(cleanedName);
+        entry.CharacterIndex = Mathf.Clamp(characterIndex, 0, 31);
+        playerLookup[clientId] = entry;
+        RebuildNetworkList();
+        OnPlayersChanged?.Invoke();
     }
 
     private void HandleClientDisconnected(ulong clientId)

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class NetworkPlayerSpawner : NetworkBehaviour
 {
@@ -17,11 +18,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
         NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
         NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnected;
-
-        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
-        {
-            SpawnForClient(clientId);
-        }
+        NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += HandleLoadEventCompleted;
     }
 
     public override void OnNetworkDespawn()
@@ -31,6 +28,9 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
         NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
         NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnected;
+        if (NetworkManager.Singleton.SceneManager != null)
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= HandleLoadEventCompleted;
+        spawnedPlayers.Clear();
     }
 
     public void SetPlayerPrefab(GameObject prefab)
@@ -45,10 +45,22 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
     private void HandleClientConnected(ulong clientId)
     {
-        if (!autoSpawnOnClientConnect)
+        if (!autoSpawnOnClientConnect || NetworkSessionManager.Instance == null ||
+            NetworkSessionManager.Instance.SessionState.Value != MultiplayerSessionState.InProgress ||
+            SceneManager.GetActiveScene().name != "MainScene")
             return;
 
         SpawnForClient(clientId);
+    }
+
+    private void HandleLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        if (!IsServer || sceneName != "MainScene")
+            return;
+
+        NetworkSessionManager.Instance?.MarkRunInProgress();
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+            SpawnForClient(clientId);
     }
 
     private void HandleClientDisconnected(ulong clientId)
@@ -95,7 +107,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         if (spawnedPlayers.ContainsKey(clientId))
             return;
 
-        Vector3 spawnPosition = GetSpawnPosition(clientId);
+        Vector3 spawnPosition = GetSpawnPosition(spawnedPlayers.Count);
         GameObject playerInstance = Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
         NetworkObject networkObject = playerInstance.GetComponent<NetworkObject>();
 
@@ -106,6 +118,22 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             return;
         }
 
+        string playerName = $"Player_{clientId}";
+        int characterIndex = 0;
+        NetworkSessionManager sessionManager = NetworkSessionManager.Instance;
+        if (sessionManager != null && !sessionManager.TryGetPlayerProfile(clientId, out playerName, out characterIndex))
+        {
+            sessionManager.AddOrUpdatePlayer(
+                clientId,
+                playerName,
+                sessionManager.HostClientId.Value == clientId,
+                false,
+                characterIndex);
+        }
+
+        if (playerInstance.TryGetComponent(out NetworkPlayer networkPlayer))
+            networkPlayer.SetServerProfile(playerName, characterIndex);
+
         if (!NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(playerPrefab))
         {
             Destroy(playerInstance);
@@ -115,22 +143,18 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
         networkObject.SpawnAsPlayerObject(clientId, true);
         spawnedPlayers[clientId] = playerInstance;
-
-        if (NetworkSessionManager.Instance != null)
-        {
-            bool isHost = NetworkSessionManager.Instance.HostClientId.Value == clientId;
-            NetworkSessionManager.Instance.AddOrUpdatePlayer(clientId, $"Player_{clientId}", isHost, false);
-        }
     }
 
-    private Vector3 GetSpawnPosition(ulong clientId)
+    private Vector3 GetSpawnPosition(int playerIndex)
     {
         if (spawnPoints != null && spawnPoints.Length > 0)
         {
-            int index = (int)(clientId % (ulong)spawnPoints.Length);
+            int index = playerIndex % spawnPoints.Length;
             return spawnPoints[index].position;
         }
 
-        return Vector3.zero;
+        GameObject respawnPoint = GameObject.Find("RespawnPoint");
+        Vector3 origin = respawnPoint == null ? Vector3.zero : respawnPoint.transform.position;
+        return origin + Vector3.right * (playerIndex * 2f);
     }
 }

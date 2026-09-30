@@ -3431,6 +3431,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 999178448}
+  - component: {fileID: 912440118}
   m_Layer: 5
   m_Name: Multijugador
   m_TagString: Untagged
@@ -4382,6 +4383,9 @@ GameObject:
   - component: {fileID: 1183821075}
   - component: {fileID: 1183821077}
   - component: {fileID: 1183821076}
+  - component: {fileID: 1183821080}
+  - component: {fileID: 1183821081}
+  - component: {fileID: 1183821082}
   m_Layer: 0
   m_Name: RelayJoinCodeManager
   m_TagString: Untagged
@@ -4463,6 +4467,47 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkBootstrapper
   autoStartServer: 0
   maxPlayers: 4
+  playerPrefab: {fileID: 5860787695679847855, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
+--- !u!114 &1183821080
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1183821074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59068c7178064fc9a34f062d01d117ca, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RelayJoinCodeManager
+  bootstrapper: {fileID: 1183821077}
+--- !u!114 &1183821081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1183821074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67e4d16a3307403989680297a038ea11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MultiplayerMenuController
+--- !u!114 &1183821082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1183821074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d6eace898f61f04f8ad735dddd84bfe, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerSpawner
+  playerPrefab: {fileID: 5860787695679847855, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
+  spawnPoints: []
+  autoSpawnOnClientConnect: 1
 --- !u!4 &1183821078
 Transform:
   m_ObjectHideFlags: 0
@@ -7077,6 +7122,20 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4099166277382448, guid: 1c8c6bed3438b9141b6c6e2eb548b815, type: 3}
   m_PrefabInstance: {fileID: 2143280979}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &912440118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 999178447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cd3e4e955a9465bb6e7d29137e28918, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MultiplayerProfilePanel
+  playerPreviewPrefab: {fileID: 5860787695679847855, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
+  previewDistance: 4
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
