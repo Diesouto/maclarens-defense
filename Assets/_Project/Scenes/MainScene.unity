@@ -40235,6 +40235,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8312282057796978332, guid: 74628649e9b360a42916f74ba781fcca, type: 3}
   m_PrefabInstance: {fileID: 931306806}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &931306808 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1075814277915832122, guid: 74628649e9b360a42916f74ba781fcca, type: 3}
+  m_PrefabInstance: {fileID: 931306806}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c53a7b932bcc4643902c4d804d1c585, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
 --- !u!1001 &931825254
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -68249,8 +68260,37 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkThreatState
   ShowTopMostFoldoutHeaderGroup: 1
+  CurrentThreat:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  CurrentLevel:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  PlayerCount:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 1
+  AliveEnemyCount:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
   threatManager: {fileID: 1797093154}
-  enemySpawner: {fileID: 0}
+  enemySpawner: {fileID: 931306808}
+  playerCountMultipliers:
+  - playerCount: 1
+    value: 1
+  - playerCount: 2
+    value: 1.25
+  - playerCount: 3
+    value: 1.5
+  - playerCount: 4
+    value: 1.75
 --- !u!114 &1527900788
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68264,6 +68304,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkGameState
   ShowTopMostFoldoutHeaderGroup: 1
+  CurrentState:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  LastFailCause:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
 --- !u!1001 &1528189219
 PrefabInstance:
   m_ObjectHideFlags: 0
