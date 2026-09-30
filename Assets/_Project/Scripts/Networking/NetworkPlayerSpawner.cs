@@ -12,6 +12,7 @@ public class NetworkPlayerSpawner : MonoBehaviour
     private readonly Dictionary<ulong, GameObject> spawnedPlayers = new();
     private NetworkManager networkManager;
     private GameObject offlinePlayer;
+    private bool ownsOfflinePlayer;
     private bool callbacksRegistered;
 
     private void Start()
@@ -51,7 +52,7 @@ public class NetworkPlayerSpawner : MonoBehaviour
                 networkManager.SceneManager.OnLoadEventCompleted -= HandleLoadEventCompleted;
         }
 
-        if (offlinePlayer != null)
+        if (ownsOfflinePlayer && offlinePlayer != null)
             Destroy(offlinePlayer);
     }
 
@@ -70,7 +71,17 @@ public class NetworkPlayerSpawner : MonoBehaviour
         if (offlinePlayer != null)
             return;
 
-        offlinePlayer = Instantiate(playerPrefab, GetSpawnPosition(0), Quaternion.identity);
+        NetworkPlayer placedPlayer = FindFirstObjectByType<NetworkPlayer>();
+        if (placedPlayer != null && placedPlayer.gameObject.scene == gameObject.scene && !placedPlayer.IsSpawned)
+        {
+            offlinePlayer = placedPlayer.gameObject;
+        }
+        else
+        {
+            offlinePlayer = Instantiate(playerPrefab, GetSpawnPosition(0), Quaternion.identity);
+            ownsOfflinePlayer = true;
+        }
+
         if (offlinePlayer.TryGetComponent(out NetworkPlayer player))
         {
             player.ConfigureOfflinePlayer(

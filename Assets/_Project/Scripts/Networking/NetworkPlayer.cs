@@ -178,6 +178,11 @@ public class NetworkPlayer : NetworkBehaviour
                 continue;
 
             virtualCamera.enabled = isLocal;
+            if (isLocal)
+            {
+                virtualCamera.Priority = 1000;
+                virtualCamera.Prioritize();
+            }
         }
     }
 
@@ -225,14 +230,17 @@ public class NetworkPlayer : NetworkBehaviour
     private IEnumerator FindOutputCameraThenBind()
     {
         Camera outputCamera = null;
-        while (outputCamera == null)
+        CinemachineBrain brain = null;
+        while (true)
         {
-            outputCamera = Camera.main;
+            if (outputCamera == null)
+                outputCamera = Camera.main;
+
             if (outputCamera == null)
             {
-                CinemachineBrain brain = FindFirstObjectByType<CinemachineBrain>();
+                brain = FindFirstObjectByType<CinemachineBrain>();
                 if (brain != null)
-                    outputCamera = brain.GetComponent<Camera>();
+                    outputCamera = brain.OutputCamera;
             }
 
             if (outputCamera == null)
@@ -243,13 +251,51 @@ public class NetworkPlayer : NetworkBehaviour
 
             if (!outputCamera.enabled)
             {
-                yield return null;
                 outputCamera = null;
+                yield return null;
                 continue;
             }
 
             playerController?.SetOutputCamera(outputCamera);
             nameplateBillboard?.SetTargetCamera(outputCamera);
+
+            if (brain == null)
+                brain = outputCamera.GetComponent<CinemachineBrain>();
+
+            if (playerVirtualCameras == null || playerVirtualCameras.Length == 0)
+            {
+                Debug.LogError("NetworkPlayer: no CinemachineCamera found on the spawned Player.", this);
+                outputCameraSearch = null;
+                yield break;
+            }
+
+            yield return null;
+
+            CinemachineCamera ownedCamera = null;
+            foreach (CinemachineCamera virtualCamera in playerVirtualCameras)
+            {
+                if (virtualCamera != null && virtualCamera.enabled)
+                {
+                    ownedCamera = virtualCamera;
+                    break;
+                }
+            }
+
+            if (brain == null)
+                brain = outputCamera.GetComponent<CinemachineBrain>();
+
+            if (brain == null)
+            {
+                Debug.LogWarning("NetworkPlayer: output Camera found without a CinemachineBrain; rendering directly from the output Camera.", outputCamera);
+                outputCameraSearch = null;
+                yield break;
+            }
+
+            if (ownedCamera != null && brain.IsLiveChild(ownedCamera))
+                Debug.Log($"NetworkPlayer: CinemachineBrain is driving owned camera '{ownedCamera.Name}'.", this);
+            else
+                Debug.LogError($"NetworkPlayer: CinemachineBrain did not select this player's virtual camera. Active camera: '{brain.ActiveVirtualCamera?.Name ?? "none"}', channel match: {ownedCamera != null && brain.IsValidChannel(ownedCamera)}.", this);
+
             outputCameraSearch = null;
             yield break;
         }
