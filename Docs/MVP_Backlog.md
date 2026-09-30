@@ -187,14 +187,14 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `[Loot] Reposicion parcial de loot entre dias`
   Resultado: el loot sobrante del dia anterior persiste y se suman nuevos spawns hasta un limite.
   Aceptacion: el jugador nota diferencia de densidad entre dias sin necesitar procedural generation.
-  Estado: implementado. `LootSpawner.Restock()` existia pero no se llamaba desde ningun sitio; ahora se suscribe a `RunManager.OnDayChanged`.
+  Estado: implementado. `LootSpawner.Restock()` se suscribe a `RunManager.OnPhaseChanged` y repone al entrar en `RunPhase.TravelingToTown`; solo el host spawnea en multijugador.
 
 ## P4 - Threat y enemigos
 
 - `[Enemy] Redirigir EnemyController hacia jugador`
   Resultado: el enemigo persigue jugador en vez de booze.
   Aceptacion: detecta al jugador y aplica presion funcional.
-  Estado: implementado en `Assets/_Project/Scripts/Enemy/EnemyController.cs` (persigue al jugador activo mas cercano vía `PlayerController.ActivePlayers`, ataca con cooldown).
+  Estado: implementado en `Assets/_Project/Scripts/Enemy/EnemyController.cs` (persigue al jugador vivo mas cercano vía `PlayerController.ActivePlayers` filtrado por `IsAlive`, ataca con cooldown). El registro de jugadores incluye copias remotas, asi que el host tambien persigue a los clientes.
 
 - `[Enemy] Crear EnemySpawner`
   Resultado: spawns controlados por presupuesto de amenaza.
@@ -343,8 +343,10 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Sincronizar salud, muerte y cuerpo recuperable`
   Resultado: `Health` y muerte son autoritativos en host; el cuerpo recuperable de P5.8 se replica para todos.
   Aceptacion: un jugador muere, todos ven el mismo cuerpo, y solo el host resuelve `Revive()` y la penalizacion al llegar a MacLarens.
-  Estado: base de salud autoritativa implementada en `NetworkHealth`; falta integrar cuerpo,
-  prefab/escena y validar muerte/recuperacion en Play Mode.
+  Estado: base de salud autoritativa implementada en `NetworkHealth`; la muerte y el revive se
+  replican (`Health.ApplyReplicatedHealth` dispara `OnDeath`/`OnRevived` en clientes), el cuerpo
+  abandonado se oculta via `NetworkPlayer.IsBodyHidden` y el teleport de respawn lo ejecuta el owner
+  (`NetworkPlayer.TeleportFromServer`). Falta el rig de ragdoll en `Player.prefab` y validar en Play Mode.
 
 - `[QA] Gate de movimiento y muerte`
   Resultado: validacion de movimiento, camara y muerte/recuperacion en sesiones de prueba.
@@ -356,20 +358,23 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Inventario server-authoritative`
   Resultado: pickup, drop, throw y deposito viajan como intencion de cliente y se validan/aplican en host.
   Aceptacion: ningun cliente puede duplicar loot ni superar los 4 slots manipulando su input local.
-  Estado: `NetworkInventoryState` replica slots y valor; `NetworkInventoryAuthority` valida en host
-  seleccion, drop y throw. Falta configurar prefabs y reconstruccion visual de `ItemInstance`.
+  Estado: `NetworkInventoryState` replica por `ItemId` (slots, item en mano como slot -1 y municion)
+  y cada cliente reconstruye su `PlayerInventory` via `ApplyReplicatedState` usando `LootCatalog`;
+  `NetworkInventoryAuthority` valida en host seleccion, drop y throw. Falta validar en Play Mode.
 
 - `[Network] Loot y `LootRegistry` sincronizados`
   Resultado: existencia, spawn y ownership temporal de cada `LootItem` viven en el host y se replican a todos.
   Aceptacion: todos los clientes ven el mismo objeto desaparecer al recogerse y reaparecer al soltarse, sin duplicados.
-  Estado: `NetworkLootItem` valida pickup en host y `LootRegistry` bloquea mutaciones cliente;
-  los drops del servidor intentan spawnear como `NetworkObject`. Falta wiring y Play Mode.
+  Estado: `NetworkLootItem.IsCollected` se actualiza en pickup y drop del host (tambien los del
+  propio host). Falta añadir `NetworkTransform` + `NetworkRigidbody` a los prefabs de loot para que
+  los clientes vean caidas y lanzamientos, y validar en Play Mode.
 
 - `[Network] `MoneyManager`/`QuotaManager` server-authoritative`
   Resultado: `TeamMoney`, deuda, cuota efectiva y modificadores se calculan y aplican solo en host.
   Aceptacion: venta, compra y `Finish Day` producen el mismo resultado para todos los clientes al mismo tiempo.
-  Estado: mutaciones de dinero, cuota y cargo quedan bloqueadas en clientes; compra y `Finish Day`
-  llegan al host. `NetworkEconomyState` replica el estado publico. Falta wiring y Play Mode.
+  Estado: los managers usan `NetworkRole.IsClientOnly` para bloquear mutaciones en clientes y
+  `NetworkEconomyState` aplica dinero, cuota, cargo y entregado en clientes
+  (`MoneyManager.ApplyReplicatedMoney`, `QuotaManager.ApplyReplicatedState`). Falta Play Mode.
 
 - `[QA] Gate de inventario y economia`
   Resultado: validacion por 2 y 4 jugadores de looteo, venta, compra y sincronizacion de inventario.
@@ -381,14 +386,17 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Sincronizar `TrainCargo`/`LootDeliveryPoint``
   Resultado: deposito fisico y entrega a `TeamMoney` resueltos en host; movimiento del tren por el spline replicado a todos.
   Aceptacion: cualquier cliente que deposite loot lo ve reflejado igual en todos los clientes y en la cuota.
-  Estado: `NetworkLootDelivery` valida y entrega loot en host; falta configurar objetos networkados
-  y validar cargo/entrega en Play Mode.
+  Estado: la entrega solo se resuelve en host y despawnea el loot entregado. El cargo ya no se
+  reparenta en clientes: `NetworkCargoState` fija cada item relativo al vagon en `LateUpdate`.
+  Falta validar cargo/entrega en Play Mode.
 
 - `[Network] Sincronizar `TrainDeparture` (countdown y aceleracion)`
   Resultado: decision de salida, countdown y aceleracion progresiva son un unico estado replicado, no un timer local por cliente.
   Aceptacion: todos los clientes ven el mismo countdown y el mismo instante de salida.
-  Estado: `NetworkTrainState` replica movimiento, estacion, destino, velocidad y distancia; la
-  salida usa RPC host-authoritative. Falta sincronizacion visual y Play Mode.
+  Estado: `NetworkTrainState` replica distancia, velocidad, estacion y movimiento; los clientes
+  siguen el spline con `TrainSplineFollower.SetReplicatedState` y el countdown se muestra en todos
+  via RPC. Los jugadores sobre el tren se sincronizan relativos al vagon (`NetworkTrainRider`).
+  Falta Play Mode.
 
 - `[Network] Sincronizar extraccion, fog y limpieza de Town`
   Resultado: `TownExtractionResolver` corre solo en host y replica el resultado (abandonados, recuperados, limpieza de loot/enemigos).
@@ -406,9 +414,9 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] `ThreatManager`/`EnemySpawner` autoritativos en host`
   Resultado: threat, spawn y comportamiento de `EnemyController` se calculan solo en host; transform/estado/ataques se replican.
   Aceptacion: ningun cliente ve enemigos o niveles de threat distintos entre si.
-  Estado: `EnemySpawner` y `EnemyController` quedan limitados al host cuando NGO esta activo;
-  `NetworkEnemyState` replica ataque/muerte y `NetworkHealth` mantiene el dano autoritativo.
-  Falta configurar prefabs y validar en Play Mode.
+  Estado: `EnemySpawner`, `EnemyController` y `ThreatManager` solo simulan en host;
+  `NetworkThreatState` (en el objeto `NetworkEconomyState` de `MainScene`) aplica threat y nivel en
+  clientes. Falta configurar prefabs de enemigos y validar en Play Mode.
 
 - `[Balance] Escalar threat y densidad de enemigos por numero de jugadores`
   Resultado: `ThreatTuningSO`/`EnemySpawner` leen un multiplicador segun jugadores conectados (1/2/3/4) en vez de un valor fijo.
@@ -426,8 +434,8 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 - `[Network] Sincronizar `GameStateManager`/`RunManager` para todos`
   Resultado: fases de `RunManager` y estados de `GameStateManager` (`Success`/`Fail`) son un unico valor replicado por el host.
   Aceptacion: todos los clientes entran y salen de `Success`/`Fail` en el mismo instante y ven la misma pantalla.
-  Estado: `NetworkGameState` y `NetworkRunState` replican estado global, dia y fase; falta
-  configurar managers en escena y validar Success/Fail en Play Mode.
+  Estado: `NetworkGameState` (colocado en el objeto `NetworkEconomyState` de `MainScene`) y
+  `NetworkRunState` replican estado global, dia y fase; falta validar Success/Fail en Play Mode.
 
 - `[Network] Reconexion o abandono durante la run`
   Resultado: un cliente desconectado durante `Run` no bloquea al resto; su jugador pasa a cuerpo abandonado o estado inerte segun corresponda.

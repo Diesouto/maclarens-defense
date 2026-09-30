@@ -168,7 +168,8 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 - [ ] Confirmar `NetworkObject`, `NetworkTransform` y registro en NetworkPrefabs para cada prefab
       de enemigo que pueda spawnear `EnemySpawner`.
 - [ ] Añadir `NetworkThreatState` al objeto de managers networkado y comprobar referencias a
-      `ThreatManager` y `EnemySpawner`.
+      `ThreatManager` y `EnemySpawner`. (Añadido por YAML al objeto `NetworkEconomyState` de
+      `MainScene`; solo falta verificar en el Editor. `EnemySpawner` se resuelve en runtime.)
 - [ ] Confirmar que los enemigos dinamicos se crean solo desde el host y que el NavMesh, capas,
       hitboxes y colliders producen el mismo resultado visual en clientes.
 - [ ] Playtest 1/2/3/4 jugadores: threat, densidad, persecucion, ataque, dano, muerte, despawn y
@@ -178,7 +179,8 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 
 - [x] Añadir `NetworkRunState` y `NetworkEconomyState` a `MainScene`.
 - [ ] Añadir `NetworkGameState` al objeto de managers y validar que solo el host cambia
-      `GameState`, `FailCause`, dia y fase.
+      `GameState`, `FailCause`, dia y fase. (Añadido por YAML al objeto `NetworkEconomyState`;
+      busca `GameStateManager.Instance` en runtime. Si no spawnea, los clientes se quedan en `Menu`.)
 - [ ] Confirmar que la desconexion de un jugador muerto aplica abandono/penalizacion solo una vez.
 - [ ] Definir y probar el contrato de un jugador vivo desconectado durante `Run` y el retorno al
       menu cuando se pierde el host.
@@ -188,7 +190,8 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 ## P6 - Cierre de conversion pendiente
 
 - [x] Añadir `NetworkInventoryAuthority` al prefab del jugador.
-- [ ] Validar drop/throw con 2 y 4 jugadores y conectar visualmente los `ItemInstance` replicados.
+- [ ] Validar drop/throw con 2 y 4 jugadores (los `ItemInstance` replicados ya se reconstruyen en
+      clientes via `NetworkInventoryState` + `LootCatalog`).
 - [ ] Validar parentado, salida y valor del cargo en red.
 - [x] Añadir `NetworkPurchaseAuthority` a los prefabs actuales de `ShopStand`.
 - [ ] Validar compras simultaneas.
@@ -205,7 +208,8 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       deben coincidir entre host y clientes.
 - [ ] Verificar que los objetos networkados se despawnean con NGO y que ningun `Destroy` local deja
       fantasmas tras extraccion, muerte, entrega o desconexion.
-- [ ] Validar pose y desparentado de cargo en clientes cuando el loot entra y sale del tren.
+- [ ] Validar pose de cargo en clientes cuando el loot entra y sale del tren (los clientes ya no
+      reparentan: `NetworkCargoState` fija la pose relativa al vagon en `LateUpdate`).
 - [x] Añadir `NetworkBreakable` a algunos prefabs destructibles actuales de loot.
 - [ ] Revisar si falta algun prefab destructible y validar que el host produce el reemplazo roto y
       los clientes reciben el despawn.
