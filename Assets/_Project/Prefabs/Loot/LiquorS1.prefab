@@ -80,7 +80,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BreakableOnImpact
   breakVelocity: 6
-  brokenPrefab: {fileID: 1854024093978230, guid: 4cf69b23636f85b4e943f026d1a910aa, type: 3}
+  brokenPrefab: {fileID: 6853899158814711122, guid: c2dca003f7a18ca4c828328ce88a1079, type: 3}
+  brokenPrefabs:
+  - {fileID: 6800092346415862841, guid: 17b3a45e60c3be6408442cd18063c351, type: 3}
+  debrisLifetime: 20
   breakSound: {fileID: 0}
 --- !u!114 &6466861298876284338
 MonoBehaviour:

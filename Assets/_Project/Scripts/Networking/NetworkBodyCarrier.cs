@@ -41,7 +41,7 @@ public class NetworkBodyCarrier : NetworkBehaviour
             return;
 
         NetworkObject current = carrier.CarriedBody != null ? carrier.CarriedBody.GetComponent<NetworkObject>() : null;
-        carriedBody.TryGet(out NetworkObject replicated);
+        carriedBody.Value.TryGet(out NetworkObject replicated);
         if (current != replicated)
             carriedBody.Value = current != null ? new NetworkObjectReference(current) : default;
     }

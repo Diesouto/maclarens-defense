@@ -15,14 +15,18 @@ MonoBehaviour:
   itemId: LiquorL
   displayName: Alcohol
   icon: {fileID: 21300000, guid: 487d7d35be6ba0147ba639472b4313df, type: 3}
-  value: 25
+  value: 40
   price: 0
   spawnWeight: 100
-  itemType: 0
+  itemType: 2
   isHeavy: 0
   isTwoHanded: 0
   animationProfile: 0
   weaponData: {fileID: 0}
+  drinkHealPercent: 0.2
+  drunkDuration: 20
+  breakHealPercent: 0
+  breakHealRadius: 0
   worldPrefab: {fileID: 223096608495352036, guid: a620731d9e7b951488de1e028f9f7c2a, type: 3}
   heldPrefab: {fileID: 0}
   rigidbodyMass: 1

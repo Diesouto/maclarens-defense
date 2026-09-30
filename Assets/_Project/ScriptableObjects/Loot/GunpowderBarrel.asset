@@ -10,24 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74711b29da55cb7428b3ce78dbd34b28, type: 3}
-  m_Name: Liquor(S)SO
+  m_Name: GunpowderBarrel
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
-  itemId: LiquorS
-  displayName: Alcohol
+  itemId: GunpowderBarrel
+  displayName: "Barril p\xF3lvora"
   icon: {fileID: 21300000, guid: 487d7d35be6ba0147ba639472b4313df, type: 3}
-  value: 25
+  value: 300
   price: 0
-  spawnWeight: 100
-  itemType: 2
-  isHeavy: 0
-  isTwoHanded: 0
+  spawnWeight: 40
+  itemType: 0
+  isHeavy: 1
+  isTwoHanded: 1
   animationProfile: 0
   weaponData: {fileID: 0}
-  drinkHealPercent: 0.1
-  drunkDuration: 8
+  drinkHealPercent: 0
+  drunkDuration: 0
   breakHealPercent: 0
-  breakHealRadius: 0
-  worldPrefab: {fileID: 4413406178975462753, guid: 689300a1d30a8e947997f774ec9e43a4, type: 3}
+  breakHealRadius: 3
+  worldPrefab: {fileID: 7817347502467321570, guid: c56a6c849c09bdd4c962cc5b8b787b2d, type: 3}
   heldPrefab: {fileID: 0}
   rigidbodyMass: 1
   heldPositionOffset: {x: 0, y: 0, z: 0}

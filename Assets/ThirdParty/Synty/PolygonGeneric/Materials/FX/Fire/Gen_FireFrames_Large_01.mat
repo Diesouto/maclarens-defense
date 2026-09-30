@@ -154,6 +154,7 @@ Material:
     - _DistortionStrength: 1
     - _DistortionStrengthScaled: 0
     - _DstBlend: 1
+    - _DstBlendAlpha: 1
     - _EmissionEnabled: 1
     - _Enable_Camera_Fade: 0
     - _Enable_Emission: 0
@@ -180,6 +181,7 @@ Material:
     - _Soft_Power: 1
     - _SpecularHighlights: 1
     - _SrcBlend: 5
+    - _SrcBlendAlpha: 1
     - _Surface: 1
     - _UVSec: 0
     - _Use_View_Edge_Compensation: 1

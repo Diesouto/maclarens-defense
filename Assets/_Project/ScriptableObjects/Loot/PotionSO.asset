@@ -10,24 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74711b29da55cb7428b3ce78dbd34b28, type: 3}
-  m_Name: Liquor(S)SO
+  m_Name: PotionSO
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
-  itemId: LiquorS
-  displayName: Alcohol
+  itemId: Potion
+  displayName: "Poci\xF3n"
   icon: {fileID: 21300000, guid: 487d7d35be6ba0147ba639472b4313df, type: 3}
-  value: 25
-  price: 0
-  spawnWeight: 100
+  value: 50
+  price: 50
+  spawnWeight: 60
   itemType: 2
   isHeavy: 0
   isTwoHanded: 0
   animationProfile: 0
   weaponData: {fileID: 0}
-  drinkHealPercent: 0.1
-  drunkDuration: 8
-  breakHealPercent: 0
-  breakHealRadius: 0
-  worldPrefab: {fileID: 4413406178975462753, guid: 689300a1d30a8e947997f774ec9e43a4, type: 3}
+  drinkHealPercent: 1
+  drunkDuration: 0
+  breakHealPercent: 0.5
+  breakHealRadius: 3
+  worldPrefab: {fileID: 2195950226579266101, guid: 8f6155f335d55354f97d125ebf912609, type: 3}
   heldPrefab: {fileID: 0}
   rigidbodyMass: 1
   heldPositionOffset: {x: 0, y: 0, z: 0}
