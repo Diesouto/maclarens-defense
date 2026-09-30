@@ -58,13 +58,6 @@ public class NetworkBootstrapper : MonoBehaviour
         if (networkManager == null)
             return;
 
-        networkManager.SetConnectionData(
-            "",
-            0,
-            "",
-            0
-        );
-
         networkManager.StartHost();
         OnConnectionChanged?.Invoke(true);
     }

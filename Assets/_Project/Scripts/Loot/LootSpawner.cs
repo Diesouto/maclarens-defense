@@ -192,7 +192,7 @@ public class LootSpawner : MonoBehaviour
                 return false;
             }
 
-            if (!NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(networkObject.GlobalObjectIdHash))
+            if (!NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(lootData.WorldPrefab))
             {
                 Destroy(instance);
                 Debug.LogError($"[LootSpawner] Loot prefab '{lootData.WorldPrefab.name}' is not registered in NetworkPrefabs.", lootData.WorldPrefab);

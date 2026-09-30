@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 // Drags the carried body's ragdoll root toward the carry point every FixedUpdate instead of

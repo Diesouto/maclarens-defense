@@ -191,7 +191,8 @@ public class EnemyController : MonoBehaviour
             animator.SetFloat("Speed", 0f);
 
         NetworkObject networkObject = GetComponent<NetworkObject>();
-        if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+        if (networkObject != null && networkObject.IsSpawned &&
+            NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
             StartCoroutine(DespawnAfterDelay(networkObject, 30f));
         else if (networkObject == null)
             Destroy(gameObject, 30f);
@@ -202,7 +203,8 @@ public class EnemyController : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
 
-        if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+        if (networkObject != null && networkObject.IsSpawned &&
+            NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
             networkObject.Despawn(true);
     }
 }

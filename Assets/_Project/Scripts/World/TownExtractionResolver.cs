@@ -68,7 +68,8 @@ public class TownExtractionResolver : MonoBehaviour
         {
             GameObject entity = temporaryEntitiesRoot.GetChild(index).gameObject;
             NetworkObject networkObject = entity.GetComponent<NetworkObject>();
-            if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+            if (networkObject != null && networkObject.IsSpawned &&
+                NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
                 networkObject.Despawn(true);
             else
                 Destroy(entity);

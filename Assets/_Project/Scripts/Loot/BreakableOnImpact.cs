@@ -58,10 +58,10 @@ public class BreakableOnImpact : MonoBehaviour
                 NetworkManager.Singleton.IsServer)
             {
                 if (brokenNetworkObject == null ||
-                    !NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(brokenNetworkObject.GlobalObjectIdHash))
+                    !NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(brokenPrefab))
                 {
                     Destroy(brokenInstance);
-                    Debug.LogError($"BreakableOnImpact: broken prefab '{brokenPrefab.name}' is not a registered NetworkObject.", brokenPrefab);
+                    Debug.LogError($"BreakableOnImpact: broken prefab '{brokenPrefab.name}' is missing a registered NetworkObject.", brokenPrefab);
                 }
                 else
                 {
@@ -71,7 +71,8 @@ public class BreakableOnImpact : MonoBehaviour
         }
 
         NetworkObject networkObject = GetComponent<NetworkObject>();
-        if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+        if (networkObject != null && networkObject.IsSpawned &&
+            NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
             networkObject.Despawn(true);
         else
             Destroy(gameObject);

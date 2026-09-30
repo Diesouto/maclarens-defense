@@ -146,7 +146,7 @@ public class EnemySpawner : MonoBehaviour
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             if (networkObject == null ||
-                !NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(networkObject.GlobalObjectIdHash))
+                !NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(prefab))
             {
                 Destroy(instance);
                 aliveEnemies.Remove(enemy);
@@ -203,7 +203,8 @@ public class EnemySpawner : MonoBehaviour
             if (enemy != null)
             {
                 NetworkObject networkObject = enemy.GetComponent<NetworkObject>();
-                if (networkObject != null && networkObject.IsSpawned && networkObject.IsServer)
+                if (networkObject != null && networkObject.IsSpawned &&
+                    NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
                     networkObject.Despawn(true);
                 else
                     Destroy(enemy.gameObject);

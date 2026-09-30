@@ -66,7 +66,8 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
                 if (spawnedPlayer.TryGetComponent(out NetworkObject networkObject))
                 {
-                    if (networkObject.IsSpawned && networkObject.IsServer)
+                    if (networkObject.IsSpawned && NetworkManager.Singleton != null &&
+                        NetworkManager.Singleton.IsServer)
                         networkObject.Despawn();
                 }
                 else
@@ -105,7 +106,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             return;
         }
 
-        if (!NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(networkObject.GlobalObjectIdHash))
+        if (!NetworkManager.Singleton.NetworkConfig.Prefabs.Contains(playerPrefab))
         {
             Destroy(playerInstance);
             Debug.LogError($"NetworkPlayerSpawner: prefab '{playerPrefab.name}' is not registered in NetworkPrefabs.", playerPrefab);
