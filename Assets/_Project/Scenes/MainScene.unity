@@ -77186,6 +77186,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5761257213316722631, guid: 2ef3f5b15d28ec14997d9498c55a7c0c, type: 3}
+      propertyPath: m_text
+      value: "\u25CF"
+      objectReference: {fileID: 0}
+    - target: {fileID: 5761257213316722631, guid: 2ef3f5b15d28ec14997d9498c55a7c0c, type: 3}
+      propertyPath: m_fontSize
+      value: 24
+      objectReference: {fileID: 0}
+    - target: {fileID: 5761257213316722631, guid: 2ef3f5b15d28ec14997d9498c55a7c0c, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 24
+      objectReference: {fileID: 0}
     - target: {fileID: 8010260929253875201, guid: 2ef3f5b15d28ec14997d9498c55a7c0c, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -98527,10 +98539,6 @@ PrefabInstance:
       propertyPath: runManager
       value: 
       objectReference: {fileID: 720582679}
-    - target: {fileID: 7912358821626050893, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
-      propertyPath: Ownership
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 7912358821626050893, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
       propertyPath: m_InScenePlaced
       value: 1

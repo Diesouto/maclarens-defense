@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1183886535063995320}
-  - component: {fileID: 844764639466559249}
   - component: {fileID: 6890276564910860401}
   - component: {fileID: 5728219379552587342}
+  - component: {fileID: 844764639466559249}
   - component: {fileID: 3976386457810388481}
   m_Layer: 0
   m_Name: CowSkull
@@ -36,20 +36,6 @@ Transform:
   - {fileID: 3005729748720971243}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &844764639466559249
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 423015025602674969}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 020ee07c337e75945876c7cc87dc3956, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootItem
-  lootData: {fileID: 11400000, guid: 8f135d554599edb4e89e39bc08ebea19, type: 2}
-  hideOnPickup: 1
 --- !u!114 &6890276564910860401
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -96,6 +82,20 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
+--- !u!114 &844764639466559249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 423015025602674969}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 020ee07c337e75945876c7cc87dc3956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LootItem
+  lootData: {fileID: 11400000, guid: 8f135d554599edb4e89e39bc08ebea19, type: 2}
+  hideOnPickup: 1
 --- !u!54 &3976386457810388481
 Rigidbody:
   m_ObjectHideFlags: 0

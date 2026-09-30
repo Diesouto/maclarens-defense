@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5480948610090277648}
-  - component: {fileID: 1485717432254167370}
   - component: {fileID: 6107863394888806882}
   - component: {fileID: -3057402567856333137}
+  - component: {fileID: 1485717432254167370}
   - component: {fileID: 574716917580073181}
   - component: {fileID: 8997202438330767944}
   m_Layer: 0
@@ -37,20 +37,6 @@ Transform:
   - {fileID: 4716935148772574157}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1485717432254167370
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6876566521717455433}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 020ee07c337e75945876c7cc87dc3956, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootItem
-  lootData: {fileID: 11400000, guid: 3d71b8bdba88aca4f977a82f169b177b, type: 2}
-  hideOnPickup: 1
 --- !u!114 &6107863394888806882
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -91,6 +77,20 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &1485717432254167370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6876566521717455433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 020ee07c337e75945876c7cc87dc3956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LootItem
+  lootData: {fileID: 11400000, guid: 3d71b8bdba88aca4f977a82f169b177b, type: 2}
+  hideOnPickup: 1
 --- !u!114 &574716917580073181
 MonoBehaviour:
   m_ObjectHideFlags: 0
