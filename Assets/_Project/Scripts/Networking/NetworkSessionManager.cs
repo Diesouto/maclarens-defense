@@ -44,6 +44,8 @@ public struct LobbyPlayerEntry : INetworkSerializable, IEquatable<LobbyPlayerEnt
 public class NetworkSessionManager : NetworkBehaviour
 {
     public static NetworkSessionManager Instance { get; private set; }
+    public static string LocalPlayerName => PlayerPrefs.GetString("PlayerName", "Player");
+    public static int LocalCharacterIndex => PlayerPrefs.GetInt("PlayerCharacterIndex", 0);
 
     [SerializeField] private int maxPlayers = 4;
 
@@ -92,8 +94,8 @@ public class NetworkSessionManager : NetworkBehaviour
         if (!IsServer)
         {
             SubmitLocalProfileServerRpc(
-                new FixedString64Bytes(MultiplayerProfilePanel.LocalPlayerName),
-                MultiplayerProfilePanel.LocalCharacterIndex);
+                new FixedString64Bytes(LocalPlayerName),
+                LocalCharacterIndex);
             return;
         }
 
@@ -103,7 +105,7 @@ public class NetworkSessionManager : NetworkBehaviour
         SetSessionState(MultiplayerSessionState.Lobby);
         HostClientId.Value = NetworkManager.Singleton.LocalClientId;
         AddOrUpdatePlayer(HostClientId.Value, "Host", true, true);
-        SubmitLocalProfile(MultiplayerProfilePanel.LocalPlayerName, MultiplayerProfilePanel.LocalCharacterIndex);
+        SubmitLocalProfile(LocalPlayerName, LocalCharacterIndex);
     }
 
     public override void OnNetworkDespawn()
