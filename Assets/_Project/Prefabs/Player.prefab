@@ -2129,6 +2129,7 @@ GameObject:
   - component: {fileID: 7826294325139820367}
   - component: {fileID: 7125351775864353586}
   - component: {fileID: 8246071983586520179}
+  - component: {fileID: 9179750907243030846}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -2416,7 +2417,7 @@ MonoBehaviour:
   RotationInterpolationType: 0
   ScaleInterpolationType: 0
   PositionLerpSmoothing: 1
-  PositionMaxInterpolationTime: 0.1
+  PositionMaxInterpolationTime: 0.02
   RotationLerpSmoothing: 1
   RotationMaxInterpolationTime: 0.1
   ScaleLerpSmoothing: 1
@@ -2540,8 +2541,9 @@ MonoBehaviour:
     m_InternalValue: 0
   playerController: {fileID: 8285399579012983252}
   playerInputHandler: {fileID: 8149199625139822230}
-  playerInteractor: {fileID: 0}
+  playerInteractor: {fileID: 167106476417269769}
   weaponAuthority: {fileID: 0}
+  playerMotor: {fileID: 3132060853652557816}
   playerCameras: []
   playerVirtualCameras:
   - {fileID: 439476528600918084}
@@ -2634,6 +2636,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkBodyCarrier
   ShowTopMostFoldoutHeaderGroup: 1
   carryDistance: 3
+--- !u!114 &9179750907243030846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5860787695679847855}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a064f2398c8f27e488028b3bfeb06cb8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OwnerNetworkAnimator
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkAnimatorExpanded: 0
+  AuthorityMode: 0
+  m_Animator: {fileID: 2520730515985291377}
+  TransitionStateInfoList: []
+  AnimatorParameterEntries:
+    ParameterEntries:
+    - name: Speed
+      NameHash: -823668238
+      Synchronize: 1
+      ParameterType: 1
+    - name: ItemAnimationProfile
+      NameHash: 814827801
+      Synchronize: 1
+      ParameterType: 3
+    - name: IsCarryingPistol
+      NameHash: -313591955
+      Synchronize: 1
+      ParameterType: 4
+    - name: IsCarryingShotgun
+      NameHash: -2125349925
+      Synchronize: 1
+      ParameterType: 4
+    - name: IsCarryingItem
+      NameHash: -376119052
+      Synchronize: 1
+      ParameterType: 4
+    - name: HasBeenHit
+      NameHash: -1686628431
+      Synchronize: 1
+      ParameterType: 9
+  AnimatorParametersExpanded: 0
 --- !u!1 &6037817788625409431
 GameObject:
   m_ObjectHideFlags: 0

@@ -17,10 +17,14 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: cd2feb23b92c34243bb3626c74b3061a, type: 3}
   value: 50
   price: 0
+  spawnWeight: 100
   itemType: 0
   isHeavy: 0
   isTwoHanded: 0
   animationProfile: 0
   weaponData: {fileID: 0}
-  worldPrefab: {fileID: 1779384929627366, guid: 6a789fbc8e00f5c4f8b86941aa0a165e, type: 3}
+  worldPrefab: {fileID: 2874308887786131536, guid: 83c07f253a328cb4792d1ccfc7f6113c, type: 3}
   heldPrefab: {fileID: 0}
+  rigidbodyMass: 1
+  heldPositionOffset: {x: 0, y: 0, z: 0}
+  heldRotationOffset: {x: 0, y: 0, z: 0}

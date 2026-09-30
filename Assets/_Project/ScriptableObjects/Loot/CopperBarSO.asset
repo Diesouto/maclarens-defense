@@ -23,7 +23,7 @@ MonoBehaviour:
   isTwoHanded: 0
   animationProfile: 0
   weaponData: {fileID: 0}
-  worldPrefab: {fileID: 5400138656691649437, guid: 1f077ee8aba6fdc46883212c5f62ffd5, type: 3}
+  worldPrefab: {fileID: 3005826969662451662, guid: 269e6aa5194b49a48a13f0fec33dcdb4, type: 3}
   heldPrefab: {fileID: 0}
   rigidbodyMass: 2
   heldPositionOffset: {x: 0, y: 0, z: 0}
