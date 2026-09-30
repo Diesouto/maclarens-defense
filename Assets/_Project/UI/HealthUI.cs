@@ -24,6 +24,20 @@ public class HealthUI : MonoBehaviour
             HandleHealthChanged(health.CurrentHealth);
     }
 
+    public void Bind(Health playerHealth)
+    {
+        if (health != null)
+            health.OnHealthChanged -= HandleHealthChanged;
+
+        health = playerHealth;
+
+        if (health != null && isActiveAndEnabled)
+            health.OnHealthChanged += HandleHealthChanged;
+
+        if (health != null)
+            HandleHealthChanged(health.CurrentHealth);
+    }
+
     private void HandleHealthChanged(float currentHealth)
     {
         if (healthBar == null || health == null)

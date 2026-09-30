@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -11,6 +12,9 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkTransform))]
 public class NetworkPlayer : NetworkBehaviour
 {
+    public static NetworkPlayer Local { get; private set; }
+    public static event Action<NetworkPlayer> LocalPlayerChanged;
+
     public NetworkVariable<FixedString64Bytes> DisplayName = new(
         new FixedString64Bytes("Player"),
         NetworkVariableReadPermission.Everyone,
@@ -91,7 +95,10 @@ public class NetworkPlayer : NetworkBehaviour
         ApplyCharacterSelection(CharacterIndex.Value);
         UpdateNameplate(DisplayName.Value);
         if (IsOwner)
+        {
+            SetLocal(this);
             BeginOutputCameraSearch();
+        }
     }
 
     public override void OnNetworkDespawn()
@@ -99,6 +106,8 @@ public class NetworkPlayer : NetworkBehaviour
         DisplayName.OnValueChanged -= HandleDisplayNameChanged;
         CharacterIndex.OnValueChanged -= HandleCharacterIndexChanged;
         ApplyLocalOwnership(false);
+        if (Local == this)
+            SetLocal(null);
         if (outputCameraSearch != null)
         {
             StopCoroutine(outputCameraSearch);
@@ -130,7 +139,14 @@ public class NetworkPlayer : NetworkBehaviour
         ApplyLocalOwnership(true);
         ApplyCharacterSelection(characterIndex);
         SetPlayerNameLabel(safeName);
+        SetLocal(this);
         BeginOutputCameraSearch();
+    }
+
+    private static void SetLocal(NetworkPlayer player)
+    {
+        Local = player;
+        LocalPlayerChanged?.Invoke(player);
     }
 
     private void Update()

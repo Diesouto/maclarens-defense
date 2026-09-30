@@ -7,8 +7,6 @@ public class PlayerInventory : MonoBehaviour
 {
     public const int BackpackSlotsCount = 4;
 
-    public static PlayerInventory Instance { get; private set; }
-
     public event Action OnInventoryChanged;
 
     [SerializeField] private int maxSlots = BackpackSlotsCount;
@@ -34,25 +32,11 @@ public class PlayerInventory : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-
         if (dropOrigin == null)
             dropOrigin = transform;
 
         maxSlots = Mathf.Clamp(maxSlots, 1, BackpackSlotsCount);
         networkAuthority = GetComponent<NetworkInventoryAuthority>();
-    }
-
-    private void OnDestroy()
-    {
-        if (Instance == this)
-            Instance = null;
     }
 
     public bool CanAdd(LootDataSO loot)

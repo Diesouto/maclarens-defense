@@ -1,32 +1,59 @@
-/* 
+using UnityEngine;
 
-I'd keep one HUD script.
+// Wires the scene HUD to whichever player is local on this machine (host, client or offline).
+public class HUD : MonoBehaviour
+{
+    [SerializeField] private HealthUI healthUI;
+    [SerializeField] private InventoryUI inventoryUI;
+    [SerializeField] private BulletsUI bulletsUI;
+    [SerializeField] private InteractUI interactUI;
 
-Not a UI manager.
+    private void Awake()
+    {
+        if (healthUI == null)
+            healthUI = GetComponentInChildren<HealthUI>(true);
 
-A HUD.
+        if (inventoryUI == null)
+            inventoryUI = GetComponentInChildren<InventoryUI>(true);
 
-HUD
-│
-├── HealthUI
-├── AmmoUI
-├── MoneyUI
-├── WaveUI
-├── CrosshairUI
-└── InteractionUI
+        if (bulletsUI == null)
+            bulletsUI = GetComponentInChildren<BulletsUI>(true);
 
-Its only responsibility is to find the local player's components when the game starts and wire them together.
+        if (interactUI == null)
+            interactUI = GetComponentInChildren<InteractUI>(true);
+    }
 
-For example:
+    private void OnEnable()
+    {
+        NetworkPlayer.LocalPlayerChanged += Initialize;
 
-hud.Initialize(localPlayer);
+        if (NetworkPlayer.Local != null)
+            Initialize(NetworkPlayer.Local);
+    }
 
-Inside:
+    private void OnDisable()
+    {
+        NetworkPlayer.LocalPlayerChanged -= Initialize;
+    }
 
-Player
-│
-├── Health
-├── Weapon
-└── Economy
+    public void Initialize(NetworkPlayer localPlayer)
+    {
+        if (localPlayer == null)
+            return;
 
-*/
+        PlayerInventory inventory = localPlayer.GetComponent<PlayerInventory>();
+
+        healthUI?.Bind(localPlayer.GetComponent<Health>());
+        inventoryUI?.Bind(inventory);
+        bulletsUI?.Bind(inventory);
+
+        if (interactUI == null)
+            return;
+
+        if (localPlayer.TryGetComponent(out PlayerInteractor interactor))
+            interactor.SetInteractUI(interactUI);
+
+        if (localPlayer.TryGetComponent(out PlayerController controller))
+            controller.SetInteractUI(interactUI);
+    }
+}

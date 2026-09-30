@@ -10,9 +10,6 @@ public class InventoryUI : MonoBehaviour
 
     private void Awake()
     {
-        if (inventory == null)
-            inventory = PlayerInventory.Instance;
-
         if (inventory != null)
             inventory.OnInventoryChanged += Refresh;
 

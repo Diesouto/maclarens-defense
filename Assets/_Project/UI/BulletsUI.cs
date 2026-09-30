@@ -7,6 +7,7 @@ public class BulletsUI : MonoBehaviour
     [SerializeField] private TMPro.TextMeshProUGUI maxBulletsText;
 
     private Weapon weapon;
+    private PlayerInventory boundInventory;
     private PlayerInventory inventory;
     private ItemHolder itemHolder;
 
@@ -52,17 +53,17 @@ public class BulletsUI : MonoBehaviour
         }
     }
 
+    public void Bind(PlayerInventory playerInventory)
+    {
+        boundInventory = playerInventory;
+        BindInventory(playerInventory);
+        Refresh();
+    }
+
     private void EnsureBindings()
     {
-        PlayerInventory activeInventory = inventory;
-        if (activeInventory == null)
-            activeInventory = PlayerInventory.Instance;
-
-        if (activeInventory == null)
-            activeInventory = FindFirstObjectByType<PlayerInventory>();
-
-        if (activeInventory != inventory)
-            BindInventory(activeInventory);
+        if (boundInventory != inventory)
+            BindInventory(boundInventory);
 
         ItemHolder activeItemHolder = inventory != null ? inventory.GetComponent<ItemHolder>() : null;
         if (activeItemHolder != itemHolder)

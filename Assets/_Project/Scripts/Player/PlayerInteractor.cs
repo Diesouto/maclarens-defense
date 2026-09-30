@@ -13,6 +13,12 @@ public class PlayerInteractor : MonoBehaviour
     public Camera InteractionCamera => interactionCamera;
     public Transform PlayerTransform => transform;
 
+    public void SetInteractUI(InteractUI ui)
+    {
+        interactUI = ui;
+        RefreshPrompt();
+    }
+
     private void Awake()
     {
         input = GetComponent<PlayerInputHandler>();

@@ -46,9 +46,13 @@ public class PlayerController : MonoBehaviour
     private bool isChargingThrow;
     private bool isChargingBodyThrow;
     private ItemHolder itemHolder;
+    private NetworkPlayer networkPlayer;
+
+    private bool IsLocalPlayer => networkPlayer == null || networkPlayer == NetworkPlayer.Local;
 
     private void Awake()
     {
+        networkPlayer = GetComponent<NetworkPlayer>();
         input = GetComponent<PlayerInputHandler>();
         motor = GetComponent<PlayerMotor>();
         trainPassenger = GetComponent<TrainPassenger>();
@@ -91,6 +95,11 @@ public class PlayerController : MonoBehaviour
             mainCamera.fieldOfView = currentFov;
         else
             Debug.LogWarning("PlayerController: No camera found for look/zoom.");
+    }
+
+    public void SetInteractUI(InteractUI ui)
+    {
+        interactUI = ui;
     }
 
     public void SetOutputCamera(Camera outputCamera)
@@ -340,6 +349,9 @@ public class PlayerController : MonoBehaviour
         if (motor != null)
             motor.enabled = false;
 
+        if (!IsLocalPlayer)
+            return;
+
         // Keep cameraTransform parented under the head bone: disabling this component (below) stops
         // us from overriding its rotation every LateUpdate, so it's free to ride the ragdoll physics.
         if (cameraTransform != null && ragdollCameraAnchor != null)
@@ -353,6 +365,9 @@ public class PlayerController : MonoBehaviour
     // Called by PlayerBody once its Health has been revived; hands control back to the player.
     public void Revive()
     {
+        if (!IsLocalPlayer)
+            return;
+
         if (cameraTransform != null && cameraDefaultParent != null)
         {
             cameraTransform.SetParent(cameraDefaultParent, false);
