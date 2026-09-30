@@ -4384,7 +4384,6 @@ GameObject:
   - component: {fileID: 1183821077}
   - component: {fileID: 1183821076}
   - component: {fileID: 1183821080}
-  - component: {fileID: 1183821081}
   - component: {fileID: 1183821082}
   m_Layer: 0
   m_Name: RelayJoinCodeManager
@@ -4481,18 +4480,6 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::RelayJoinCodeManager
   bootstrapper: {fileID: 1183821077}
---- !u!114 &1183821081
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1183821074}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67e4d16a3307403989680297a038ea11, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::MultiplayerMenuController
 --- !u!114 &1183821082
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6967,6 +6954,7 @@ GameObject:
   - component: {fileID: 2126928680}
   - component: {fileID: 2126928679}
   - component: {fileID: 2126928678}
+  - component: {fileID: 912440119}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -7037,6 +7025,18 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &912440119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2126928677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67e4d16a3307403989680297a038ea11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MultiplayerMenuController
 --- !u!224 &2126928681
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7046,7 +7046,7 @@ RectTransform:
   m_GameObject: {fileID: 2126928677}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1946443081}
