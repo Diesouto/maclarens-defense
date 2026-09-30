@@ -3431,7 +3431,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 999178448}
-  - component: {fileID: 912440118}
   m_Layer: 5
   m_Name: Multijugador
   m_TagString: Untagged
@@ -4467,6 +4466,8 @@ MonoBehaviour:
   autoStartServer: 0
   maxPlayers: 4
   playerPrefab: {fileID: 5860787695679847855, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
+  networkManager: {fileID: 0}
+  transport: {fileID: 0}
 --- !u!114 &1183821080
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7037,6 +7038,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67e4d16a3307403989680297a038ea11, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::MultiplayerMenuController
+  relayManager: {fileID: 1183821080}
 --- !u!224 &2126928681
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7122,20 +7124,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4099166277382448, guid: 1c8c6bed3438b9141b6c6e2eb548b815, type: 3}
   m_PrefabInstance: {fileID: 2143280979}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &912440118
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 999178447}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3cd3e4e955a9465bb6e7d29137e28918, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::MultiplayerProfilePanel
-  playerPreviewPrefab: {fileID: 5860787695679847855, guid: ac7bf7b429575184195ac2b9b49c721d, type: 3}
-  previewDistance: 4
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

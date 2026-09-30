@@ -98,15 +98,25 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 - [x] Implementar Host/Join por codigo con Authentication, Relay y `UnityTransport` en
       `RelayJoinCodeManager`.
 - [ ] Vincular el proyecto a Unity Services y configurar/verificar el entorno de Relay en Dashboard.
-- [x] Configurar el objeto persistente de red de `MenuScene`: `NetworkManager`/`UnityTransport`
-      se configuran en `NetworkBootstrapper`; comparte `NetworkObject` con
-      `NetworkSessionManager` y `NetworkPlayerSpawner`.
+- [ ] En el objeto de servicios de `MenuScene`, asignar `NetworkManager` y `UnityTransport` a
+      `NetworkBootstrapper`; si estan vacios, el bootstrapper crea un objeto `NetworkRuntime`
+      separado. Verificar que la `NetworkConfig` del `NetworkManager` exista.
+- [ ] Mantener `NetworkSessionManager` en un GameObject con `NetworkObject`; no poner
+      `NetworkManager` en el mismo GameObject que ese `NetworkObject`.
 - [x] Añadir `NetworkObject`, `NetworkTransform` y `NetworkPlayer` a `Player.prefab` y registrar
       el prefab en `DefaultNetworkPrefabs`.
-- [x] Configurar `NetworkPlayerSpawner` en el objeto persistente; registra `Player.prefab` y espera
-      a que NGO cargue `MainScene` para hacer spawn desde `RespawnPoint`.
-- [x] Conectar `Jugar`, Host y Cliente de `MenuScene`; implementar join code, lista/conteo, Ready,
-      Start solo para host y salida de lobby. `MainScene` queda como escena de gameplay.
+- [ ] Asignar `Player.prefab` en `NetworkPlayerSpawner`; dejar `spawnPoints` vacio para usar
+      `RespawnPoint` o asignar transforms concretos de spawn en `MainScene`.
+- [ ] Conectar en `MultiplayerMenuController` todos los GameObjects de pantalla y controles:
+      `mainMenuScreen`, `multiplayerScreen`, `joinScreen`, `lobbyScreen`; botones de Singleplayer,
+      Multiplayer, Host, Join, Back, Connect, Previous/Next Character, Ready, Start y Leave;
+      campos TMP de nombre/codigo, indice de personaje, estado, codigo de sala, conteo y lista.
+- [ ] Rellenar `characterPreviewModels` con los modelos de preview, uno por indice; el script activa
+      solo el elemento seleccionado.
+- [ ] Probar que Host abre el lobby y genera/enseña el codigo Relay; Cliente permite introducirlo;
+      lobby replica jugadores/Ready y Start del host carga `MainScene` para todos.
+- [ ] Configurar el `NetworkManager` con scene management activado y registrar `Player.prefab` en
+      `NetworkPrefabs` si no esta en la lista de prefabs que usa la instancia.
 - [ ] Verificar en Play Mode que solo el propietario activa input, interaccion y camara.
 - [ ] Playtest de lobby en 1/2/3/4 jugadores: entradas, salidas, ready, start y host desconectado.
 - [ ] En `MenuScene`, cambiar nombre y personaje desde Multiplayer; comprobar que el perfil aparece

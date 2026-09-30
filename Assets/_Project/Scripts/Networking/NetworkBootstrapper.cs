@@ -10,12 +10,16 @@ public class NetworkBootstrapper : MonoBehaviour
     [SerializeField] private bool autoStartServer = false;
     [SerializeField] private int maxPlayers = 4;
     [SerializeField] private GameObject playerPrefab;
+    [SerializeField] private NetworkManager networkManager;
+    [SerializeField] private UnityTransport transport;
 
-    private NetworkManager networkManager;
+    private bool isConfigured;
+    private GameObject runtimeNetworkRoot;
 
     public bool IsRunning => networkManager != null && networkManager.IsListening;
     public bool IsServer => networkManager != null && networkManager.IsServer;
     public bool IsClient => networkManager != null && networkManager.IsClient;
+    public UnityTransport Transport => transport;
 
     public event Action<bool> OnConnectionChanged;
 
@@ -30,27 +34,67 @@ public class NetworkBootstrapper : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        UnityTransport transport = GetComponent<UnityTransport>();
-        if (transport == null)
-            transport = gameObject.AddComponent<UnityTransport>();
-
-        networkManager = GetComponent<NetworkManager>();
         if (networkManager == null)
-            networkManager = gameObject.AddComponent<NetworkManager>();
+            networkManager = GetComponent<NetworkManager>();
+        if (transport == null)
+            transport = networkManager != null ? networkManager.GetComponent<UnityTransport>() : GetComponent<UnityTransport>();
+
+        if (networkManager == null)
+        {
+            runtimeNetworkRoot = new GameObject("NetworkRuntime");
+            DontDestroyOnLoad(runtimeNetworkRoot);
+            if (transport == null)
+                transport = runtimeNetworkRoot.AddComponent<UnityTransport>();
+            networkManager = runtimeNetworkRoot.AddComponent<NetworkManager>();
+        }
+
+        if (transport == null)
+            transport = networkManager.gameObject.AddComponent<UnityTransport>();
+
+        if (networkManager.NetworkConfig == null)
+        {
+            Debug.LogError("NetworkBootstrapper: NetworkManager has no NetworkConfig.", networkManager);
+            enabled = false;
+            return;
+        }
 
         networkManager.NetworkConfig.NetworkTransport = transport;
         networkManager.NetworkConfig.EnableSceneManagement = true;
         networkManager.NetworkConfig.ConnectionApproval = true;
-        if (playerPrefab != null)
-            networkManager.AddNetworkPrefab(playerPrefab);
+        if (playerPrefab == null)
+        {
+            Debug.LogError("NetworkBootstrapper: assign the networked player prefab.", this);
+            enabled = false;
+            return;
+        }
+
+        if (networkManager.NetworkConfig.Prefabs == null)
+        {
+            Debug.LogError("NetworkBootstrapper: NetworkConfig has no prefab registry.", networkManager);
+            enabled = false;
+            return;
+        }
+
+        try
+        {
+            if (!networkManager.NetworkConfig.Prefabs.Contains(playerPrefab))
+                networkManager.AddNetworkPrefab(playerPrefab);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"NetworkBootstrapper: could not register player prefab: {exception.Message}", this);
+            enabled = false;
+            return;
+        }
 
         networkManager.ConnectionApprovalCallback = ApprovalCheck;
         networkManager.OnClientDisconnectCallback += HandleClientDisconnected;
+        isConfigured = true;
     }
 
     private void Start()
     {
-        if (autoStartServer)
+        if (autoStartServer && isConfigured)
             StartHost();
     }
 
@@ -59,7 +103,12 @@ public class NetworkBootstrapper : MonoBehaviour
         if (networkManager != null)
         {
             networkManager.OnClientDisconnectCallback -= HandleClientDisconnected;
+            if (networkManager.IsListening)
+                networkManager.Shutdown();
         }
+
+        if (runtimeNetworkRoot != null)
+            Destroy(runtimeNetworkRoot);
 
         if (Instance == this)
             Instance = null;
@@ -67,8 +116,11 @@ public class NetworkBootstrapper : MonoBehaviour
 
     public bool StartHost()
     {
-        if (networkManager == null)
+        if (!isConfigured || networkManager == null)
+        {
+            Debug.LogError("NetworkBootstrapper: cannot start host because network references are not configured.", this);
             return false;
+        }
 
         bool started = networkManager.StartHost();
         if (started)
@@ -78,8 +130,11 @@ public class NetworkBootstrapper : MonoBehaviour
 
     public bool StartClient()
     {
-        if (networkManager == null)
+        if (!isConfigured || networkManager == null)
+        {
+            Debug.LogError("NetworkBootstrapper: cannot start client because network references are not configured.", this);
             return false;
+        }
 
         bool started = networkManager.StartClient();
         if (started)
