@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Cinemachine;
@@ -35,6 +36,7 @@ public class NetworkPlayer : NetworkBehaviour
     private Vector3 lastServerPosition;
     private Transform[] characterModels;
     private WorldSpaceBillboard nameplateBillboard;
+    private Coroutine outputCameraSearch;
 
     public void MarkAbandoned()
     {
@@ -88,7 +90,8 @@ public class NetworkPlayer : NetworkBehaviour
         ApplyLocalOwnership(IsOwner);
         ApplyCharacterSelection(CharacterIndex.Value);
         UpdateNameplate(DisplayName.Value);
-        BindNameplateToOutputCamera();
+        if (IsOwner)
+            BeginOutputCameraSearch();
     }
 
     public override void OnNetworkDespawn()
@@ -96,6 +99,11 @@ public class NetworkPlayer : NetworkBehaviour
         DisplayName.OnValueChanged -= HandleDisplayNameChanged;
         CharacterIndex.OnValueChanged -= HandleCharacterIndexChanged;
         ApplyLocalOwnership(false);
+        if (outputCameraSearch != null)
+        {
+            StopCoroutine(outputCameraSearch);
+            outputCameraSearch = null;
+        }
     }
 
     public void SetServerProfile(string playerName, int characterIndex)
@@ -122,7 +130,7 @@ public class NetworkPlayer : NetworkBehaviour
         ApplyLocalOwnership(true);
         ApplyCharacterSelection(characterIndex);
         SetPlayerNameLabel(safeName);
-        BindNameplateToOutputCamera();
+        BeginOutputCameraSearch();
     }
 
     private void Update()
@@ -208,10 +216,43 @@ public class NetworkPlayer : NetworkBehaviour
         SetPlayerNameLabel(playerName.ToString());
     }
 
-    private void BindNameplateToOutputCamera()
+    private void BeginOutputCameraSearch()
     {
-        if (nameplateBillboard != null && Camera.main != null)
-            nameplateBillboard.SetTargetCamera(Camera.main);
+        if (outputCameraSearch == null)
+            outputCameraSearch = StartCoroutine(FindOutputCameraThenBind());
+    }
+
+    private IEnumerator FindOutputCameraThenBind()
+    {
+        Camera outputCamera = null;
+        while (outputCamera == null)
+        {
+            outputCamera = Camera.main;
+            if (outputCamera == null)
+            {
+                CinemachineBrain brain = FindFirstObjectByType<CinemachineBrain>();
+                if (brain != null)
+                    outputCamera = brain.GetComponent<Camera>();
+            }
+
+            if (outputCamera == null)
+            {
+                yield return null;
+                continue;
+            }
+
+            if (!outputCamera.enabled)
+            {
+                yield return null;
+                outputCamera = null;
+                continue;
+            }
+
+            playerController?.SetOutputCamera(outputCamera);
+            nameplateBillboard?.SetTargetCamera(outputCamera);
+            outputCameraSearch = null;
+            yield break;
+        }
     }
 
     private void SetPlayerNameLabel(string value)

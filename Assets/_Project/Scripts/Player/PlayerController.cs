@@ -93,6 +93,15 @@ public class PlayerController : MonoBehaviour
             Debug.LogWarning("PlayerController: No camera found for look/zoom.");
     }
 
+    public void SetOutputCamera(Camera outputCamera)
+    {
+        if (outputCamera == null)
+            return;
+
+        mainCamera = outputCamera;
+        currentFov = mainCamera.fieldOfView;
+    }
+
     private void OnEnable()
     {
         activePlayers.Add(this);
