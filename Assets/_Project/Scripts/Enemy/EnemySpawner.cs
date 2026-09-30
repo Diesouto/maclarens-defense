@@ -32,8 +32,12 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("Spawn Settings")]
     [SerializeField] private bool spawnOnStart = true;
+    [Tooltip("Enemies placed across town when the train heads there (same moment loot restocks); they don't count toward the threat cap.")]
+    [SerializeField, Min(0)] private int townResidentEnemies = 6;
 
     private readonly List<EnemyController> aliveEnemies = new();
+    private readonly HashSet<EnemyController> residentEnemies = new();
+    private RunManager runManager;
 
     private float spawnTimer;
 
@@ -41,6 +45,52 @@ public class EnemySpawner : MonoBehaviour
     {
         if (spawnOnStart)
             spawnTimer = GetCurrentSettings().spawnInterval;
+
+        runManager = RunManager.Instance;
+        if (runManager != null)
+            runManager.OnPhaseChanged += HandlePhaseChanged;
+    }
+
+    private void OnDestroy()
+    {
+        if (runManager != null)
+            runManager.OnPhaseChanged -= HandlePhaseChanged;
+    }
+
+    private void HandlePhaseChanged(RunPhase phase)
+    {
+        if (phase == RunPhase.TravelingToTown && !NetworkRole.IsClientOnly)
+            SpawnTownResidents();
+    }
+
+    // Populates the town regardless of threat so it never feels empty; threat only adds pressure on top.
+    private void SpawnTownResidents()
+    {
+        if (spawnPoints == null || spawnPoints.Length == 0)
+            return;
+
+        var candidates = new List<EnemySpawnPoint>();
+        foreach (EnemySpawnPoint point in spawnPoints)
+        {
+            if (point != null && point.gameObject.activeInHierarchy)
+                candidates.Add(point);
+        }
+
+        CleanupDeadEnemies();
+        int toSpawn = Mathf.Min(townResidentEnemies - residentEnemies.Count, candidates.Count);
+        for (int i = 0; i < toSpawn; i++)
+        {
+            int index = UnityEngine.Random.Range(0, candidates.Count);
+            EnemySpawnPoint point = candidates[index];
+            candidates.RemoveAt(index);
+
+            EnemyController resident = SpawnAt(point);
+            if (resident != null)
+            {
+                resident.MarkAsResident();
+                residentEnemies.Add(resident);
+            }
+        }
     }
 
     private void Update()
@@ -56,7 +106,7 @@ public class EnemySpawner : MonoBehaviour
 
         ThreatSpawnSettings settings = GetCurrentSettings();
 
-        if (aliveEnemies.Count >= settings.maxAliveEnemies)
+        if (aliveEnemies.Count - residentEnemies.Count >= settings.maxAliveEnemies)
             return;
 
         spawnTimer -= Time.deltaTime;
@@ -99,6 +149,14 @@ public class EnemySpawner : MonoBehaviour
         if (spawnPoint == null)
             return;
 
+        SpawnAt(spawnPoint);
+    }
+
+    private EnemyController SpawnAt(EnemySpawnPoint spawnPoint)
+    {
+        if (enemyPrefabs == null || enemyPrefabs.Length == 0)
+            return null;
+
         GameObject prefab = enemyPrefabs[
             UnityEngine.Random.Range(0, enemyPrefabs.Length)
         ];
@@ -117,7 +175,7 @@ public class EnemySpawner : MonoBehaviour
                 spawnPoint
             );
 
-            return;
+            return null;
         }
 
         GameObject instance = Instantiate(
@@ -136,7 +194,7 @@ public class EnemySpawner : MonoBehaviour
             );
 
             Destroy(instance);
-            return;
+            return null;
         }
 
         aliveEnemies.Add(enemy);
@@ -151,12 +209,14 @@ public class EnemySpawner : MonoBehaviour
                 Destroy(instance);
                 aliveEnemies.Remove(enemy);
                 Debug.LogError($"{prefab.name} must have a registered NetworkObject while networking is active.", prefab);
-                return;
+                return null;
             }
 
             if (!networkObject.IsSpawned)
                 networkObject.Spawn(true);
         }
+
+        return enemy;
     }
 
     // Picks the valid point farthest from any player, so enemies feel like they come from the town, not thin air.
@@ -191,9 +251,11 @@ public class EnemySpawner : MonoBehaviour
 
     private void CleanupDeadEnemies()
     {
+        // Dead enemies linger as ragdolls for a while; they must not keep occupying spawn slots.
         aliveEnemies.RemoveAll(enemy =>
-            enemy == null || !enemy.gameObject.activeInHierarchy
+            enemy == null || enemy.IsDead || !enemy.gameObject.activeInHierarchy
         );
+        residentEnemies.RemoveWhere(enemy => enemy == null || enemy.IsDead);
     }
 
     public int AliveEnemyCount => aliveEnemies.Count;
@@ -214,5 +276,6 @@ public class EnemySpawner : MonoBehaviour
         }
 
         aliveEnemies.Clear();
+        residentEnemies.Clear();
     }
 }

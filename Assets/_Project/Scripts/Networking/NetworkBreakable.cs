@@ -20,4 +20,16 @@ public class NetworkBreakable : NetworkBehaviour
 
         breakable.ApplyBreak();
     }
+
+    public void PlayBreakEffects(Vector3 position, Quaternion rotation, Vector3 velocity)
+    {
+        if (IsServer && IsSpawned)
+            PlayBreakEffectsRpc(position, rotation, velocity);
+    }
+
+    [Rpc(SendTo.Everyone)]
+    private void PlayBreakEffectsRpc(Vector3 position, Quaternion rotation, Vector3 velocity)
+    {
+        breakable.PlayLocalBreakEffects(position, rotation, velocity);
+    }
 }

@@ -8,9 +8,15 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] private LayerMask interactionMask = ~0;
 
     private PlayerInputHandler input;
+    private PlayerController playerController;
     private IInteractable currentInteractable;
+    private IInteractable holdTarget;
+    private float holdStartedAt;
 
-    public Camera InteractionCamera => interactionCamera;
+    // Prefer this player's own view camera: Camera.main can resolve to another player's camera in multiplayer.
+    public Camera InteractionCamera => playerController != null && playerController.ViewCamera != null
+        ? playerController.ViewCamera
+        : interactionCamera;
     public Transform PlayerTransform => transform;
 
     public void SetInteractUI(InteractUI ui)
@@ -22,6 +28,7 @@ public class PlayerInteractor : MonoBehaviour
     private void Awake()
     {
         input = GetComponent<PlayerInputHandler>();
+        playerController = GetComponent<PlayerController>();
 
         if (interactionCamera == null)
             interactionCamera = Camera.main;
@@ -30,12 +37,68 @@ public class PlayerInteractor : MonoBehaviour
             interactUI = GetComponentInChildren<InteractUI>();
     }
 
+    private void OnDisable()
+    {
+        CancelHold();
+    }
+
     private void Update()
     {
         UpdateTarget();
 
-        if (currentInteractable != null && input != null && input.InteractPressed)
-            currentInteractable.Interact(this);
+        if (currentInteractable == null || input == null)
+        {
+            CancelHold();
+            return;
+        }
+
+        float holdDuration = currentInteractable.HoldDuration;
+        if (holdDuration <= 0f)
+        {
+            if (input.InteractPressed)
+                currentInteractable.Interact(this);
+            return;
+        }
+
+        UpdateHold(holdDuration);
+    }
+
+    private void UpdateHold(float holdDuration)
+    {
+        if (input.InteractPressed && holdTarget == null)
+        {
+            holdTarget = currentInteractable;
+            holdStartedAt = Time.time;
+            interactUI?.StartHeldProgress(holdDuration, currentInteractable.GetPrompt(this));
+        }
+
+        if (holdTarget == null)
+            return;
+
+        if (!input.InteractHeld || holdTarget != currentInteractable)
+        {
+            CancelHold();
+            return;
+        }
+
+        if (Time.time - holdStartedAt < holdDuration)
+            return;
+
+        IInteractable target = holdTarget;
+        holdTarget = null;
+        interactUI?.FinishProgress();
+        target.Interact(this);
+        RefreshPrompt();
+    }
+
+    private void CancelHold()
+    {
+        if (holdTarget == null)
+            return;
+
+        holdTarget = null;
+        interactUI?.CancelProgress();
+        RefreshPrompt();
     }
 
     private void UpdateTarget()
@@ -51,10 +114,11 @@ public class PlayerInteractor : MonoBehaviour
 
     private IInteractable FindInteractable()
     {
-        if (interactionCamera == null)
+        Camera viewCamera = InteractionCamera;
+        if (viewCamera == null)
             return null;
 
-        Ray ray = interactionCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+        Ray ray = viewCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
         if (!Physics.Raycast(ray, out RaycastHit hit, interactionDistance, interactionMask, QueryTriggerInteraction.Ignore))
             return null;
 
@@ -67,7 +131,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private void RefreshPrompt()
     {
-        if (interactUI == null)
+        if (interactUI == null || holdTarget != null)
             return;
 
         if (currentInteractable == null)

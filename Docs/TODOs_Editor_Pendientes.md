@@ -66,6 +66,45 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 - [ ] Playtest: la camara del jugador solo debe mostrar sus propias manos y pies; mirando a otro
       jugador (o en una futura camara de espectador) el cuerpo debe verse completo.
 
+## P5.18 - Consumibles y recarga de municion
+
+- [ ] Pasar `LiquorSO` (y variantes) a `ItemType = Consumable` con `drinkHealPercent = 0.1` y
+      `drunkDuration ~ 8`. Beber se hace con `Fire` teniendo el item seleccionado.
+- [ ] Crear `PotionSO` (`Consumable`, `drinkHealPercent = 1`, `breakHealPercent = 0.5`,
+      `breakHealRadius ~ 3`) y su prefab de mundo con `LootItem`, `NetworkLootItem`, `NetworkObject`,
+      `NetworkTransform`, `NetworkRigidbody`, `Rigidbody`, `Collider` y `BreakableOnImpact`;
+      registrarlo en `DefaultNetworkPrefabs` y ponerlo en `LootSpawnPoint`s o en un `ShopStand`.
+- [ ] Playtest: beber pocion/booze (host y cliente), lanzar y romper pocion junto a otro jugador,
+      comprar municion con el arma en mano en su `ShopStand`.
+
+## P7 - Explosivos y botellas rotas
+
+- [ ] Crear dos `ExplosionEffectSO` (Create > MacLarens > Explosion Effect): nitro y polvora, con
+      su VFX de particulas (prefab sin `NetworkObject`) y SFX.
+- [ ] Prefab `NitroglicerinBottle`: `LootItem` + `LootDataSO`, `NetworkObject`, `NetworkTransform`,
+      `NetworkRigidbody`, `Rigidbody`, `Collider`, `BreakableOnImpact` (sin piezas) y `Explosive`
+      (`explodeWhenShot = true`). Registrar en `DefaultNetworkPrefabs`.
+- [ ] Prefab `GunpowderBarrel`: `NetworkObject`, `NetworkTransform`, `NetworkRigidbody`,
+      `Rigidbody`, `Collider` y `Explosive`. Colocarlo en escena o en spawn points; registrar si se
+      spawnea en runtime.
+- [ ] Comprobar que `PlayerKnockdown` aparece en la raiz de `Player.prefab` (añadido por YAML).
+- [ ] Botellas de licor: rellenar `BreakableOnImpact.brokenPrefabs` con las dos mitades (sin
+      `NetworkObject`, con `Rigidbody` + `Collider`) y vaciar `brokenPrefab` si ya no se usa.
+      `LiquorL1`/`LiquorL2` no tienen `NetworkBreakable`: añadirlo para que los clientes vean las mitades.
+- [ ] Playtest: disparar el barril (host y cliente), lanzar nitro, cadena de barriles, enemigos
+      muertos por la explosion, jugador tumbado que se levanta y jugador que muere tumbado.
+
+## P7 - Rodadora y lazo
+
+- [ ] Prefab `Tumbleweed`: raiz con `NavMeshAgent`, `EnemyController` (`selfDestruct` = su `Explosive`,
+      `searchInterval` ~0.2, `attackDistance` ~1.5), `Explosive` + `ExplosionEffectSO` propio
+      (`threatAdded` 0), `Collider`, `NetworkObject`, `NetworkTransform`, `NetworkEnemyState` y
+      `RollingVisual` con el modelo como hijo en `visual`. Sin `Health`. Registrar en
+      `DefaultNetworkPrefabs` y añadir a `EnemySpawner.enemyPrefabs`.
+- [ ] `LootDataSO` del lazo con `ItemType = Tool` y su `heldPrefab`/`worldPrefab`; añadirlo a un `ShopStand` o al loot.
+- [ ] `Player.prefab`: añadir `LassoTool` a la raiz y un `LineRenderer` (ancho ~0.03, material de cuerda) asignado en `rope`.
+- [ ] Playtest: lazar loot, un barril y a otro jugador (host y cliente).
+
 ## P5.9 - Team wipe y cuota fallida / P5.10 - Deuda pagada
 
 - Codigo listo: `GameStateManager` ahora tiene `FailCause` (`TeamWipe`/`QuotaFailed`), `SetFail(cause)`,

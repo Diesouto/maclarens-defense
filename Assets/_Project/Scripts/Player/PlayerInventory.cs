@@ -8,6 +8,8 @@ public class PlayerInventory : MonoBehaviour
     public const int BackpackSlotsCount = 4;
 
     public event Action OnInventoryChanged;
+    // Raised on the host (or offline) after a consumable leaves the inventory; listeners apply its effects.
+    public event Action<LootDataSO> OnItemConsumed;
 
     [SerializeField] private int maxSlots = BackpackSlotsCount;
     [SerializeField] private Transform dropOrigin;
@@ -186,6 +188,66 @@ public class PlayerInventory : MonoBehaviour
         if (targetWeapon.WeaponData != ActiveItem.WeaponData)
             targetWeapon.Equip(ActiveItem.WeaponData);
 
+        return true;
+    }
+
+    public bool ActiveWeaponNeedsAmmo(LootDataSO weapon)
+    {
+        ItemInstance instance = ActiveItemInstance;
+        if (weapon == null || !weapon.IsWeapon || instance?.Data != weapon || !instance.HasAmmoState)
+            return false;
+
+        return instance.CurrentAmmo < weapon.WeaponData.magazineSize ||
+            instance.CurrentReserveAmmo < weapon.WeaponData.maxAmmo;
+    }
+
+    public bool TryConsumeActive()
+    {
+        ItemInstance instance = ActiveItemInstance;
+        LootDataSO item = instance?.Data;
+        if (item == null || !item.IsConsumable)
+            return false;
+
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
+        {
+            networkAuthority.RequestConsumeServerRpc();
+            return true;
+        }
+
+        if (activeHeldItem == instance)
+            activeHeldItem = null;
+        else
+            backpackSlots[selectedSlotIndex] = null;
+
+        selectedSlotIndex = -1;
+        DestroyWorldItem(instance);
+        NotifyChanged();
+        OnItemConsumed?.Invoke(item);
+        return true;
+    }
+
+    // A picked-up item keeps its hidden world object for re-dropping; a consumed one is gone for good.
+    private static void DestroyWorldItem(ItemInstance instance)
+    {
+        LootItem worldItem = instance.WorldItem;
+        if (worldItem == null)
+            return;
+
+        LootRegistry.Instance?.Unregister(worldItem);
+        if (worldItem.TryGetComponent(out Unity.Netcode.NetworkObject networkObject) && networkObject.IsSpawned)
+            networkObject.Despawn(true);
+        else
+            Destroy(worldItem.gameObject);
+    }
+
+    public bool TryRefillActiveWeapon()
+    {
+        ItemInstance instance = ActiveItemInstance;
+        if (instance?.Data == null || !instance.Data.IsWeapon)
+            return false;
+
+        instance.Refill(instance.Data.WeaponData.magazineSize, instance.Data.WeaponData.maxAmmo);
+        NotifyChanged();
         return true;
     }
 

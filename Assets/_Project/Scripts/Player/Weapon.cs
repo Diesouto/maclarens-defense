@@ -23,6 +23,8 @@ public class Weapon : MonoBehaviour
     private float reloadTimer;
     private ItemInstance equippedInstance;
     private NetworkWeaponAuthority networkAuthority;
+    private PlayerController ownerController;
+    private int equippedRefillCount;
     private int shotId;
 
     private void Awake()
@@ -32,6 +34,7 @@ public class Weapon : MonoBehaviour
 
         inventory = GetComponentInParent<PlayerInventory>();
         networkAuthority = GetComponentInParent<NetworkWeaponAuthority>();
+        ownerController = GetComponentInParent<PlayerController>();
 
         if (playerCamera == null)
             playerCamera = FindFirstObjectByType<Camera>();
@@ -164,6 +167,10 @@ public class Weapon : MonoBehaviour
 
     private void ShootRaycast()
     {
+        // Resolve from the owning player: FindFirstObjectByType/Camera.main can return another player's camera.
+        if (ownerController != null && ownerController.ViewCamera != null)
+            playerCamera = ownerController.ViewCamera;
+
         if (playerCamera == null || weaponData == null)
             return;
 
@@ -235,8 +242,13 @@ public class Weapon : MonoBehaviour
             if (damageable != null)
             {
                 NetworkHealth networkTarget = hit.collider.GetComponentInParent<NetworkHealth>();
-                if (networkAuthority != null && networkAuthority.IsSpawned &&
-                    !networkAuthority.IsServer && networkTarget != null)
+                Explosive explosiveTarget = hit.collider.GetComponentInParent<Explosive>();
+                bool isNetworkClient = networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer;
+                if (isNetworkClient && explosiveTarget != null && explosiveTarget.IsSpawned)
+                {
+                    networkAuthority.RequestDetonateServerRpc(explosiveTarget.NetworkObject, hit.point, shotId);
+                }
+                else if (isNetworkClient && networkTarget != null)
                 {
                     networkAuthority.RequestHitServerRpc(
                         networkTarget.NetworkObject,
@@ -343,9 +355,11 @@ public class Weapon : MonoBehaviour
             return false;
         }
 
-        if (equippedInstance != activeInstance || weaponData != activeData.WeaponData)
+        if (equippedInstance != activeInstance || weaponData != activeData.WeaponData ||
+            equippedRefillCount != activeInstance.RefillCount)
         {
             equippedInstance = activeInstance;
+            equippedRefillCount = activeInstance.RefillCount;
             Equip(activeData.WeaponData);
         }
 

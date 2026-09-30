@@ -7,6 +7,10 @@ public class ShopStand : MonoBehaviour, IInteractable
     [SerializeField] private RunManager runManager;
     [SerializeField] private MoneyManager moneyManager;
     [SerializeField] private NetworkPurchaseAuthority networkPurchaseAuthority;
+    [Tooltip("Fraction of the weapon price charged to refill it when the player already holds it.")]
+    [SerializeField, Range(0f, 1f)] private float ammoRefillPriceMultiplier = 0.5f;
+
+    private int AmmoRefillPrice => Mathf.CeilToInt(lootData.Price * ammoRefillPriceMultiplier);
 
     private void Awake()
     {
@@ -37,17 +41,37 @@ public class ShopStand : MonoBehaviour, IInteractable
             return false;
         }
 
+        PlayerInventory inventory = interactor.GetComponent<PlayerInventory>();
+        if (inventory == null)
+            return false;
+
+        if (IsAmmoRefill(inventory))
+            return moneyManager != null && moneyManager.TeamMoney >= AmmoRefillPrice;
+
         if (moneyManager == null || moneyManager.TeamMoney < lootData.Price)
             return false;
 
-        PlayerInventory inventory = interactor.GetComponent<PlayerInventory>();
-        return inventory != null && inventory.CanAdd(lootData);
+        return inventory.CanAdd(lootData);
+    }
+
+    // Holding this stand's own gun turns the purchase into a cheaper ammo refill.
+    private bool IsAmmoRefill(PlayerInventory inventory)
+    {
+        return lootData != null && lootData.IsWeapon && inventory != null && inventory.ActiveItem == lootData;
     }
 
     public string GetPrompt(PlayerInteractor interactor)
     {
         if (lootData == null)
             return "Buy";
+
+        PlayerInventory inventory = interactor != null ? interactor.GetComponent<PlayerInventory>() : null;
+        if (IsAmmoRefill(inventory))
+        {
+            return inventory.ActiveWeaponNeedsAmmo(lootData)
+                ? $"Refill {lootData.DisplayName} ammo (${AmmoRefillPrice:N0})"
+                : $"{lootData.DisplayName} ammo is full";
+        }
 
         return $"Buy {lootData.DisplayName} (${lootData.Price:N0})";
     }
@@ -64,17 +88,28 @@ public class ShopStand : MonoBehaviour, IInteractable
         if (!CanInteract(interactor))
             return;
 
-        TryPurchase(interactor != null ? interactor.GetComponent<PlayerInventory>() : null);
+        TryPurchase(interactor != null ? interactor.GetComponent<PlayerInventory>() : null, out _);
     }
 
-    public bool TryPurchase(PlayerInventory inventory)
+    public bool TryPurchase(PlayerInventory inventory, out bool refilledAmmo)
     {
+        refilledAmmo = false;
+
         if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
             return false;
 
         if (runManager != null && runManager.CurrentPhase != RunPhase.MacLarens &&
             runManager.CurrentPhase != RunPhase.ResolvingDay)
             return false;
+
+        if (IsAmmoRefill(inventory))
+        {
+            if (!inventory.ActiveWeaponNeedsAmmo(lootData) || !moneyManager.TrySpendMoney(AmmoRefillPrice))
+                return false;
+
+            refilledAmmo = inventory.TryRefillActiveWeapon();
+            return refilledAmmo;
+        }
 
         if (inventory == null || !inventory.CanAdd(lootData))
             return false;

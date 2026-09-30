@@ -37,6 +37,15 @@ public class LootDataSO : ScriptableObject
     [Header("Weapon binding")]
     [SerializeField] private WeaponDataSO weaponData;
 
+    [Header("Consumable (ItemType = Consumable)")]
+    [Tooltip("Fraction of max health restored when drunk (1 = full).")]
+    [SerializeField, Range(0f, 1f)] private float drinkHealPercent;
+    [Tooltip("Seconds of drunk camera wobble after drinking; 0 = none.")]
+    [SerializeField, Min(0f)] private float drunkDuration;
+    [Tooltip("Fraction of max health restored to every player in range when the item breaks (needs BreakableOnImpact).")]
+    [SerializeField, Range(0f, 1f)] private float breakHealPercent;
+    [SerializeField, Min(0f)] private float breakHealRadius = 3f;
+
     [Header("World")]
     [SerializeField] private GameObject worldPrefab;
     [SerializeField] private GameObject heldPrefab;
@@ -65,4 +74,9 @@ public class LootDataSO : ScriptableObject
     public ItemAnimationProfile AnimationProfile => animationProfile;
     public WeaponDataSO WeaponData => weaponData;
     public bool IsWeapon => itemType == InventoryItemType.Weapon && weaponData != null;
+    public bool IsConsumable => itemType == InventoryItemType.Consumable;
+    public float DrinkHealPercent => drinkHealPercent;
+    public float DrunkDuration => drunkDuration;
+    public float BreakHealPercent => breakHealPercent;
+    public float BreakHealRadius => breakHealRadius;
 }

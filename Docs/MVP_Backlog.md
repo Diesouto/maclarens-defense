@@ -298,6 +298,11 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: vertical slice portable y demostrable.
   Aceptacion: se puede jugar de inicio a fin sin usar el editor para arreglar nada.
 
+- `[P5.18][Items] Consumibles y recarga de municion`
+  Resultado: pocion (beber = vida completa; lanzarla y romperla = 50% a los jugadores en el radio), booze (beber = 10% de vida + camara borracha unos segundos) y recarga de municion comprando el arma que ya se lleva en mano a mitad de precio.
+  Aceptacion: beber con `Fire` consume el item y cura en host; romper la pocion cura en area; el prompt del `ShopStand` cambia a "Refill" con el arma en mano y la municion se sincroniza con el owner.
+  Estado: codigo implementado (`LootDataSO` campos de consumible, `PlayerInventory.TryConsumeActive`, `PlayerController.ApplyDrunk`, `BreakableOnImpact` curacion en area, `ShopStand` refill). Falta crear el asset/prefab de pocion, pasar `LiquorSO` a `Consumable` y validar en Play Mode.
+
 ## P6 - Multiplayer host-authoritative (despues del freeze singleplayer)
 
 Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode. Ninguna tarea de P6 reimplementa gameplay: reutiliza el mismo flujo request -> validate -> apply que ya usa singleplayer, con el host como validador unico.
@@ -473,6 +478,21 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 
 ## P7 - Polish posterior
 
+- `[Hazards] Nitroglicerina y barril de polvora`
+  Resultado: explosivos configurables por `ExplosionEffectSO` (radio, daño con caida, fuerza, knockdown, threat, VFX/SFX). La nitro explota al lanzarla o dispararla; el barril al dispararlo. Daña jugadores y enemigos en el radio, encadena otros explosivos y tumba a los jugadores en ragdoll; se levantan tras unos segundos si siguen vivos.
+  Aceptacion: host y cliente ven la misma explosion, el daño solo se aplica en host y el jugador tumbado recupera el control donde cayo.
+  Estado: codigo implementado (`Explosive`, `PlayerKnockdown`, `ExplosionEffectSO`, hook en `BreakableOnImpact`, `RequestDetonateServerRpc`). Falta crear assets/prefabs y validar en Play Mode.
+
+- `[Enemy] Planta rodadora explosiva`
+  Resultado: enemigo kamikaze que persigue al jugador vivo mas cercano y explota al alcanzarlo; tambien explota al dispararle o al pillarla otra explosion.
+  Aceptacion: host y cliente la ven rodar y explotar en el mismo sitio; la explosion usa las mismas reglas que la nitro.
+  Estado: codigo implementado (`EnemyController.selfDestruct`, `RollingVisual`). Falta prefab y validar en Play Mode.
+
+- `[Tool] Lazo`
+  Resultado: herramienta (`InventoryItemType.Tool`) que con `Fire` lanza una cuerda con alcance: atrae objetos sueltos a las manos del jugador y tumba en ragdoll a otros jugadores hacia el.
+  Aceptacion: el host valida item, alcance, objetivo y cooldown; todos ven la cuerda; el jugador lazado se levanta tras el knockdown.
+  Estado: codigo implementado (`LassoTool`, cuerda con `LineRenderer` en curva Bezier). Falta asset/prefab y validar en Play Mode.
+
 - `[Combat] Anadir shotgun o rifle`
 - `[Loot] Añadir un outline al apuntar a un loot item`
   Resultado: los loot items resaltan visualmente cuando el jugador apunta hacia ellos.
@@ -481,7 +501,17 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
   Resultado: tenemos un sistema flexible que extiende la lógica existente de LootItems para crear herramientas u objetos utilizables de uno o varios usos con distintas funcionalidades.
   Aceptacion: se pueden crear y usar herramientas desde el inventario, y su comportamiento se refleja correctamente en el juego.
 - `[Enemy] Anadir más enemigos solo si los primeros son estables`
-  Cactus que se mueve cuando nadie lo mira, planta rodadora que persigue a los jugadores y al estar cerca explota, enano que intenta robar lootItems y llevárselos hasta su escondite, fantasma que atraviesa paredes y solo puede matarse utilizando un LootItem de una cruz??
+  Cactus invencible que se mueve cuando nadie lo mira, planta rodadora que persigue a los jugadores y al estar cerca explota, zombie enano que intenta robar lootItems del tren y llevárselos hasta su escondite, fantasma que atraviesa paredes y solo puede matarse utilizando/lanzandole el LootItem de la cruz
+
+- `[Enemy] Fantasma inmortal que atraviesa paredes`
+  Resultado: enemigo sin NavMesh que se mueve en linea recta hacia el jugador y no puede morir (solo repelerse, p. ej. con la cruz).
+  Aceptacion: persigue atravesando geometria, ignora el daño y su posicion se replica desde el host.
+  Estado: post-MVP (decidido en la revision del 2026-09-30).
+
+- `[Enemy] Cactus que solo se mueve si nadie lo mira`
+  Resultado: enemigo que se congela mientras esta en el campo de vision de cualquier jugador vivo.
+  Aceptacion: el host comprueba frustum + linea de vision de todos los jugadores y el cactus solo avanza cuando nadie lo ve.
+  Estado: post-MVP (decidido en la revision del 2026-09-30).
 
 - `[UI] Crear selector de personaje en el maclarens??`
   Resultado: El jugador puede cambiar su personaje.

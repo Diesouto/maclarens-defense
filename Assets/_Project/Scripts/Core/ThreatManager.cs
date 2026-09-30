@@ -9,6 +9,7 @@ public class ThreatManager : MonoBehaviour
 
     [SerializeField] private float threatPerSecond = 0.2f;
     [SerializeField] private float lootPickupThreat = 5f;
+    [SerializeField] private float enemyKillThreat = 1f;
     [SerializeField] private float maxThreat = 100f;
 
     [Header("Threat Levels")]
@@ -90,6 +91,19 @@ public class ThreatManager : MonoBehaviour
     public void RegisterLootPickup()
     {
         AddThreat(lootPickupThreat);
+    }
+
+    // Gunfire draws attention: killing makes the town angrier, not calmer.
+    public void RegisterEnemyKill()
+    {
+        if (IsThreatActiveInTown())
+            AddThreat(enemyKillThreat);
+    }
+
+    public void RegisterExplosion(float amount)
+    {
+        if (IsThreatActiveInTown())
+            AddThreat(amount);
     }
 
     private void AddThreat(float amount)

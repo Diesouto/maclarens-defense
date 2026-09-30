@@ -58,7 +58,10 @@ public class BodyCarrier : MonoBehaviour
         Rigidbody root = ragdoll != null ? ragdoll.RootRigidbody : null;
 
         if (root == null)
+        {
+            Debug.LogWarning($"BodyCarrier: '{body.name}' has no ragdoll Rigidbody to carry (run the Ragdoll Wizard on the Player rig).", body);
             return false;
+        }
 
         CarriedBody = body;
         carriedRagdoll = ragdoll;
@@ -105,6 +108,20 @@ public class BodyCarrier : MonoBehaviour
 
         if (root != null)
             root.AddForce(force, ForceMode.Impulse);
+
+        if (networkAuthority != null && networkAuthority.IsServer)
+            networkAuthority.BroadcastThrow(force);
+    }
+
+    // Replicas mirror the host's carry locally: each peer drags its own ragdoll toward this carrier.
+    public void ApplyReplicatedCarry(PlayerBody body)
+    {
+        if (CarriedBody == body)
+            return;
+
+        ReleaseCarry();
+        if (body != null)
+            ApplyPickup(body);
     }
 
     private void ReleaseCarry()

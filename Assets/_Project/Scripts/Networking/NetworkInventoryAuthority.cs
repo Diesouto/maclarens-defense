@@ -35,4 +35,25 @@ public class NetworkInventoryAuthority : NetworkBehaviour
 
         inventory.TryThrowSelected(dropPosition, throwForce);
     }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    public void RequestConsumeServerRpc(RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId == OwnerClientId)
+            inventory.TryConsumeActive();
+    }
+
+    // Drunk wobble is a camera effect, so only the owning client needs to hear about it.
+    public void NotifyDrunkToOwner(float duration)
+    {
+        if (IsServer && IsSpawned)
+            DrunkOwnerRpc(duration);
+    }
+
+    [Rpc(SendTo.Owner)]
+    private void DrunkOwnerRpc(float duration)
+    {
+        if (TryGetComponent(out PlayerController controller))
+            controller.ApplyDrunk(duration);
+    }
 }

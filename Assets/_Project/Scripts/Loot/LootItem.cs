@@ -70,10 +70,7 @@ public class LootItem : MonoBehaviour, IInteractable
         if (interactor == null || IsCollected || lootData == null)
             return false;
 
-        NetworkLootItem networkLoot = GetComponent<NetworkLootItem>();
-        if (networkLoot != null && networkLoot.IsSpawned && !networkLoot.IsServer)
-            return true;
-
+        // Clients have the replicated inventory, so they can pre-check space and avoid a prompt the host would reject.
         PlayerInventory inventory = interactor.GetComponent<PlayerInventory>();
         return inventory != null && inventory.CanAdd(lootData);
     }

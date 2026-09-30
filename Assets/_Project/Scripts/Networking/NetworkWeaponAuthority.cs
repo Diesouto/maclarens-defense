@@ -50,6 +50,29 @@ public class NetworkWeaponAuthority : NetworkBehaviour
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    public void RequestDetonateServerRpc(NetworkObjectReference explosiveReference, Vector3 hitPoint, int shotId,
+        RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId ||
+            !explosiveReference.TryGet(out NetworkObject explosiveObject) || explosiveObject == null ||
+            !explosiveObject.TryGetComponent(out Explosive explosive))
+            return;
+
+        WeaponDataSO weaponData = inventory != null && inventory.ActiveItem != null && inventory.ActiveItem.IsWeapon
+            ? inventory.ActiveItem.WeaponData
+            : null;
+        if (weaponData == null || !TryConsumeShot(weaponData, shotId))
+            return;
+
+        Vector3 eye = transform.position + Vector3.up * eyeHeight;
+        if (Vector3.Distance(eye, hitPoint) > weaponData.range + hitPointTolerance ||
+            !IsNearAnyCollider(explosiveObject, hitPoint, hitPointTolerance))
+            return;
+
+        explosive.TakeDamage(weaponData.damage, (hitPoint - eye).normalized, 0f);
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
     public void ReportAmmoServerRpc(int currentAmmo, int reserveAmmo, RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId || inventory == null)
@@ -88,7 +111,7 @@ public class NetworkWeaponAuthority : NetworkBehaviour
         return ++hitsThisShot <= maxHits;
     }
 
-    private static bool IsNearAnyCollider(NetworkObject target, Vector3 point, float tolerance)
+    public static bool IsNearAnyCollider(NetworkObject target, Vector3 point, float tolerance)
     {
         float sqrTolerance = tolerance * tolerance;
         foreach (Collider targetCollider in target.GetComponentsInChildren<Collider>())

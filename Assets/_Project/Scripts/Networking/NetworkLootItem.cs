@@ -41,12 +41,36 @@ public class NetworkLootItem : NetworkBehaviour
             client.PlayerObject == null)
             return;
 
-        if (Vector3.Distance(client.PlayerObject.transform.position, transform.position) > pickupDistance)
+        if (!IsWithinReach(client.PlayerObject.transform))
+        {
+            Debug.LogWarning($"NetworkLootItem: pickup of '{name}' by client {rpcParams.Receive.SenderClientId} rejected (too far on host).", this);
             return;
+        }
 
         PlayerInventory inventory = client.PlayerObject.GetComponent<PlayerInventory>();
-        if (inventory != null)
-            lootItem.TryCollect(inventory);
+        if (inventory != null && !lootItem.TryCollect(inventory))
+            Debug.LogWarning($"NetworkLootItem: pickup of '{name}' by client {rpcParams.Receive.SenderClientId} rejected (inventory can't take it).", this);
+    }
+
+    // Interaction raycasts from the camera, so measure from eye height to the loot's surface, not root to root.
+    private bool IsWithinReach(Transform player)
+    {
+        Vector3 eye = player.position + Vector3.up * 1.6f;
+        Vector3 closest = transform.position;
+        float best = float.MaxValue;
+        foreach (Collider lootCollider in GetComponentsInChildren<Collider>())
+        {
+            Vector3 point = lootCollider.ClosestPointOnBounds(eye);
+            float distance = (point - eye).sqrMagnitude;
+            if (distance < best)
+            {
+                best = distance;
+                closest = point;
+            }
+        }
+
+        // Small slack for the owner-to-host position lag.
+        return Vector3.Distance(eye, closest) <= pickupDistance + 0.75f;
     }
 
     public void SetCollectedOnServer(bool collected)

@@ -16,6 +16,11 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float attackForce = 5f;
     [SerializeField] private float runSpeed = 4.5f;
     [SerializeField] private float attackCooldown = 2f;
+    [Tooltip("Town residents only notice players within this range; threat-spawned enemies hunt anywhere.")]
+    [SerializeField, Min(0f)] private float residentDetectionRange = 20f;
+    [Tooltip("Kamikaze enemies (tumbleweed): detonate this instead of attacking once in reach.")]
+    [SerializeField] private Explosive selfDestruct;
+    [SerializeField, Min(0f)] private float selfDestructFuse = 0.3f;
 
     private NavMeshAgent agent;
     private Health health;
@@ -24,6 +29,14 @@ public class EnemyController : MonoBehaviour
     private bool isDead;
     private bool isAttacking;
     private NetworkEnemyState networkState;
+
+    public bool IsDead => isDead;
+    public bool IsResident { get; private set; }
+
+    public void MarkAsResident()
+    {
+        IsResident = true;
+    }
 
     void Awake()
     {
@@ -95,8 +108,15 @@ public class EnemyController : MonoBehaviour
                 // onto the mesh below, so the real 3D distance must also be within reach.
                 if (!agent.pathPending && agent.remainingDistance <= attackDistance && IsWithinAttackReach(target))
                 {
-                    StartAttack(target);
-                    target = null;
+                    if (selfDestruct != null)
+                    {
+                        selfDestruct.Detonate(selfDestructFuse);
+                    }
+                    else
+                    {
+                        StartAttack(target);
+                        target = null;
+                    }
                 }
             }
 
@@ -146,7 +166,7 @@ public class EnemyController : MonoBehaviour
 
     void FindNearestPlayer()
     {
-        float bestSqr = Mathf.Infinity;
+        float bestSqr = IsResident ? residentDetectionRange * residentDetectionRange : Mathf.Infinity;
         Transform best = null;
         Vector3 pos = transform.position;
 
@@ -164,6 +184,10 @@ public class EnemyController : MonoBehaviour
         }
 
         target = best;
+
+        // Once a resident spots someone it stays alerted and hunts like any threat spawn.
+        if (best != null)
+            IsResident = false;
     }
 
     private void OnDestroy()
@@ -203,6 +227,7 @@ public class EnemyController : MonoBehaviour
         isDead = true;
         networkState?.SetDead(true);
         StopAllCoroutines();
+        ThreatManager.Instance?.RegisterEnemyKill();
 
         if (agent != null)
             agent.enabled = false;

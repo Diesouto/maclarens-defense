@@ -44,6 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6b0772050339bb4d8d3cadd980c441d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnPoint
-  minimumThreatLevel: 2
+  minimumThreatLevel: 4
   minimumPlayerDistance: 15
   reuseCooldown: 15

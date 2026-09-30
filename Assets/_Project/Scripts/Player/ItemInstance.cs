@@ -31,6 +31,15 @@ public class ItemInstance
         currentReserveAmmo = Mathf.Max(reserveAmmo, 0);
     }
 
+    // Bumped on shop refills so an equipped Weapon knows to re-read ammo it didn't write itself.
+    public int RefillCount { get; private set; }
+
+    public void Refill(int ammo, int reserveAmmo)
+    {
+        SetAmmo(ammo, reserveAmmo);
+        RefillCount++;
+    }
+
     public void BindWorldItem(LootItem worldItem)
     {
         WorldItem = worldItem;

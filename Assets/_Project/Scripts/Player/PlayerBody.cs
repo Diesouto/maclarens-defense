@@ -12,6 +12,8 @@ public class PlayerBody : MonoBehaviour, IInteractable
     private static readonly List<PlayerBody> allBodies = new();
     public static IReadOnlyList<PlayerBody> AllBodies => allBodies;
 
+    [SerializeField, Min(0f)] private float carryHoldDuration = 2f;
+
     // A wipe only makes sense once at least one player has actually spawned.
     public static bool IsTeamWiped
     {
@@ -102,6 +104,8 @@ public class PlayerBody : MonoBehaviour, IInteractable
     {
         return "Carry Body";
     }
+
+    float IInteractable.HoldDuration => carryHoldDuration;
 
     public void Interact(PlayerInteractor interactor)
     {

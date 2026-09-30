@@ -30,12 +30,18 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float maximumThrowForce = 10f;
     [SerializeField] private InteractUI interactUI;
 
+    [Header("Drunk Wobble")]
+    [SerializeField] private float drunkRoll = 8f;
+    [SerializeField] private float drunkYawWobble = 4f;
+    [SerializeField] private float drunkPitchWobble = 3f;
+
     private PlayerInputHandler input;
     private PlayerMotor motor;
     private TrainPassenger trainPassenger;
     private PlayerInventory inventory;
     private BodyCarrier bodyCarrier;
     private Weapon weapon;
+    private LassoTool lasso;
     private Health health;
     private PlayerBody body;
     private Animator animator;
@@ -52,6 +58,8 @@ public class PlayerController : MonoBehaviour
     private bool isChargingBodyThrow;
     private ItemHolder itemHolder;
     private NetworkPlayer networkPlayer;
+    private float drunkEndTime;
+    private float drunkTotalDuration = 1f;
 
     private bool IsLocalPlayer => networkPlayer == null || networkPlayer == NetworkPlayer.Local;
 
@@ -65,6 +73,7 @@ public class PlayerController : MonoBehaviour
         bodyCarrier = GetComponent<BodyCarrier>();
         itemHolder = GetComponent<ItemHolder>();
         weapon = itemHolder != null ? itemHolder.RuntimeWeapon : GetComponentInChildren<Weapon>(true);
+        lasso = GetComponent<LassoTool>();
         health = GetComponent<Health>();
         body = GetComponent<PlayerBody>();
         animator = GetComponentInChildren<Animator>();
@@ -78,6 +87,9 @@ public class PlayerController : MonoBehaviour
             health.OnHit += OnHit;
             health.OnDeath += OnDeath;
         }
+
+        if (inventory != null)
+            inventory.OnItemConsumed += HandleItemConsumed;
 
         if (cameraTransform == null)
             cameraTransform = Camera.main != null ? Camera.main.transform : null;
@@ -110,6 +122,7 @@ public class PlayerController : MonoBehaviour
     }
 
     public Transform CameraTransform => cameraTransform;
+    public Camera ViewCamera => mainCamera;
 
     public void SetOutputCamera(Camera outputCamera)
     {
@@ -122,6 +135,9 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (IsKnockedDown)
+            return;
+
         HandleLook();
         HandleMovement();
         HandleAimZoom();
@@ -153,8 +169,52 @@ public class PlayerController : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (IsKnockedDown)
+            return;
+
         ApplyTrainMotion();
         ApplyLookRotation();
+    }
+
+    public bool IsKnockedDown { get; private set; }
+
+    // Used by PlayerKnockdown on the owning client: the ragdoll drives the body, the camera rides the head.
+    public void SetKnockedDown(bool knockedDown)
+    {
+        if (!IsLocalPlayer || IsKnockedDown == knockedDown)
+            return;
+
+        IsKnockedDown = knockedDown;
+
+        if (knockedDown)
+        {
+            CancelThrow();
+            AttachCameraToRagdoll();
+            return;
+        }
+
+        RestoreCamera();
+    }
+
+    private void AttachCameraToRagdoll()
+    {
+        if (cameraTransform != null && ragdollCameraAnchor != null)
+            cameraTransform.SetParent(ragdollCameraAnchor, true);
+    }
+
+    private void RestoreCamera()
+    {
+        if (cameraTransform != null && cameraDefaultParent != null)
+        {
+            cameraTransform.SetParent(cameraDefaultParent, false);
+            cameraTransform.localPosition = cameraDefaultLocalPosition;
+            cameraTransform.localRotation = cameraDefaultLocalRotation;
+        }
+
+        yaw = transform.eulerAngles.y;
+        pitch = 0f;
+        smoothedYaw = yaw;
+        smoothedPitch = pitch;
     }
 
     private void HandleLook()
@@ -174,10 +234,45 @@ public class PlayerController : MonoBehaviour
         smoothedYaw = Mathf.LerpAngle(smoothedYaw, yaw, Time.deltaTime * lookSmoothing);
         smoothedPitch = Mathf.LerpAngle(smoothedPitch, pitch, Time.deltaTime * lookSmoothing);
 
-        transform.rotation = Quaternion.Euler(0f, smoothedYaw, 0f);
+        float drunk = GetDrunkStrength();
+        float yawWobble = Mathf.Sin(Time.time * 0.9f) * drunkYawWobble * drunk;
+        float pitchWobble = Mathf.Sin(Time.time * 1.7f) * drunkPitchWobble * drunk;
+        float roll = Mathf.Sin(Time.time * 1.3f) * drunkRoll * drunk;
+
+        transform.rotation = Quaternion.Euler(0f, smoothedYaw + yawWobble, 0f);
 
         if (cameraTransform != null)
-            cameraTransform.localRotation = Quaternion.Euler(smoothedPitch, 0f, 0f);
+            cameraTransform.localRotation = Quaternion.Euler(smoothedPitch + pitchWobble, 0f, roll);
+    }
+
+    public void ApplyDrunk(float duration)
+    {
+        drunkEndTime = Mathf.Max(drunkEndTime, Time.time + duration);
+        drunkTotalDuration = Mathf.Max(duration, 0.01f);
+    }
+
+    // Full strength for most of the effect, easing out over its last third.
+    private float GetDrunkStrength()
+    {
+        float remaining = drunkEndTime - Time.time;
+        if (remaining <= 0f)
+            return 0f;
+
+        return Mathf.Clamp01(remaining / (drunkTotalDuration / 3f));
+    }
+
+    private void HandleItemConsumed(LootDataSO item)
+    {
+        if (health != null && item.DrinkHealPercent > 0f)
+            health.Heal(health.MaxHealth * item.DrinkHealPercent);
+
+        if (item.DrunkDuration <= 0f)
+            return;
+
+        if (IsLocalPlayer)
+            ApplyDrunk(item.DrunkDuration);
+        else if (TryGetComponent(out NetworkInventoryAuthority inventoryAuthority))
+            inventoryAuthority.NotifyDrunkToOwner(item.DrunkDuration);
     }
 
     private void HandleAimZoom()
@@ -269,7 +364,24 @@ public class PlayerController : MonoBehaviour
         if (bodyCarrier != null && bodyCarrier.IsCarryingBody)
             return;
 
-        if (inventory == null || inventory.ActiveItem == null || !inventory.ActiveItem.IsWeapon)
+        if (inventory == null || inventory.ActiveItem == null)
+            return;
+
+        if (inventory.ActiveItem.IsConsumable)
+        {
+            if (input.FirePressed && !isChargingThrow)
+                inventory.TryConsumeActive();
+            return;
+        }
+
+        if (inventory.ActiveItem.ItemType == InventoryItemType.Tool)
+        {
+            if (input.FirePressed && !isChargingThrow && lasso != null)
+                lasso.TryThrow(GetAimRay());
+            return;
+        }
+
+        if (!inventory.ActiveItem.IsWeapon)
             return;
 
         weapon = itemHolder != null ? itemHolder.RuntimeWeapon : weapon;
@@ -277,6 +389,15 @@ public class PlayerController : MonoBehaviour
             return;
 
         weapon.HandleInput(input.FirePressed, input.FireHeld, input.ReloadPressed);
+    }
+
+    private Ray GetAimRay()
+    {
+        if (mainCamera != null)
+            return mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+
+        Transform origin = cameraTransform != null ? cameraTransform : transform;
+        return new Ray(origin.position, origin.forward);
     }
 
     private void ReleaseThrow()
@@ -333,6 +454,9 @@ public class PlayerController : MonoBehaviour
             health.OnHit -= OnHit;
             health.OnDeath -= OnDeath;
         }
+
+        if (inventory != null)
+            inventory.OnItemConsumed -= HandleItemConsumed;
     }
 
     private void OnHit()
@@ -354,8 +478,7 @@ public class PlayerController : MonoBehaviour
 
         // Keep cameraTransform parented under the head bone: disabling this component (below) stops
         // us from overriding its rotation every LateUpdate, so it's free to ride the ragdoll physics.
-        if (cameraTransform != null && ragdollCameraAnchor != null)
-            cameraTransform.SetParent(ragdollCameraAnchor, true);
+        AttachCameraToRagdoll();
 
         if (DeathCameraController.Instance != null)
             DeathCameraController.Instance.NotifyPlayerDied(this);
@@ -371,17 +494,8 @@ public class PlayerController : MonoBehaviour
         if (!IsLocalPlayer)
             return;
 
-        if (cameraTransform != null && cameraDefaultParent != null)
-        {
-            cameraTransform.SetParent(cameraDefaultParent, false);
-            cameraTransform.localPosition = cameraDefaultLocalPosition;
-            cameraTransform.localRotation = cameraDefaultLocalRotation;
-        }
-
-        yaw = transform.eulerAngles.y;
-        pitch = 0f;
-        smoothedYaw = yaw;
-        smoothedPitch = pitch;
+        IsKnockedDown = false;
+        RestoreCamera();
 
         DeathCameraController.Instance?.Deactivate();
 

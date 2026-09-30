@@ -27,6 +27,19 @@ public class NetworkPurchaseAuthority : NetworkBehaviour
             return;
 
         PlayerInventory inventory = client.PlayerObject.GetComponent<PlayerInventory>();
-        shopStand.TryPurchase(inventory);
+        if (shopStand.TryPurchase(inventory, out bool refilledAmmo) && refilledAmmo &&
+            client.ClientId != NetworkManager.ServerClientId)
+        {
+            AmmoRefilledRpc(RpcTarget.Single(client.ClientId, RpcTargetUse.Temp));
+        }
+    }
+
+    // The owner simulates its own ammo, so it must apply the refill locally too (see NetworkInventoryState).
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void AmmoRefilledRpc(RpcParams rpcParams)
+    {
+        NetworkPlayer localPlayer = NetworkPlayer.Local;
+        if (localPlayer != null && localPlayer.TryGetComponent(out PlayerInventory localInventory))
+            localInventory.TryRefillActiveWeapon();
     }
 }
