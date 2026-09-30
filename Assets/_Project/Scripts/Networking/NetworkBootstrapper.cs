@@ -61,6 +61,9 @@ public class NetworkBootstrapper : MonoBehaviour
         networkManager.NetworkConfig.NetworkTransport = transport;
         networkManager.NetworkConfig.EnableSceneManagement = true;
         networkManager.NetworkConfig.ConnectionApproval = true;
+        if (networkManager.gameObject != gameObject)
+            DontDestroyOnLoad(networkManager.gameObject);
+
         if (playerPrefab == null)
         {
             Debug.LogError("NetworkBootstrapper: assign the networked player prefab.", this);

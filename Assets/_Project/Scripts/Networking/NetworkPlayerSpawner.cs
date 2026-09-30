@@ -76,6 +76,10 @@ public class NetworkPlayerSpawner : MonoBehaviour
             player.ConfigureOfflinePlayer(
                 PlayerPrefs.GetString("PlayerName", "Player"),
                 PlayerPrefs.GetInt("PlayerCharacterIndex", 0));
+            if (Camera.main == null)
+                Debug.LogError("NetworkPlayerSpawner: offline player spawned, but MainScene has no enabled Camera tagged MainCamera.", offlinePlayer);
+            else
+                Debug.Log($"NetworkPlayerSpawner: spawned offline Player at {offlinePlayer.transform.position}; output camera is '{Camera.main.name}'.", offlinePlayer);
         }
         else
         {
@@ -170,6 +174,8 @@ public class NetworkPlayerSpawner : MonoBehaviour
 
         if (playerObject.TryGetComponent(out NetworkPlayer networkPlayer))
             networkPlayer.SetServerProfile(playerName, characterIndex);
+
+        Debug.Log($"NetworkPlayerSpawner: spawned network player for client {clientId} at {spawnPosition}.", playerObject);
     }
 
     private Vector3 GetSpawnPosition(int playerIndex)
