@@ -20,8 +20,6 @@ public class NetworkPlayer : NetworkBehaviour
 
     private Vector3 lastServerPosition;
 
-    public bool IsLocalPlayer => IsOwner;
-
     public void MarkAbandoned()
     {
         if (IsServer)

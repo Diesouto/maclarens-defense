@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 1754416918944181407}
   - component: {fileID: 6724930496539612065}
   - component: {fileID: 5086993296489769110}
+  - component: {fileID: -1044796410693636579}
+  - component: {fileID: -2380481601382356577}
   m_Layer: 0
   m_Name: SilverBar
   m_TagString: Untagged
@@ -60,6 +62,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5ee6b6b4e5b07e4eb56596974902896, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassenger
+  groundedMomentumDecay: 20
+--- !u!114 &-1044796410693636579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6638057679064033363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &-2380481601382356577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6638057679064033363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: baaf51c5b4cd486429fe9011a34548f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkLootItem
+  ShowTopMostFoldoutHeaderGroup: 1
+  pickupDistance: 3
+  IsCollected:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
 --- !u!1001 &1916547972277699045
 PrefabInstance:
   m_ObjectHideFlags: 0

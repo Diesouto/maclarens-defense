@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 345679502583690413}
   - component: {fileID: 8577971363074293591}
+  - component: {fileID: 34596797793829927}
+  - component: {fileID: -3503998118628484160}
   m_Layer: 0
   m_Name: Cup2
   m_TagString: Untagged
@@ -47,6 +49,52 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootItem
   lootData: {fileID: 11400000, guid: 5dc0ffc347da04f4ca1eb2966aef5c3a, type: 2}
   hideOnPickup: 1
+--- !u!114 &34596797793829927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3619238469957037912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &-3503998118628484160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3619238469957037912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: baaf51c5b4cd486429fe9011a34548f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkLootItem
+  ShowTopMostFoldoutHeaderGroup: 1
+  pickupDistance: 3
+  IsCollected:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
 --- !u!1001 &2881870452787075235
 PrefabInstance:
   m_ObjectHideFlags: 0

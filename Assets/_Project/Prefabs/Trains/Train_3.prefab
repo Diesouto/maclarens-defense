@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4795704184472974500}
   - component: {fileID: 8293946504856149061}
   - component: {fileID: 339506564277225421}
+  - component: {fileID: 5750122071618272952}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -119,6 +120,20 @@ MonoBehaviour:
   quotaManager: {fileID: 0}
   quotaText: {fileID: 4394677294218583149}
   quotaFormat: 'Total: {0}$'
+--- !u!114 &5750122071618272952
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1383576637626539054}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c41dd3de1e96e547a3bf3ee4703100f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldSpaceBillboard
+  targetCamera: {fileID: 0}
+  lockYAxisOnly: 1
 --- !u!1 &1758459211853798097
 GameObject:
   m_ObjectHideFlags: 0
@@ -257,6 +272,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4369289717985392778}
+  - component: {fileID: 7912358821626050893}
+  - component: {fileID: 118014366017617991}
+  - component: {fileID: 7317833371215014767}
   m_Layer: 0
   m_Name: Train_3
   m_TagString: Untagged
@@ -282,6 +300,120 @@ Transform:
   - {fileID: 9129881935419151677}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7912358821626050893
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2474164988726242321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3216342307
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &118014366017617991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2474164988726242321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
+  AuthorityMode: 0
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 0
+  Interpolate: 1
+  SlerpPosition: 0
+--- !u!114 &7317833371215014767
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2474164988726242321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cba9a89921268c148bc00dfecd05fa17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkTrainState
+  ShowTopMostFoldoutHeaderGroup: 1
+  CurrentStation:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  Destination:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  IsMoving:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  CurrentSpeed:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  CurrentDistance:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  train: {fileID: 8409356447852147718}
+  departure: {fileID: 4718697250797635662}
+  runManager: {fileID: 0}
 --- !u!1 &3523986166404893236
 GameObject:
   m_ObjectHideFlags: 0
@@ -1081,6 +1213,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1235095919362174, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4819967596935173046}
+    - targetCorrespondingSourceObject: {fileID: 1235095919362174, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6022857023909407443}
+    - targetCorrespondingSourceObject: {fileID: 1235095919362174, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 396050937361639685}
     - targetCorrespondingSourceObject: {fileID: 1243112592757012, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3570464677790124229}
@@ -1274,6 +1412,7 @@ MonoBehaviour:
   trainDeparture: {fileID: 4718697250797635662}
   townPosition: 0.016
   macLarensPosition: 0.436
+  townExitMarker: {fileID: 0}
   startingStation: 1
   maxSpeed: 15
   accelerationDistance: 20
@@ -1327,6 +1466,51 @@ MonoBehaviour:
   movementLoopClip: {fileID: 0}
   movementFx:
   - {fileID: 3240990808868934208}
+--- !u!114 &6022857023909407443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2775492666064744037}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &396050937361639685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2775492666064744037}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd95cfcb757621a4b8f9a1406196437b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkCargoState
+  ShowTopMostFoldoutHeaderGroup: 1
+  CargoValue:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
 --- !u!1 &2775499493300633359 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1243112592757012, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
@@ -1370,6 +1554,7 @@ MonoBehaviour:
   interactUI: {fileID: 0}
   runManager: {fileID: 0}
   trainSplineFollower: {fileID: 8409356447852147718}
+  networkTrainState: {fileID: 0}
 --- !u!1 &2775570807466992423 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1172621986598204, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
@@ -1722,6 +1907,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1851869774959808, guid: 0ac283a7cb4d865449b4c6d300dbb84e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8894054248444186343}
+    - targetCorrespondingSourceObject: {fileID: 1851869774959808, guid: 0ac283a7cb4d865449b4c6d300dbb84e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5976234719541273068}
+    - targetCorrespondingSourceObject: {fileID: 1851869774959808, guid: 0ac283a7cb4d865449b4c6d300dbb84e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2156939566150275362}
   m_SourcePrefab: {fileID: 100100000, guid: 0ac283a7cb4d865449b4c6d300dbb84e, type: 3}
 --- !u!4 &5307225418529449079 stripped
 Transform:
@@ -1821,6 +2012,51 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassengerArea
   detectionTrigger: {fileID: 650130217074243818}
   carriageRoot: {fileID: 5307225418529449079}
+--- !u!114 &5976234719541273068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5310005235068437117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &2156939566150275362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5310005235068437117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd95cfcb757621a4b8f9a1406196437b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkCargoState
+  ShowTopMostFoldoutHeaderGroup: 1
+  CargoValue:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
 --- !u!1001 &6892051895319191385
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2079,6 +2315,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1089333317956822, guid: 7de9d83e7cf93764d841d97ec6bcad60, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3533844167005388074}
+    - targetCorrespondingSourceObject: {fileID: 1089333317956822, guid: 7de9d83e7cf93764d841d97ec6bcad60, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3337793908729577351}
+    - targetCorrespondingSourceObject: {fileID: 1089333317956822, guid: 7de9d83e7cf93764d841d97ec6bcad60, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5559087154066048663}
   m_SourcePrefab: {fileID: 100100000, guid: 7de9d83e7cf93764d841d97ec6bcad60, type: 3}
 --- !u!1 &9124685401971700725 stripped
 GameObject:
@@ -2173,6 +2415,51 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassengerArea
   detectionTrigger: {fileID: 7373892706832012779}
   carriageRoot: {fileID: 9129881935419151677}
+--- !u!114 &3337793908729577351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9124685401971700725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &5559087154066048663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9124685401971700725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd95cfcb757621a4b8f9a1406196437b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkCargoState
+  ShowTopMostFoldoutHeaderGroup: 1
+  CargoValue:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
 --- !u!4 &9129881935419151677 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4891207191253534, guid: 7de9d83e7cf93764d841d97ec6bcad60, type: 3}

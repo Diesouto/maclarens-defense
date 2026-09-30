@@ -50,7 +50,7 @@ public class NetworkSessionManager : NetworkBehaviour
 
     public event Action<ulong> OnPlayerJoined;
     public event Action<ulong> OnPlayerLeft;
-    public event Action OnHostChanged;
+    // public event Action OnHostChanged;
     public event Action OnSessionClosed;
     public event Action OnPlayersChanged;
     public event Action<MultiplayerSessionState, MultiplayerSessionState> OnSessionStateChanged;

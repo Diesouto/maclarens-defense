@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1046747728075007874}
   - component: {fileID: 3570121494145671347}
+  - component: {fileID: -8579788711145462309}
+  - component: {fileID: 7618865889540133064}
   m_Layer: 0
   m_Name: LiquorL2
   m_TagString: Untagged
@@ -47,6 +49,52 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootItem
   lootData: {fileID: 11400000, guid: 9498276d163714d4faf71906c83c747e, type: 2}
   hideOnPickup: 1
+--- !u!114 &-8579788711145462309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895414186744754168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &7618865889540133064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895414186744754168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: baaf51c5b4cd486429fe9011a34548f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkLootItem
+  ShowTopMostFoldoutHeaderGroup: 1
+  pickupDistance: 3
+  IsCollected:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
 --- !u!1001 &7423020071552423758
 PrefabInstance:
   m_ObjectHideFlags: 0

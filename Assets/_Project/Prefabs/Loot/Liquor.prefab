@@ -13,6 +13,9 @@ GameObject:
   - component: {fileID: 7689246161689928752}
   - component: {fileID: 8552439450580476211}
   - component: {fileID: 7468489491247814667}
+  - component: {fileID: -7143534546817983833}
+  - component: {fileID: -3379981977748070695}
+  - component: {fileID: 6265187907355213633}
   m_Layer: 0
   m_Name: Liquor
   m_TagString: Untagged
@@ -104,6 +107,66 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5ee6b6b4e5b07e4eb56596974902896, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainPassenger
+  groundedMomentumDecay: 20
+--- !u!114 &-7143534546817983833
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8074069486069697404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2539096509
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &-3379981977748070695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8074069486069697404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: baaf51c5b4cd486429fe9011a34548f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkLootItem
+  ShowTopMostFoldoutHeaderGroup: 1
+  pickupDistance: 3
+  IsCollected:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+--- !u!114 &6265187907355213633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8074069486069697404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80a2729826c6a91419d685e568e44f7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkBreakable
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1001 &1074319003101780124
 PrefabInstance:
   m_ObjectHideFlags: 0

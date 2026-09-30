@@ -67,8 +67,60 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7396728985478706284, guid: 523e47ce37092294fa59f9b1a57def27, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4689045147502670565}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6052254724695625094, guid: 523e47ce37092294fa59f9b1a57def27, type: 3}
+      insertIndex: 2
+      addedObject: {fileID: 1955684258078892910}
+    - targetCorrespondingSourceObject: {fileID: 6052254724695625094, guid: 523e47ce37092294fa59f9b1a57def27, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7737332277239865306}
   m_SourcePrefab: {fileID: 100100000, guid: 523e47ce37092294fa59f9b1a57def27, type: 3}
+--- !u!1 &5676573893688321539 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6052254724695625094, guid: 523e47ce37092294fa59f9b1a57def27, type: 3}
+  m_PrefabInstance: {fileID: 2106225000052026245}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1955684258078892910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5676573893688321539}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3718984011
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &7737332277239865306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5676573893688321539}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd8e70dac1500c4448f88ae56cc7358d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPurchaseAuthority
+  ShowTopMostFoldoutHeaderGroup: 1
+  purchaseDistance: 4
 --- !u!4 &8907176308005330921 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7396728985478706284, guid: 523e47ce37092294fa59f9b1a57def27, type: 3}

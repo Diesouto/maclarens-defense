@@ -46,9 +46,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46bca36a3461c3140be5c0f0c059a9a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MacLarensOwner
-  runManager: {fileID: 0}
-  quotaManager: {fileID: 0}
-  moneyManager: {fileID: 0}
   dialogueText: {fileID: 8059416235965955794}
   dialogueLines:
   - Bring enough money back to MacLarens.
@@ -278,6 +275,7 @@ GameObject:
   - component: {fileID: 6779171856529530841}
   - component: {fileID: 608298485755767017}
   - component: {fileID: 409722510829604168}
+  - component: {fileID: 5701956350612530776}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -369,6 +367,20 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &5701956350612530776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7931540642393441628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c41dd3de1e96e547a3bf3ee4703100f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldSpaceBillboard
+  targetCamera: {fileID: 0}
+  lockYAxisOnly: 1
 --- !u!1001 &9048613947437532804
 PrefabInstance:
   m_ObjectHideFlags: 0

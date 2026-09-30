@@ -150,6 +150,7 @@ GameObject:
   - component: {fileID: 676711392784816341}
   - component: {fileID: 6132778320264867669}
   - component: {fileID: 1809839338363274252}
+  - component: {fileID: 8214449481343259088}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -261,6 +262,20 @@ MonoBehaviour:
   quotaFormat: '{0} / {1}$'
   quotaMetMessage: Quota reached
   quotaPendingMessage: Quota pending
+--- !u!114 &8214449481343259088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2518774276881584762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c41dd3de1e96e547a3bf3ee4703100f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldSpaceBillboard
+  targetCamera: {fileID: 0}
+  lockYAxisOnly: 1
 --- !u!1 &4218126291088255872
 GameObject:
   m_ObjectHideFlags: 0
@@ -347,6 +362,8 @@ GameObject:
   - component: {fileID: 7405086982569772573}
   - component: {fileID: 6848171660187854244}
   - component: {fileID: 4133233736695991095}
+  - component: {fileID: 6969456520917869033}
+  - component: {fileID: 5018671367553146088}
   m_Layer: 0
   m_Name: _LootDeliveryPoint
   m_TagString: Untagged
@@ -406,6 +423,47 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootDeliveryPoint
   deliveryTrigger: {fileID: 6848171660187854244}
+--- !u!114 &6969456520917869033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5434815174250925479}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &5018671367553146088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5434815174250925479}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1142d8136429e7841bb050df5aa2add5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkLootDelivery
+  ShowTopMostFoldoutHeaderGroup: 1
+  deliveryDistance: 4
 --- !u!1 &7785496632785555300
 GameObject:
   m_ObjectHideFlags: 0
