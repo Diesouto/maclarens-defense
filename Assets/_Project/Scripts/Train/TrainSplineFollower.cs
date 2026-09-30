@@ -45,6 +45,12 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
     [SerializeField] private Vector3 up = Vector3.up;
     [SerializeField] private bool invertForward;
 
+    [Header("Network Replica")]
+    [Tooltip("How fast a client converges on the host's replicated distance (1/s).")]
+    [SerializeField, Min(0f)] private float replicaCorrectionRate = 8f;
+    [Tooltip("Errors larger than this (meters) snap instead of smoothing.")]
+    [SerializeField, Min(0f)] private float replicaSnapDistance = 10f;
+
     public float CurrentDistance { get; private set; }
     public float CurrentSpeed { get; private set; }
     public Vector3 CurrentVelocity { get; private set; }
@@ -63,6 +69,9 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
 
     private Coroutine travelRoutine;
     private Vector3 previousPosition;
+    private bool isReplica;
+    private float replicaTargetDistance;
+    private float replicaSpeed;
 
     /// <summary>
     /// Actual distance along the spline where Town is located.
@@ -138,10 +147,63 @@ public class TrainSplineFollower : MonoBehaviour, ITrainMotion
 
     private void HandleDeparted()
     {
+        if (isReplica)
+            return;
+
         if (travelRoutine != null)
             StopCoroutine(travelRoutine);
 
         travelRoutine = StartCoroutine(TravelRoutine());
+    }
+
+    // Clients never simulate travel; they follow the host's distance so station/exit logic stays host-only.
+    public void SetReplicatedState(float distance, float speed, TrainDestination station, bool moving, bool snap)
+    {
+        isReplica = true;
+        replicaTargetDistance = distance;
+        replicaSpeed = speed;
+        CurrentStation = station;
+
+        if (snap)
+        {
+            CurrentDistance = distance;
+            SnapToSpline();
+            previousPosition = transform.position;
+        }
+
+        if (IsMoving == moving)
+            return;
+
+        IsMoving = moving;
+        if (moving)
+            OnMovementStarted?.Invoke();
+        else
+            OnMovementStopped?.Invoke();
+    }
+
+    private void Update()
+    {
+        if (!isReplica || spline == null || spline.Length <= 0f)
+            return;
+
+        float step = IsMoving ? replicaSpeed * Time.deltaTime : 0f;
+        replicaTargetDistance = spline.WrapDistance(replicaTargetDistance + step);
+
+        float predicted = CurrentDistance + step;
+        float error = replicaTargetDistance - predicted;
+        float halfLength = spline.Length * 0.5f;
+        if (error > halfLength)
+            error -= spline.Length;
+        else if (error < -halfLength)
+            error += spline.Length;
+
+        float correction = Mathf.Abs(error) > replicaSnapDistance
+            ? error
+            : error * Mathf.Clamp01(replicaCorrectionRate * Time.deltaTime);
+
+        CurrentDistance = spline.WrapDistance(predicted + correction);
+        SnapToSpline();
+        UpdateMotionState();
     }
 
     private IEnumerator TravelRoutine()

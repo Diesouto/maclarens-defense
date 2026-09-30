@@ -54,20 +54,31 @@ public class NetworkTrainState : NetworkBehaviour
         }
         else
         {
-            ApplyState();
+            CurrentDistance.OnValueChanged += HandleDistanceChanged;
+            IsMoving.OnValueChanged += HandleMovingChanged;
+            CurrentStation.OnValueChanged += HandleStationChanged;
+            ApplyState(true);
         }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        CurrentDistance.OnValueChanged -= HandleDistanceChanged;
+        IsMoving.OnValueChanged -= HandleMovingChanged;
+        CurrentStation.OnValueChanged -= HandleStationChanged;
     }
 
     private void Update()
     {
-        if (IsServer)
-        {
+        if (IsServer && train != null)
             SyncState();
-            return;
-        }
-
-        ApplyState();
     }
+
+    private void HandleDistanceChanged(float previousValue, float newValue) => ApplyState(false);
+
+    private void HandleMovingChanged(bool previousValue, bool newValue) => ApplyState(false);
+
+    private void HandleStationChanged(TrainDestination previousValue, TrainDestination newValue) => ApplyState(false);
 
     public void RequestDeparture()
     {
@@ -152,9 +163,16 @@ public class NetworkTrainState : NetworkBehaviour
             CurrentDistance.Value = train.CurrentDistance;
     }
 
-    private void ApplyState()
+    private void ApplyState(bool snap)
     {
-        // NetworkTransform carries the authoritative transform. These values remain public
-        // state for UI, audio and future deterministic presentation code.
+        if (train == null)
+            return;
+
+        train.SetReplicatedState(
+            CurrentDistance.Value,
+            CurrentSpeed.Value,
+            CurrentStation.Value,
+            IsMoving.Value,
+            snap);
     }
 }

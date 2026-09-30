@@ -122,6 +122,11 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       hay camaras.
 - [ ] Playtest de spawn y movimiento: cada cliente controla solo su personaje y todos ven el
       transform sincronizado, el modelo elegido y el nombre del Canvas `PlayerName` sobre cada jugador.
+- [ ] Añadir `OwnerNetworkAnimator` a la raíz de `Player.prefab` y asignar su campo `Animator` al
+      Animator del rig (sincroniza `Speed` y los bools de pose desde el owner).
+- [ ] Opcional: quitar el `NetworkTransform` redundante de la raíz de `Train_3.prefab` (la raíz no se
+      mueve; los clientes siguen el tren vía `NetworkTrainState.CurrentDistance`) y el que hay en el
+      GameObject de `RunManager` en `MainScene`.
 
 ## P6 - Bloques 2 y 3 de networking
 

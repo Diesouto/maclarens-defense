@@ -31,6 +31,7 @@ public class NetworkPlayer : NetworkBehaviour
     [SerializeField] private PlayerInputHandler playerInputHandler;
     [SerializeField] private PlayerInteractor playerInteractor;
     [SerializeField] private NetworkWeaponAuthority weaponAuthority;
+    [SerializeField] private PlayerMotor playerMotor;
     [SerializeField] private Camera[] playerCameras;
     [SerializeField] private CinemachineCamera[] playerVirtualCameras;
     [SerializeField] private TMP_Text playerNameLabel;
@@ -38,6 +39,7 @@ public class NetworkPlayer : NetworkBehaviour
     [SerializeField, Min(0f)] private float movementValidationTolerance = 0.75f;
 
     private Vector3 lastServerPosition;
+    private TrainPassenger trainPassenger;
     private Transform[] characterModels;
     private WorldSpaceBillboard nameplateBillboard;
     private Coroutine outputCameraSearch;
@@ -61,6 +63,11 @@ public class NetworkPlayer : NetworkBehaviour
 
         if (weaponAuthority == null)
             weaponAuthority = GetComponent<NetworkWeaponAuthority>();
+
+        if (playerMotor == null)
+            playerMotor = GetComponent<PlayerMotor>();
+
+        trainPassenger = GetComponent<TrainPassenger>();
 
         if (playerCameras == null || playerCameras.Length == 0)
             playerCameras = GetComponentsInChildren<Camera>(true);
@@ -99,6 +106,13 @@ public class NetworkPlayer : NetworkBehaviour
             SetLocal(this);
             BeginOutputCameraSearch();
         }
+    }
+
+    protected override void OnNetworkPostSpawn()
+    {
+        // Spawn data is applied after Awake; without this the owner's CharacterController drags it back to the origin.
+        if (IsOwner && playerMotor != null)
+            playerMotor.Teleport(transform.position, transform.rotation);
     }
 
     public override void OnNetworkDespawn()
@@ -156,11 +170,10 @@ public class NetworkPlayer : NetworkBehaviour
             return;
 
         float maximumDistance = maximumMovementSpeed * Time.deltaTime + movementValidationTolerance;
-        if (Vector3.Distance(lastServerPosition, transform.position) > maximumDistance)
-        {
-            transform.position = lastServerPosition;
-            return;
-        }
+        bool ridingTrain = trainPassenger != null && trainPassenger.CurrentCarriage != null;
+        // Detection only: movement is owner-authoritative, so snapping back here would just fight NetworkTransform.
+        if (!ridingTrain && Vector3.Distance(lastServerPosition, transform.position) > maximumDistance)
+            Debug.LogWarning($"NetworkPlayer: suspicious movement for client {OwnerClientId} ({Vector3.Distance(lastServerPosition, transform.position):F1}m in one frame).", this);
 
         lastServerPosition = transform.position;
     }

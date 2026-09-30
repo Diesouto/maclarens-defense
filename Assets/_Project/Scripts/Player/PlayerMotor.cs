@@ -24,6 +24,15 @@ public class PlayerMotor : MonoBehaviour
 
     public bool IsGrounded => grounded;
 
+    // CharacterController caches its own position, so direct transform writes get undone on the next Move().
+    public void Teleport(Vector3 position, Quaternion rotation)
+    {
+        controller.enabled = false;
+        transform.SetPositionAndRotation(position, rotation);
+        controller.enabled = true;
+        velocity = Vector3.zero;
+    }
+
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
