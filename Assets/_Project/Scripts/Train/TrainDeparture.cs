@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 
 public class TrainDeparture : MonoBehaviour, IInteractable
@@ -12,6 +13,9 @@ public class TrainDeparture : MonoBehaviour, IInteractable
 
     public bool IsDeparting { get; private set; }
     public bool HasDeparted { get; private set; }
+
+    private Coroutine countdownRoutine;
+    private bool isCountdownVisible;
 
     // Hook for the future rail/animation system: the train can start accelerating away.
     public event Action OnTrainDeparted;
@@ -53,8 +57,12 @@ public class TrainDeparture : MonoBehaviour, IInteractable
 
     public bool CanInteract(PlayerInteractor interactor)
     {
+        bool replicatedBusy = networkTrainState != null && networkTrainState.IsSpawned &&
+            (networkTrainState.IsMoving.Value || isCountdownVisible);
+
         return !IsDeparting &&
                !HasDeparted &&
+               !replicatedBusy &&
                (GameStateManager.Instance == null || GameStateManager.Instance.IsRunActive);
     }
 
@@ -79,8 +87,38 @@ public class TrainDeparture : MonoBehaviour, IInteractable
             return;
         }
 
+        if (IsNetworkClient())
+        {
+            Debug.LogError("TrainDeparture: NetworkTrainState is not spawned on this client; departure request dropped.", this);
+            return;
+        }
+
         // Departure does not require the quota to be met; the crew can choose to leave early.
         BeginAuthoritativeDeparture();
+    }
+
+    // Runs on every machine so each player sees the countdown on their own HUD.
+    public void ShowDepartureCountdown(float duration)
+    {
+        if (countdownRoutine != null)
+            StopCoroutine(countdownRoutine);
+
+        countdownRoutine = StartCoroutine(CountdownRoutine(duration));
+    }
+
+    private IEnumerator CountdownRoutine(float duration)
+    {
+        isCountdownVisible = true;
+        interactUI?.StartProgress(duration, "Starting train...");
+        yield return new WaitForSeconds(duration);
+        isCountdownVisible = false;
+        countdownRoutine = null;
+    }
+
+    private static bool IsNetworkClient()
+    {
+        NetworkManager networkManager = NetworkManager.Singleton;
+        return networkManager != null && networkManager.IsListening && !networkManager.IsServer;
     }
 
     public void BeginAuthoritativeDeparture()
@@ -95,7 +133,11 @@ public class TrainDeparture : MonoBehaviour, IInteractable
     {
         IsDeparting = true;
 
-        interactUI?.StartProgress(departurePrepDuration, "Starting train...");
+        if (networkTrainState != null && networkTrainState.IsSpawned)
+            networkTrainState.BroadcastDepartureCountdown(departurePrepDuration);
+        else
+            ShowDepartureCountdown(departurePrepDuration);
+
         yield return new WaitForSeconds(departurePrepDuration);
 
         IsDeparting = false;

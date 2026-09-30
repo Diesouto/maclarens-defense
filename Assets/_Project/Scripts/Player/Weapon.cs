@@ -113,6 +113,9 @@ public class Weapon : MonoBehaviour
 
         if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
         {
+            if (reloadPressed && !isReloading && CanStartReload())
+                interactUI?.StartProgress(Mathf.Max(weaponData.reloadTime, 0f), "Reloading...");
+
             networkAuthority.RequestWeaponInputServerRpc(firePressed, fireHeld, reloadPressed);
             return;
         }
@@ -287,14 +290,22 @@ public class Weapon : MonoBehaviour
         Instantiate(weaponData.hitEffect, hit.point, Quaternion.LookRotation(hit.normal));
     }
 
+    private bool CanStartReload()
+    {
+        return weaponData != null && currentAmmo < weaponData.magazineSize && currentReserveAmmo > 0;
+    }
+
     private void TryStartReload()
     {
-        if (weaponData == null || isReloading || currentAmmo >= weaponData.magazineSize || currentReserveAmmo <= 0)
+        if (isReloading || !CanStartReload())
             return;
 
         isReloading = true;
         reloadTimer = Mathf.Max(weaponData.reloadTime, 0f);
-        interactUI?.StartProgress(reloadTimer, "Reloading...");
+
+        bool isLocalWeapon = networkAuthority == null || !networkAuthority.IsSpawned || networkAuthority.IsOwner;
+        if (isLocalWeapon)
+            interactUI?.StartProgress(reloadTimer, "Reloading...");
     }
 
     public void ApplyServerInput(bool firePressed, bool fireHeld, bool reloadPressed)

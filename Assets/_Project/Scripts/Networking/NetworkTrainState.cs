@@ -94,24 +94,49 @@ public class NetworkTrainState : NetworkBehaviour
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestDepartureServerRpc(RpcParams rpcParams = default)
     {
-        if (NetworkManager.Singleton == null || runManager == null ||
-            !NetworkManager.Singleton.ConnectedClients.TryGetValue(
-                rpcParams.Receive.SenderClientId, out NetworkClient client) ||
+        if (runManager == null)
+            runManager = RunManager.Instance;
+
+        ulong senderId = rpcParams.Receive.SenderClientId;
+        if (runManager == null || departure == null ||
+            !NetworkManager.ConnectedClients.TryGetValue(senderId, out NetworkClient client) ||
             client.PlayerObject == null)
+        {
+            Debug.LogWarning($"NetworkTrainState: departure from client {senderId} rejected (missing RunManager, departure or player object).", this);
             return;
+        }
 
         Health playerHealth = client.PlayerObject.GetComponent<Health>();
         if (playerHealth != null && playerHealth.IsDead)
             return;
 
-        if (Vector3.Distance(client.PlayerObject.transform.position, departure.transform.position) > 4f)
+        float distance = Vector3.Distance(client.PlayerObject.transform.position, departure.transform.position);
+        if (distance > 4f)
+        {
+            Debug.LogWarning($"NetworkTrainState: departure from client {senderId} rejected, {distance:F1}m from the lever (host view).", this);
             return;
+        }
 
         if (runManager.CurrentPhase != RunPhase.Town &&
             runManager.CurrentPhase != RunPhase.MacLarens)
+        {
+            Debug.LogWarning($"NetworkTrainState: departure from client {senderId} rejected in phase {runManager.CurrentPhase}.", this);
             return;
+        }
 
         BeginDeparture();
+    }
+
+    public void BroadcastDepartureCountdown(float duration)
+    {
+        if (IsServer)
+            DepartureCountdownRpc(duration);
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void DepartureCountdownRpc(float duration)
+    {
+        departure?.ShowDepartureCountdown(duration);
     }
 
     public void RequestFinishDay()

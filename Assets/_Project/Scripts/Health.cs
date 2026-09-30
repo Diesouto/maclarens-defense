@@ -38,9 +38,13 @@ public class Health : MonoBehaviour, IDamageable
 
     public void TakeDamage(float damage, Vector3 hitDirection, float forceAmount)
     {
-        if (networkHealth != null && !networkHealth.IsServer)
+        if (networkHealth != null && networkHealth.IsSpawned)
         {
-            networkHealth.RequestDamageServerRpc(damage, hitDirection, forceAmount);
+            // Local hazards (DeathFloor, etc.) fire on every machine; only the server or the owner may act on them.
+            if (networkHealth.IsServer)
+                networkHealth.ApplyServerDamage(damage, hitDirection, forceAmount);
+            else if (networkHealth.IsOwner)
+                networkHealth.RequestDamageServerRpc(damage, hitDirection, forceAmount);
 
             return;
         }
@@ -50,8 +54,17 @@ public class Health : MonoBehaviour, IDamageable
 
     public void ApplyReplicatedHealth(float health)
     {
+        float previousHealth = CurrentHealth;
         CurrentHealth = Mathf.Clamp(health, 0f, maxHealth);
         OnHealthChanged?.Invoke(CurrentHealth);
+
+        if (CurrentHealth >= previousHealth)
+            return;
+
+        OnHit?.Invoke();
+
+        if (previousHealth > 0f && CurrentHealth <= 0f)
+            Die();
     }
 
     internal void ApplyDamage(float damage, Vector3 hitDirection, float forceAmount)
