@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4433742368775038875}
-  - component: {fileID: 7252452843345885888}
   - component: {fileID: 1550347661257043625}
   - component: {fileID: -3397439061738136867}
+  - component: {fileID: 7252452843345885888}
   - component: {fileID: 2552841971823319106}
   m_Layer: 0
   m_Name: "Malet\xEDnL"
@@ -36,20 +36,6 @@ Transform:
   - {fileID: 3286708892761643010}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7252452843345885888
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 296259869013544541}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 020ee07c337e75945876c7cc87dc3956, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootItem
-  lootData: {fileID: 11400000, guid: 79943a424a15f8c45a1ba08b44c54b96, type: 2}
-  hideOnPickup: 1
 --- !u!114 &1550347661257043625
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -96,6 +82,20 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
+--- !u!114 &7252452843345885888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 296259869013544541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 020ee07c337e75945876c7cc87dc3956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LootItem
+  lootData: {fileID: 11400000, guid: 79943a424a15f8c45a1ba08b44c54b96, type: 2}
+  hideOnPickup: 1
 --- !u!54 &2552841971823319106
 Rigidbody:
   m_ObjectHideFlags: 0

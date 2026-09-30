@@ -10,12 +10,12 @@ GameObject:
   m_Component:
   - component: {fileID: 1844552674681545951}
   - component: {fileID: 7575828402765775672}
-  - component: {fileID: 7689246161689928752}
   - component: {fileID: 8552439450580476211}
   - component: {fileID: 7468489491247814667}
   - component: {fileID: -7143534546817983833}
   - component: {fileID: -3379981977748070695}
   - component: {fileID: 6265187907355213633}
+  - component: {fileID: 7689246161689928752}
   m_Layer: 0
   m_Name: Liquor
   m_TagString: Untagged
@@ -66,20 +66,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &7689246161689928752
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8074069486069697404}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 020ee07c337e75945876c7cc87dc3956, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootItem
-  lootData: {fileID: 11400000, guid: ea748979160f9074385a9e421d9bad54, type: 2}
-  hideOnPickup: 1
 --- !u!114 &8552439450580476211
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -167,6 +153,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkBreakable
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &7689246161689928752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8074069486069697404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 020ee07c337e75945876c7cc87dc3956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LootItem
+  lootData: {fileID: 11400000, guid: ea748979160f9074385a9e421d9bad54, type: 2}
+  hideOnPickup: 1
 --- !u!1001 &1074319003101780124
 PrefabInstance:
   m_ObjectHideFlags: 0
