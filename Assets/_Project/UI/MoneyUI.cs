@@ -18,6 +18,12 @@ public class MoneyUI : MonoBehaviour
         Refresh();
     }
 
+    // OnEnable can run before MoneyManager.Awake sets the starting money (which raises no event).
+    private void Start()
+    {
+        Refresh();
+    }
+
     private void OnDisable()
     {
         if (moneyManager != null)

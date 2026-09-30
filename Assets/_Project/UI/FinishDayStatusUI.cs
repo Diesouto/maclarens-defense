@@ -36,6 +36,12 @@ public class FinishDayStatusUI : MonoBehaviour
         Refresh();
     }
 
+    // OnEnable can run before the managers' Awake initializes money, debt and quota.
+    private void Start()
+    {
+        Refresh();
+    }
+
     private void OnDisable()
     {
         if (runManager != null)

@@ -20,6 +20,7 @@ public class DeathCameraController : MonoBehaviour
     [SerializeField] private CinemachineCamera deathCamera;
 
     private readonly List<Transform> spectateTargets = new();
+    private readonly List<Camera> suppressedCameras = new();
     private int currentTargetIndex;
     private Coroutine activateRoutine;
 
@@ -46,9 +47,40 @@ public class DeathCameraController : MonoBehaviour
         yield return new WaitForSeconds(activationDelay);
 
         RefreshTargets(deadPlayer != null ? deadPlayer.transform : null);
+        SuppressPlayerCameras(deadPlayer);
         SetActiveCamera(true);
+        Debug.Log($"DeathCameraController: spectating '{(spectateTargets.Count > 0 ? spectateTargets[0].name : "nothing")}'.", this);
 
         activateRoutine = null;
+    }
+
+    // A Camera living on the player prefab renders over the scene's CinemachineBrain output, which
+    // is what the death camera drives; hide it while spectating.
+    private void SuppressPlayerCameras(PlayerController deadPlayer)
+    {
+        RestorePlayerCameras();
+        if (deadPlayer == null)
+            return;
+
+        foreach (Camera playerCamera in deadPlayer.GetComponentsInChildren<Camera>())
+        {
+            if (!playerCamera.enabled)
+                continue;
+
+            playerCamera.enabled = false;
+            suppressedCameras.Add(playerCamera);
+        }
+    }
+
+    private void RestorePlayerCameras()
+    {
+        foreach (Camera playerCamera in suppressedCameras)
+        {
+            if (playerCamera != null)
+                playerCamera.enabled = true;
+        }
+
+        suppressedCameras.Clear();
     }
 
     private void RefreshTargets(Transform corpse)
@@ -107,6 +139,7 @@ public class DeathCameraController : MonoBehaviour
             activateRoutine = null;
         }
 
+        RestorePlayerCameras();
         SetActiveCamera(false);
     }
 

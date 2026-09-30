@@ -1,57 +1,116 @@
 using Unity.Netcode;
 using UnityEngine;
 
+// The owner fires locally (own camera, instant feedback); the host validates each reported hit
+// against the weapon in the replicated inventory, its fire rate, range and target proximity.
 [RequireComponent(typeof(NetworkObject))]
 public class NetworkWeaponAuthority : NetworkBehaviour
 {
-    private Weapon weapon;
+    [SerializeField, Min(0f)] private float eyeHeight = 1.6f;
+    [Tooltip("How far a reported hit point may be from the target's colliders on the host (interpolation lag).")]
+    [SerializeField, Min(0f)] private float hitPointTolerance = 1.5f;
+    [SerializeField, Min(0f)] private float maxHitForce = 100f;
+
+    private PlayerInventory inventory;
+    private int lastShotId = int.MinValue;
+    private float lastShotTime = float.NegativeInfinity;
+    private int hitsThisShot;
 
     private void Awake()
     {
-        weapon = GetComponentInChildren<Weapon>(true);
+        inventory = GetComponent<PlayerInventory>();
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
-    public void RequestWeaponInputServerRpc(bool firePressed, bool fireHeld, bool reloadPressed,
-        RpcParams rpcParams = default)
-    {
-        if (rpcParams.Receive.SenderClientId != OwnerClientId || weapon == null)
-            return;
-
-        weapon.ApplyServerInput(firePressed, fireHeld, reloadPressed);
-    }
-
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
-    public void RequestHitServerRpc(NetworkObjectReference targetReference, Vector3 hitDirection,
-        float hitForce, RpcParams rpcParams = default)
+    public void RequestHitServerRpc(NetworkObjectReference targetReference, Vector3 hitPoint, Vector3 hitDirection,
+        float hitForce, bool claimedHeadshot, int shotId, RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId ||
-            !targetReference.TryGet(out NetworkObject targetObject) || targetObject == null)
+            !targetReference.TryGet(out NetworkObject targetObject) || targetObject == null ||
+            !targetObject.TryGetComponent(out NetworkHealth targetHealth))
             return;
 
-        Vector3 origin = transform.position + Vector3.up;
-        Vector3 toTarget = targetObject.transform.position - origin;
-        float targetDistance = toTarget.magnitude;
-        if (targetDistance <= 0.01f || targetDistance > 100f)
+        WeaponDataSO weaponData = inventory != null && inventory.ActiveItem != null && inventory.ActiveItem.IsWeapon
+            ? inventory.ActiveItem.WeaponData
+            : null;
+        if (weaponData == null || !TryConsumeShot(weaponData, shotId))
             return;
 
-        Vector3 direction = toTarget / targetDistance;
-        if (hitDirection.sqrMagnitude > 0.01f && Vector3.Dot(direction, hitDirection.normalized) < 0.5f)
+        Vector3 eye = transform.position + Vector3.up * eyeHeight;
+        if (Vector3.Distance(eye, hitPoint) > weaponData.range + hitPointTolerance ||
+            !IsNearAnyCollider(targetObject, hitPoint, hitPointTolerance))
             return;
 
-        if (!Physics.Raycast(origin, direction, out RaycastHit hit, targetDistance + 1f,
-                ~0, QueryTriggerInteraction.Collide))
+        float damage = weaponData.damage;
+        if (claimedHeadshot && IsNearHeadHitbox(targetObject, hitPoint))
+            damage *= weaponData.headshotMultiplier;
+
+        Vector3 direction = hitDirection.sqrMagnitude > 0.0001f ? hitDirection.normalized : (hitPoint - eye).normalized;
+        targetHealth.ApplyServerDamage(damage, direction, Mathf.Clamp(hitForce, 0f, maxHitForce));
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    public void ReportAmmoServerRpc(int currentAmmo, int reserveAmmo, RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId || inventory == null)
             return;
 
-        NetworkHealth targetHealth = targetObject.GetComponent<NetworkHealth>();
-        NetworkHealth hitHealth = hit.collider.GetComponentInParent<NetworkHealth>();
-        if (targetHealth == null || hitHealth != targetHealth)
+        ItemInstance instance = inventory.ActiveItemInstance;
+        WeaponDataSO weaponData = instance?.Data != null && instance.Data.IsWeapon ? instance.Data.WeaponData : null;
+        if (weaponData == null)
             return;
 
-        float damage = weapon.WeaponData != null ? weapon.WeaponData.damage : 0f;
-        Hitbox hitbox = hit.collider.GetComponent<Hitbox>();
-        if (hitbox != null && hitbox.Type == Hitbox.HitboxType.Head && weapon.WeaponData != null)
-            damage *= weapon.WeaponData.headshotMultiplier;
-        targetHealth.ApplyServerDamage(damage, hitDirection, Mathf.Clamp(hitForce, 0f, 100f));
+        currentAmmo = Mathf.Clamp(currentAmmo, 0, weaponData.magazineSize);
+        reserveAmmo = Mathf.Clamp(reserveAmmo, 0, weaponData.maxAmmo);
+
+        // Reloading only moves bullets between magazine and reserve; the total can never grow.
+        if (instance.HasAmmoState && currentAmmo + reserveAmmo > instance.CurrentAmmo + instance.CurrentReserveAmmo)
+            return;
+
+        instance.SetAmmo(currentAmmo, reserveAmmo);
+    }
+
+    // A penetrating shot may report several hits with the same id; new ids respect the fire rate.
+    private bool TryConsumeShot(WeaponDataSO weaponData, int shotId)
+    {
+        if (shotId != lastShotId)
+        {
+            float minInterval = 0.8f / Mathf.Max(weaponData.fireRate, 0.01f);
+            if (Time.time - lastShotTime < minInterval)
+                return false;
+
+            lastShotId = shotId;
+            lastShotTime = Time.time;
+            hitsThisShot = 0;
+        }
+
+        int maxHits = weaponData.canPenetrate ? weaponData.maxPenetrations + 1 : 1;
+        return ++hitsThisShot <= maxHits;
+    }
+
+    private static bool IsNearAnyCollider(NetworkObject target, Vector3 point, float tolerance)
+    {
+        float sqrTolerance = tolerance * tolerance;
+        foreach (Collider targetCollider in target.GetComponentsInChildren<Collider>())
+        {
+            if ((targetCollider.ClosestPointOnBounds(point) - point).sqrMagnitude <= sqrTolerance)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsNearHeadHitbox(NetworkObject target, Vector3 point)
+    {
+        foreach (Hitbox hitbox in target.GetComponentsInChildren<Hitbox>())
+        {
+            if (hitbox.Type != Hitbox.HitboxType.Head || !hitbox.TryGetComponent(out Collider headCollider))
+                continue;
+
+            if ((headCollider.ClosestPointOnBounds(point) - point).sqrMagnitude <= 0.5f * 0.5f)
+                return true;
+        }
+
+        return false;
     }
 }

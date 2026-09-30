@@ -133,6 +133,8 @@ public class ItemHolder : MonoBehaviour
         staging.SetActive(false);
 
         GameObject visual = Instantiate(prefab, staging.transform);
+        // Dependents first: NetworkRigidbody requires NetworkTransform, which requires NetworkObject.
+        StripWorldComponents<Unity.Netcode.Components.NetworkRigidbodyBase>(visual);
         StripWorldComponents<Unity.Netcode.NetworkBehaviour>(visual);
         StripWorldComponents<Unity.Netcode.NetworkObject>(visual);
         StripWorldComponents<BreakableOnImpact>(visual);

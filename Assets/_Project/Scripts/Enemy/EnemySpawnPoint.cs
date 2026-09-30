@@ -25,7 +25,9 @@ public class EnemySpawnPoint : MonoBehaviour
         if (Time.time - lastUsedTime < reuseCooldown)
             return false;
 
-        return !IsAnyPlayerTooClose();
+        // TEMP playtest: spawn even with players nearby.
+        // return !IsAnyPlayerTooClose();
+        return true;
     }
 
     // Higher score = safer/better pick; farthest nearby player wins among valid points.

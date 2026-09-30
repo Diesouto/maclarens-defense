@@ -162,8 +162,11 @@ public class NetworkInventoryState : NetworkBehaviour
                 continue;
 
             ItemInstance existing = isHeld ? inventory.HeldItemInstance : inventory.GetInstanceAtSlot(slot.SlotIndex);
-            ItemInstance instance = existing != null && existing.Data == data ? existing : new ItemInstance(data);
-            if (slot.CurrentAmmo >= 0 && slot.ReserveAmmo >= 0)
+            bool reuseExisting = existing != null && existing.Data == data;
+            ItemInstance instance = reuseExisting ? existing : new ItemInstance(data);
+            // The owner simulates its own ammo and reports it upstream; don't roll it back with stale host values.
+            bool keepLocalAmmo = reuseExisting && IsOwner && existing.HasAmmoState;
+            if (!keepLocalAmmo && slot.CurrentAmmo >= 0 && slot.ReserveAmmo >= 0)
                 instance.SetAmmo(slot.CurrentAmmo, slot.ReserveAmmo);
 
             if (isHeld)

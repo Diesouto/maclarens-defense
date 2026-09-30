@@ -23,6 +23,7 @@ public class Weapon : MonoBehaviour
     private float reloadTimer;
     private ItemInstance equippedInstance;
     private NetworkWeaponAuthority networkAuthority;
+    private int shotId;
 
     private void Awake()
     {
@@ -111,15 +112,6 @@ public class Weapon : MonoBehaviour
         if (!SyncWithActiveItemInternal())
             return;
 
-        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
-        {
-            if (reloadPressed && !isReloading && CanStartReload())
-                interactUI?.StartProgress(Mathf.Max(weaponData.reloadTime, 0f), "Reloading...");
-
-            networkAuthority.RequestWeaponInputServerRpc(firePressed, fireHeld, reloadPressed);
-            return;
-        }
-
         if (isReloading)
             return;
 
@@ -162,6 +154,7 @@ public class Weapon : MonoBehaviour
         float fireRate = Mathf.Max(weaponData.fireRate, 0.01f);
         nextTimeToFire = Time.time + 1f / fireRate;
         currentAmmo--;
+        shotId++;
         SaveAmmoState();
         OnAmmoChanged?.Invoke(currentAmmo, currentReserveAmmo);
         gunshotParticleReference?.GetComponent<ParticleSystem>()?.Play();
@@ -247,8 +240,11 @@ public class Weapon : MonoBehaviour
                 {
                     networkAuthority.RequestHitServerRpc(
                         networkTarget.NetworkObject,
+                        hit.point,
                         hitDirection,
-                        hitForce);
+                        hitForce,
+                        isHeadshot,
+                        shotId);
                 }
                 else
                 {
@@ -308,25 +304,6 @@ public class Weapon : MonoBehaviour
             interactUI?.StartProgress(reloadTimer, "Reloading...");
     }
 
-    public void ApplyServerInput(bool firePressed, bool fireHeld, bool reloadPressed)
-    {
-        if (!SyncWithActiveItemInternal())
-            return;
-
-        if (isReloading)
-            return;
-
-        if (reloadPressed)
-        {
-            TryStartReload();
-            return;
-        }
-
-        bool shouldFire = weaponData != null && (weaponData.automatic ? fireHeld : firePressed);
-        if (shouldFire)
-            TryFire();
-    }
-
     private void FinishReload()
     {
         if (weaponData == null)
@@ -345,8 +322,14 @@ public class Weapon : MonoBehaviour
 
     private void SaveAmmoState()
     {
-        if (inventory != null && inventory.ActiveItem != null && inventory.ActiveItem.IsWeapon)
-            inventory.SetWeaponAmmo(inventory.ActiveItemInstance, currentAmmo, currentReserveAmmo);
+        if (inventory == null || inventory.ActiveItem == null || !inventory.ActiveItem.IsWeapon)
+            return;
+
+        inventory.SetWeaponAmmo(inventory.ActiveItemInstance, currentAmmo, currentReserveAmmo);
+
+        // The owner simulates its own gun; the host only keeps the ammo in the replicated inventory.
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer && networkAuthority.IsOwner)
+            networkAuthority.ReportAmmoServerRpc(currentAmmo, currentReserveAmmo);
     }
 
     private bool SyncWithActiveItemInternal()

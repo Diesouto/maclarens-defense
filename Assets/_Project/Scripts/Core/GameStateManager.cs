@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -92,16 +93,33 @@ public class GameStateManager : MonoBehaviour
         OnStateChanged?.Invoke(previous, state);
     }
 
+    public bool CanRestart => !NetworkRole.IsClientOnly;
+
     // Reloading the gameplay scene is the reset: every manager, loot, enemy and threat instance
     // is freshly created instead of hand-resetting each system one by one.
     public void RestartRun()
     {
+        if (!CanRestart)
+            return;
+
         Scene activeScene = SceneManager.GetActiveScene();
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager != null && networkManager.IsListening)
+        {
+            // Networked reload so every client follows the host into the fresh run.
+            networkManager.SceneManager.LoadScene(activeScene.name, LoadSceneMode.Single);
+            return;
+        }
+
         SceneManager.LoadScene(activeScene.buildIndex);
     }
 
     public void ReturnToMainMenu()
     {
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager != null && networkManager.IsListening)
+            networkManager.Shutdown();
+
         SceneManager.LoadScene(mainMenuSceneName);
     }
 }

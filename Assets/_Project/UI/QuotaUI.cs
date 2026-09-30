@@ -31,6 +31,12 @@ public class QuotaUI : MonoBehaviour
         Refresh();
     }
 
+    // OnEnable can run before the managers' Awake initializes quota and money.
+    private void Start()
+    {
+        Refresh();
+    }
+
     private void OnDisable()
     {
         if (quotaManager != null)

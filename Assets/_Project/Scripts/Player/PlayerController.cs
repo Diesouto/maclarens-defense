@@ -109,6 +109,8 @@ public class PlayerController : MonoBehaviour
         interactUI = ui;
     }
 
+    public Transform CameraTransform => cameraTransform;
+
     public void SetOutputCamera(Camera outputCamera)
     {
         if (outputCamera == null)
@@ -355,7 +357,10 @@ public class PlayerController : MonoBehaviour
         if (cameraTransform != null && ragdollCameraAnchor != null)
             cameraTransform.SetParent(ragdollCameraAnchor, true);
 
-        DeathCameraController.Instance?.NotifyPlayerDied(this);
+        if (DeathCameraController.Instance != null)
+            DeathCameraController.Instance.NotifyPlayerDied(this);
+        else
+            Debug.LogWarning("PlayerController: local player died but there is no DeathCameraController in the scene.", this);
 
         enabled = false;
     }

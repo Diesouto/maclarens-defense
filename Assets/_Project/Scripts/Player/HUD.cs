@@ -7,9 +7,13 @@ public class HUD : MonoBehaviour
     [SerializeField] private InventoryUI inventoryUI;
     [SerializeField] private BulletsUI bulletsUI;
     [SerializeField] private InteractUI interactUI;
+    [SerializeField] private DamageFeedback damageFeedback;
 
     private void Awake()
     {
+        if (damageFeedback == null)
+            damageFeedback = GetComponentInChildren<DamageFeedback>(true);
+
         if (healthUI == null)
             healthUI = GetComponentInChildren<HealthUI>(true);
 
@@ -49,6 +53,14 @@ public class HUD : MonoBehaviour
         healthUI?.Bind(localPlayer.GetComponent<Health>());
         inventoryUI?.Bind(inventory);
         bulletsUI?.Bind(inventory);
+
+        if (damageFeedback != null)
+        {
+            localPlayer.TryGetComponent(out PlayerController playerController);
+            damageFeedback.Bind(
+                localPlayer.GetComponent<Health>(),
+                playerController != null ? playerController.CameraTransform : null);
+        }
 
         if (interactUI == null)
             return;

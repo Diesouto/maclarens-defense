@@ -176,7 +176,9 @@ public class EnemySpawner : MonoBehaviour
             if (point == null || !point.IsValid())
                 continue;
 
-            float score = point.GetScore();
+            // TEMP playtest: random valid point instead of the one farthest from every player.
+            // float score = point.GetScore();
+            float score = UnityEngine.Random.value;
             if (score > bestScore)
             {
                 bestScore = score;

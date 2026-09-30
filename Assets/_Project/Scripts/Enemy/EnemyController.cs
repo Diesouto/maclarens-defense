@@ -11,6 +11,7 @@ public class EnemyController : MonoBehaviour
 
     [SerializeField] private float searchInterval = 1f;
     [SerializeField] private float attackDistance = 1.5f;
+    [SerializeField] private float attackVerticalReach = 1.2f;
     [SerializeField] private float attackDamage = 10f;
     [SerializeField] private float attackForce = 5f;
     [SerializeField] private float runSpeed = 4.5f;
@@ -90,7 +91,9 @@ public class EnemyController : MonoBehaviour
             {
                 agent.SetDestination(target.position);
 
-                if (!agent.pathPending && agent.remainingDistance <= attackDistance)
+                // remainingDistance is measured on the NavMesh: an airborne or unreachable player projects
+                // onto the mesh below, so the real 3D distance must also be within reach.
+                if (!agent.pathPending && agent.remainingDistance <= attackDistance && IsWithinAttackReach(target))
                 {
                     StartAttack(target);
                     target = null;
@@ -99,6 +102,16 @@ public class EnemyController : MonoBehaviour
 
             yield return new WaitForSeconds(searchInterval);
         }
+    }
+
+    private bool IsWithinAttackReach(Transform attackTarget)
+    {
+        Vector3 offset = attackTarget.position - transform.position;
+        float verticalOffset = Mathf.Abs(offset.y);
+        offset.y = 0f;
+
+        return offset.sqrMagnitude <= (attackDistance + 0.5f) * (attackDistance + 0.5f) &&
+            verticalOffset <= attackVerticalReach;
     }
 
     void StartAttack(Transform attackTarget)
@@ -124,8 +137,12 @@ public class EnemyController : MonoBehaviour
         yield return new WaitForSeconds(attackCooldown);
         isAttacking = false;
         networkState?.SetAttacking(false);
-        agent.isStopped = false;
+        if (IsAgentUsable())
+            agent.isStopped = false;
     }
+
+    // Clients disable the agent (the host drives enemies), but OnHit still fires there from replicated health.
+    private bool IsAgentUsable() => agent != null && agent.enabled && agent.isOnNavMesh && !isDead;
 
     void FindNearestPlayer()
     {
@@ -173,6 +190,9 @@ public class EnemyController : MonoBehaviour
     {
         if (animator != null)
             animator.SetTrigger("HasBeenHit");
+
+        if (!IsAgentUsable())
+            return;
 
         agent.isStopped = true;
         StartCoroutine(ResetAttack());
