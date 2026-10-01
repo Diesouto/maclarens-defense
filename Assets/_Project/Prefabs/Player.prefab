@@ -2782,35 +2782,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &4815162342108151628
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5860787695679847855}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4bb7a04faa191a848b3820b7d0f767a8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LassoTool
-  ShowTopMostFoldoutHeaderGroup: 1
-  range: 15
-  cooldown: 1.5
-  playerPullForce: 12
-  playerKnockdownDuration: 2.5
-  objectFlightTime: 0.6
-  eyeHeight: 1.6
-  hitPointTolerance: 1.5
-  ropeMaterial: {fileID: 0}
-  ropeColor: {r: 0.55, g: 0.4, b: 0.22, a: 1}
-  ropeWidth: 0.03
-  ropeOrigin: {fileID: 0}
-  ropeSegments: 20
-  ropeSag: 1.5
-  ropeDuration: 0.6
-  loopRadius: 0.45
-  loopSegments: 20
 --- !u!4 &4691649494528451186
 Transform:
   m_ObjectHideFlags: 0
@@ -2849,13 +2820,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 2
+  m_Height: 1.8
   m_Radius: 0.2
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 1, z: 0}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!114 &8149199625139822230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2946,6 +2917,10 @@ MonoBehaviour:
   minimumThrowForce: 2
   maximumThrowForce: 10
   interactUI: {fileID: 0}
+  drunkRoll: 8
+  drunkYawWobble: 4
+  drunkPitchWobble: 3
+  maximumDrunkStacks: 3
 --- !u!114 &7390504334859196634
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3031,6 +3006,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05c9233ea8f370748a94e5141867effd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBody
+  carryHoldDuration: 2
+  respawnGroundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  groundSnapHeight: 3
+  respawnGroundOffset: 0.1
 --- !u!114 &7434138952413738710
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3297,6 +3278,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkWeaponAuthority
   ShowTopMostFoldoutHeaderGroup: 1
+  eyeHeight: 1.6
+  hitPointTolerance: 1.5
+  maxHitForce: 100
 --- !u!114 &8246071983586520179
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3311,38 +3295,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkBodyCarrier
   ShowTopMostFoldoutHeaderGroup: 1
   carryDistance: 3
---- !u!114 &4815162342108151624
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5860787695679847855}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c3e9a41d25b4f6e8a0b1c2d3e4f5a6b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetworkTrainRider
-  ShowTopMostFoldoutHeaderGroup: 1
-  smoothing: 15
-  positionThreshold: 0.005
---- !u!114 &4815162342108151626
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5860787695679847855}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b1c4e2f7a8d4c3e9f0a1b2c3d4e5f60, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerKnockdown
-  ShowTopMostFoldoutHeaderGroup: 1
-  minimumUpForce: 0.35
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!114 &9179750907243030846
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3387,6 +3339,70 @@ MonoBehaviour:
       Synchronize: 1
       ParameterType: 9
   AnimatorParametersExpanded: 0
+--- !u!114 &4815162342108151624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5860787695679847855}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c3e9a41d25b4f6e8a0b1c2d3e4f5a6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkTrainRider
+  ShowTopMostFoldoutHeaderGroup: 1
+  smoothing: 15
+  positionThreshold: 0.005
+--- !u!114 &4815162342108151626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5860787695679847855}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b1c4e2f7a8d4c3e9f0a1b2c3d4e5f60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerKnockdown
+  ShowTopMostFoldoutHeaderGroup: 1
+  minimumUpForce: 0.35
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &4815162342108151628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5860787695679847855}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb7a04faa191a848b3820b7d0f767a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LassoTool
+  ShowTopMostFoldoutHeaderGroup: 1
+  range: 15
+  minimumRange: 5
+  cooldown: 1.5
+  chargeDuration: 1.5
+  minimumChargeForceFraction: 0.35
+  playerPullForce: 12
+  playerKnockdownDuration: 2.5
+  objectFlightTime: 0.6
+  eyeHeight: 1.6
+  hitPointTolerance: 1.5
+  ropeMaterial: {fileID: 0}
+  ropeColor: {r: 0.55, g: 0.4, b: 0.22, a: 1}
+  ropeWidth: 0.03
+  ropeOrigin: {fileID: 0}
+  ropeSegments: 20
+  ropeSag: 1.5
+  ropeDuration: 0.6
+  loopRadius: 0.45
+  loopSegments: 20
 --- !u!1 &6037817788625409431
 GameObject:
   m_ObjectHideFlags: 0
