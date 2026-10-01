@@ -12,15 +12,14 @@ public class ShopStand : MonoBehaviour, IInteractable
 
     private int AmmoRefillPrice => Mathf.CeilToInt(lootData.Price * ammoRefillPriceMultiplier);
 
+    // Resolved lazily: a stand without scene references can Awake before the manager singletons.
+    private MoneyManager Money => moneyManager != null ? moneyManager : moneyManager = MoneyManager.Instance;
+    private RunManager Run => runManager != null ? runManager : runManager = RunManager.Instance;
+    private bool IsShopOpen => Run == null || Run.CurrentPhase == RunPhase.MacLarens;
+
     private void Awake()
     {
         LootCatalog.Register(lootData);
-
-        if (runManager == null)
-            runManager = RunManager.Instance;
-
-        if (moneyManager == null)
-            moneyManager = MoneyManager.Instance;
 
         if (networkPurchaseAuthority == null)
             networkPurchaseAuthority = GetComponent<NetworkPurchaseAuthority>();
@@ -34,21 +33,17 @@ public class ShopStand : MonoBehaviour, IInteractable
         if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
             return false;
 
-        if (runManager != null &&
-            runManager.CurrentPhase != RunPhase.MacLarens &&
-            runManager.CurrentPhase != RunPhase.ResolvingDay)
-        {
+        if (!IsShopOpen)
             return false;
-        }
 
         PlayerInventory inventory = interactor.GetComponent<PlayerInventory>();
         if (inventory == null)
             return false;
 
         if (IsAmmoRefill(inventory))
-            return moneyManager != null && moneyManager.TeamMoney >= AmmoRefillPrice;
+            return Money != null && Money.TeamMoney >= AmmoRefillPrice;
 
-        if (moneyManager == null || moneyManager.TeamMoney < lootData.Price)
+        if (Money == null || Money.TeamMoney < lootData.Price)
             return false;
 
         return inventory.CanAdd(lootData);
@@ -71,14 +66,14 @@ public class ShopStand : MonoBehaviour, IInteractable
             if (!inventory.ActiveWeaponNeedsAmmo(lootData))
                 return $"{lootData.DisplayName} ammo is full";
 
-            return moneyManager != null && moneyManager.TeamMoney < AmmoRefillPrice
+            return Money != null && Money.TeamMoney < AmmoRefillPrice
                 ? $"Refill {lootData.DisplayName} ammo (${AmmoRefillPrice:N0}) - not enough money"
                 : $"Refill {lootData.DisplayName} ammo (${AmmoRefillPrice:N0})";
         }
 
         string buyText = $"Buy {lootData.DisplayName} (${lootData.Price:N0})";
 
-        if (moneyManager != null && moneyManager.TeamMoney < lootData.Price)
+        if (Money != null && Money.TeamMoney < lootData.Price)
             return $"{buyText} - not enough money";
 
         if (inventory != null && !inventory.CanAdd(lootData))
@@ -109,13 +104,12 @@ public class ShopStand : MonoBehaviour, IInteractable
         if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
             return false;
 
-        if (runManager != null && runManager.CurrentPhase != RunPhase.MacLarens &&
-            runManager.CurrentPhase != RunPhase.ResolvingDay)
+        if (!IsShopOpen || Money == null)
             return false;
 
         if (IsAmmoRefill(inventory))
         {
-            if (!inventory.ActiveWeaponNeedsAmmo(lootData) || !moneyManager.TrySpendMoney(AmmoRefillPrice))
+            if (!inventory.ActiveWeaponNeedsAmmo(lootData) || !Money.TrySpendMoney(AmmoRefillPrice))
                 return false;
 
             refilledAmmo = inventory.TryRefillActiveWeapon();
@@ -125,12 +119,12 @@ public class ShopStand : MonoBehaviour, IInteractable
         if (inventory == null || !inventory.CanAdd(lootData))
             return false;
 
-        if (!moneyManager.TrySpendMoney(lootData.Price))
+        if (!Money.TrySpendMoney(lootData.Price))
             return false;
 
         if (!inventory.TryAdd(lootData))
         {
-            moneyManager.AddMoney(lootData.Price);
+            Money.AddMoney(lootData.Price);
             return false;
         }
 

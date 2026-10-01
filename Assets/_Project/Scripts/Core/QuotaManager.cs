@@ -19,12 +19,8 @@ public class QuotaManager : MonoBehaviour
 {
     public static QuotaManager Instance { get; private set; }
 
-    [SerializeField, Min(0)] private int totalDebt = 10000;
     [SerializeField] private int currentQuota = 100;
 
-    public int TotalDebt => totalDebt;
-    public int DebtPaid { get; private set; }
-    public int DebtRemaining => Mathf.Max(totalDebt - DebtPaid, 0);
     public int CurrentQuota => currentQuota;
     public int EffectiveQuota => Mathf.Max(currentQuota + GetModifierTotal(), 0);
     public IReadOnlyList<QuotaModifier> Modifiers => modifiers;
@@ -32,16 +28,14 @@ public class QuotaManager : MonoBehaviour
     // Value currently stored across ALL train cargos.
     public int CurrentCargoValue { get; private set; }
 
-    // Value already delivered to the delivery point.
+    // Value delivered to the delivery point during the current quota round.
     public int DeliveredValue { get; private set; }
 
     public bool QuotaMet => MoneyManager.Instance != null &&
-        MoneyManager.Instance.TeamMoney >= AmountRequiredToFinishDay;
-    public int AmountRequiredToFinishDay => Mathf.Min(EffectiveQuota, DebtRemaining);
+        MoneyManager.Instance.TeamMoney >= EffectiveQuota;
 
     public event Action OnQuotaProgressChanged;
     public event Action OnQuotaMet;
-    public event Action OnDebtChanged;
     public event Action OnQuotaModifiersChanged;
 
     private bool quotaWasMet;
@@ -57,13 +51,12 @@ public class QuotaManager : MonoBehaviour
 
         Instance = this;
         currentQuota = Mathf.Max(currentQuota, 0);
-        totalDebt = Mathf.Max(totalDebt, 0);
     }
 
     private void Start()
     {
         if (RunManager.Instance != null)
-            RunManager.Instance.ApplyQuotaForCurrentDay();
+            RunManager.Instance.ApplyCurrentQuota();
     }
 
     private void OnDestroy()
@@ -72,6 +65,7 @@ public class QuotaManager : MonoBehaviour
             Instance = null;
     }
 
+    // Cargo is left untouched: loot still aboard the train belongs to the next round too.
     public void SetQuota(int quota)
     {
         if (IsNetworkClient())
@@ -80,7 +74,6 @@ public class QuotaManager : MonoBehaviour
         currentQuota = Mathf.Max(quota, 0);
 
         DeliveredValue = 0;
-        CurrentCargoValue = 0;
         quotaWasMet = false;
 
         OnQuotaProgressChanged?.Invoke();
@@ -89,32 +82,15 @@ public class QuotaManager : MonoBehaviour
             SetQuotaMet();
     }
 
-    public void ResetDebt()
-    {
-        if (IsNetworkClient())
-            return;
-
-        DebtPaid = 0;
-        ClearQuotaModifiers();
-        OnDebtChanged?.Invoke();
-    }
-
     public bool TryPayCurrentQuota(MoneyManager moneyManager)
     {
         if (IsNetworkClient())
             return false;
 
-        if (moneyManager == null || DebtRemaining <= 0)
+        if (moneyManager == null || !moneyManager.TrySpendMoney(EffectiveQuota))
             return false;
 
-        int payment = Mathf.Min(EffectiveQuota, DebtRemaining);
-
-        if (!moneyManager.TrySpendMoney(payment))
-            return false;
-
-        DebtPaid += payment;
         ClearQuotaModifiers();
-        OnDebtChanged?.Invoke();
         return true;
     }
 
@@ -193,18 +169,13 @@ public class QuotaManager : MonoBehaviour
     }
 
     // Clients mirror the host's effective quota directly; modifiers themselves stay host-side.
-    public void ApplyReplicatedState(int effectiveQuota, int debtPaid, int cargoValue, int deliveredValue)
+    public void ApplyReplicatedState(int effectiveQuota, int cargoValue, int deliveredValue)
     {
-        bool debtChanged = DebtPaid != debtPaid;
-
         currentQuota = Mathf.Max(effectiveQuota, 0);
-        DebtPaid = debtPaid;
         CurrentCargoValue = cargoValue;
         DeliveredValue = deliveredValue;
 
         OnQuotaProgressChanged?.Invoke();
-        if (debtChanged)
-            OnDebtChanged?.Invoke();
 
         if (!quotaWasMet && currentQuota > 0 && DeliveredValue >= currentQuota)
             SetQuotaMet();

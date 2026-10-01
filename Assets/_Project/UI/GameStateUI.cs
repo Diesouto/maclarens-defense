@@ -11,15 +11,27 @@ public class GameStateUI : MonoBehaviour
     [SerializeField] private GameObject panelRoot;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text causeText;
+    [Tooltip("Optional. When empty a stats label is created inside panelRoot.")]
+    [SerializeField] private TMP_Text statsText;
     [SerializeField] private Button restartButton;
     [SerializeField] private Button mainMenuButton;
 
-    [SerializeField] private string successTitle = "Debt paid!";
+    [SerializeField] private string successTitle = "Quotas paid!";
     [SerializeField] private string failTitle = "Defeat";
-    [SerializeField] private string successCauseText = "MacLarens is free. The crew made it.";
+    [SerializeField] private string successCauseText = "MacLarens is safe. The crew made it.";
     [SerializeField] private string teamWipeCauseText = "The whole crew went down.";
-    [SerializeField] private string quotaFailedCauseText = "The quota wasn't paid in time.";
+    [SerializeField] private string timeExpiredCauseText = "Te quedaste sin tiempo para pagar la cuota";
     [SerializeField] private string waitingForHostText = "Waiting for the host to restart...";
+
+    [Header("Stats")]
+    [Tooltip("{0} = run time, {1} = total money earned, {2} = quotas completed, {3} = quotas to win.")]
+    [SerializeField] private string runStatsFormat = "Run time: {0}\nMoney collected: ${1:N0}\nQuotas paid: {2} / {3}";
+    [Tooltip("{0} = player, {1} = enemies killed, {2} = deaths, {3} = revives.")]
+    [SerializeField] private string playerStatsFormat = "{0}  -  Kills: {1}   Deaths: {2}   Revives: {3}";
+
+    private RunManager runManager;
+    private MoneyManager moneyManager;
+    private bool isShowingPanel;
 
     private void Awake()
     {
@@ -28,6 +40,9 @@ public class GameStateUI : MonoBehaviour
 
         if (panelRoot == null)
             BuildDefaultPanel();
+
+        if (statsText == null && panelRoot != null)
+            statsText = CreateText("Stats", panelRoot.transform, 32f, new Vector2(0f, -120f), new Vector2(1400f, 320f));
 
         if (restartButton != null)
             restartButton.onClick.AddListener(HandleRestart);
@@ -44,6 +59,8 @@ public class GameStateUI : MonoBehaviour
         if (gameStateManager == null)
             gameStateManager = GameStateManager.Instance;
 
+        BindRunSources();
+
         if (gameStateManager != null)
         {
             gameStateManager.OnStateChanged += HandleStateChanged;
@@ -54,6 +71,8 @@ public class GameStateUI : MonoBehaviour
     // GameStateManager may not exist yet during OnEnable (Awake order is not guaranteed).
     private void Start()
     {
+        BindRunSources();
+
         if (gameStateManager != null)
             return;
 
@@ -69,6 +88,26 @@ public class GameStateUI : MonoBehaviour
     {
         if (gameStateManager != null)
             gameStateManager.OnStateChanged -= HandleStateChanged;
+
+        if (runManager != null)
+        {
+            runManager.OnRunStateChanged -= RefreshStats;
+            runManager.Stats.OnStatsChanged -= RefreshStats;
+        }
+    }
+
+    // Clients receive the final stats a few frames after the state change, so keep listening.
+    private void BindRunSources()
+    {
+        if (moneyManager == null)
+            moneyManager = MoneyManager.Instance;
+
+        if (runManager != null || RunManager.Instance == null)
+            return;
+
+        runManager = RunManager.Instance;
+        runManager.OnRunStateChanged += RefreshStats;
+        runManager.Stats.OnStatsChanged += RefreshStats;
     }
 
     private void HandleStateChanged(GameState previousState, GameState nextState)
@@ -79,6 +118,7 @@ public class GameStateUI : MonoBehaviour
     private void Refresh(GameState state)
     {
         bool showPanel = state == GameState.Success || state == GameState.Fail;
+        isShowingPanel = showPanel;
 
         if (panelRoot != null)
             panelRoot.SetActive(showPanel);
@@ -99,6 +139,31 @@ public class GameStateUI : MonoBehaviour
 
         if (restartButton != null)
             restartButton.gameObject.SetActive(gameStateManager.CanRestart);
+
+        RefreshStats();
+    }
+
+    private void RefreshStats()
+    {
+        if (!isShowingPanel || statsText == null || runManager == null)
+            return;
+
+        int totalSeconds = Mathf.FloorToInt(runManager.ElapsedRunSeconds);
+        string runTime = $"{totalSeconds / 60:00}:{totalSeconds % 60:00}";
+        int earned = moneyManager != null ? moneyManager.TotalEarned : 0;
+
+        var builder = new System.Text.StringBuilder();
+        builder.AppendFormat(runStatsFormat, runTime, earned, runManager.QuotasCompleted,
+            RunSettings.Describe(runManager.QuotasToWin));
+
+        foreach (PlayerRunStats player in runManager.Stats.All)
+        {
+            builder.Append('\n');
+            builder.AppendFormat(playerStatsFormat, player.PlayerName.ToString(), player.EnemiesKilled,
+                player.Deaths, player.Revives);
+        }
+
+        statsText.text = builder.ToString();
     }
 
     // Disabling the local input handler unlocks the cursor and stops gameplay input behind the panel.
@@ -116,7 +181,7 @@ public class GameStateUI : MonoBehaviour
         return cause switch
         {
             FailCause.TeamWipe => teamWipeCauseText,
-            FailCause.QuotaFailed => quotaFailedCauseText,
+            FailCause.TimeExpired => timeExpiredCauseText,
             _ => string.Empty
         };
     }
@@ -140,10 +205,11 @@ public class GameStateUI : MonoBehaviour
         Image background = panelRoot.AddComponent<Image>();
         background.color = new Color(0f, 0f, 0f, 0.8f);
 
-        titleText = CreateText("Title", panelRoot.transform, 96f, new Vector2(0f, 180f), new Vector2(1400f, 140f));
-        causeText = CreateText("Cause", panelRoot.transform, 40f, new Vector2(0f, 60f), new Vector2(1400f, 80f));
-        restartButton = CreateButton("RestartButton", panelRoot.transform, "Restart", new Vector2(-180f, -120f), out _);
-        mainMenuButton = CreateButton("MainMenuButton", panelRoot.transform, "Main Menu", new Vector2(180f, -120f), out _);
+        titleText = CreateText("Title", panelRoot.transform, 96f, new Vector2(0f, 330f), new Vector2(1400f, 140f));
+        causeText = CreateText("Cause", panelRoot.transform, 40f, new Vector2(0f, 210f), new Vector2(1400f, 80f));
+        statsText = CreateText("Stats", panelRoot.transform, 32f, new Vector2(0f, -20f), new Vector2(1400f, 360f));
+        restartButton = CreateButton("RestartButton", panelRoot.transform, "Restart", new Vector2(-180f, -300f), out _);
+        mainMenuButton = CreateButton("MainMenuButton", panelRoot.transform, "Main Menu", new Vector2(180f, -300f), out _);
         panelRoot.transform.SetAsLastSibling();
     }
 

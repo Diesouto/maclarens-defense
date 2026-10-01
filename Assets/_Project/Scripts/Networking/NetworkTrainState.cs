@@ -162,26 +162,26 @@ public class NetworkTrainState : NetworkBehaviour
         departure?.ShowDepartureCountdown(duration);
     }
 
-    public void RequestFinishDay()
+    public void RequestPayQuota()
     {
         if (!IsSpawned)
             return;
 
         if (IsServer)
-            ApplyFinishDay();
+            ApplyPayQuota();
         else
-            RequestFinishDayServerRpc();
+            RequestPayQuotaServerRpc();
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void RequestFinishDayServerRpc(RpcParams rpcParams = default)
+    private void RequestPayQuotaServerRpc(RpcParams rpcParams = default)
     {
         if (!NetworkManager.ConnectedClients.TryGetValue(rpcParams.Receive.SenderClientId, out NetworkClient client) ||
             client.PlayerObject == null ||
             (client.PlayerObject.TryGetComponent(out Health playerHealth) && playerHealth.IsDead))
             return;
 
-        ApplyFinishDay();
+        ApplyPayQuota();
     }
 
     private void BeginDeparture()
@@ -196,12 +196,12 @@ public class NetworkTrainState : NetworkBehaviour
         departure.BeginAuthoritativeDeparture();
     }
 
-    private void ApplyFinishDay()
+    private void ApplyPayQuota()
     {
-        if (!IsServer || runManager == null || runManager.CurrentPhase != RunPhase.ResolvingDay)
+        if (!IsServer || runManager == null)
             return;
 
-        runManager.FinishDay();
+        runManager.PayQuota();
     }
 
     private void SyncState()

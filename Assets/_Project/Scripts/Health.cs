@@ -12,6 +12,10 @@ public class Health : MonoBehaviour, IDamageable
     public float MaxHealth => maxHealth;
     public Vector3 LastHitDirection { get; private set; }
     public float LastHitForce { get; private set; }
+    // Client id of the player whose direct hit killed this entity; null for hazards and explosions.
+    public ulong? KillerId { get; private set; }
+
+    private ulong? pendingAttackerId;
 
     public event Action<float> OnHealthChanged;
     public event Action OnHit;
@@ -31,6 +35,11 @@ public class Health : MonoBehaviour, IDamageable
 
         networkHealth = GetComponent<NetworkHealth>();
     }
+
+    // Scope a hit to a player: set before TakeDamage, cleared right after by the same caller.
+    public void SetPendingAttacker(ulong attackerClientId) => pendingAttackerId = attackerClientId;
+
+    public void ClearPendingAttacker() => pendingAttackerId = null;
 
     public void TakeDamage(float damage)
     {
@@ -99,6 +108,7 @@ public class Health : MonoBehaviour, IDamageable
         if (CurrentHealth <= 0f)
         {
             Debug.Log($"{gameObject.name} has died.");
+            KillerId = pendingAttackerId;
             Die();
         }
     }
@@ -128,6 +138,7 @@ public class Health : MonoBehaviour, IDamageable
             return;
 
         CurrentHealth = Mathf.Max(1f, maxHealth * Mathf.Clamp01(healthFraction));
+        KillerId = null;
         OnHealthChanged?.Invoke(CurrentHealth);
         if (networkHealth != null)
             networkHealth.SyncFromHealth();

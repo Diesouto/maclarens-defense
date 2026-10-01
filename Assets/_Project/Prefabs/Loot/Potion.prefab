@@ -272,6 +272,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Gen_Prop_Potion_01
       objectReference: {fileID: 0}
+    - target: {fileID: 2616162624439434904, guid: 68da6e11f0050cb48a708855e9c3aee3, type: 3}
+      propertyPath: m_Convex
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

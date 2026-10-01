@@ -247,6 +247,10 @@ public class EnemyController : MonoBehaviour
         StopAllCoroutines();
         ThreatManager.Instance?.RegisterEnemyKill();
 
+        if (!NetworkRole.IsClientOnly && health != null && health.KillerId.HasValue &&
+            (GameStateManager.Instance == null || GameStateManager.Instance.IsRunActive))
+            RunManager.Instance?.Stats.RecordKill(health.KillerId.Value);
+
         if (agent != null)
             agent.enabled = false;
 

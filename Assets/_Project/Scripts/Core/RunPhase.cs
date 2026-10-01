@@ -4,6 +4,5 @@ public enum RunPhase
     TravelingToTown,
     Town,
     LeavingTown,
-    ReturningToMacLarens,
-    ResolvingDay
+    ReturningToMacLarens
 }

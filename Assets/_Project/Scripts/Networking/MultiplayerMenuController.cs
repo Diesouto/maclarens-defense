@@ -56,6 +56,15 @@ public class MultiplayerMenuController : MonoBehaviour
     [Header("Networking")]
     [SerializeField] private RelayJoinCodeManager relayManager;
 
+    [Header("Match Settings")]
+    [Tooltip("Main menu field used for single-player runs. Digits only, 0 = infinite.")]
+    [SerializeField] private TMP_InputField singlePlayerQuotasInput;
+    [SerializeField] private TMP_Text singlePlayerQuotasHintText;
+    [Tooltip("Lobby field; editable by the host only, read-only mirror for clients.")]
+    [SerializeField] private TMP_InputField lobbyQuotasInput;
+    [SerializeField] private TMP_Text lobbyQuotasHintText;
+    [SerializeField] private string quotasHintFormat = "Cuotas para ganar (0 = infinito): {0}";
+
     private const string PlayerNameKey = "PlayerName";
     private const string CharacterIndexKey = "PlayerCharacterIndex";
     private const int MaximumNameLength = 24;
@@ -75,8 +84,51 @@ public class MultiplayerMenuController : MonoBehaviour
         playerNameInput?.SetTextWithoutNotify(PlayerPrefs.GetString(PlayerNameKey, "Player"));
         CreateCharacterPreview();
         ApplyCharacterIndex(PlayerPrefs.GetInt(CharacterIndexKey, 0));
+        ConfigureQuotasInput(singlePlayerQuotasInput, HandleSinglePlayerQuotasEdited);
+        ConfigureQuotasInput(lobbyQuotasInput, HandleLobbyQuotasEdited);
+        ShowQuotas(singlePlayerQuotasInput, singlePlayerQuotasHintText, RunSettings.SavedQuotasToWin);
         ValidateReferences();
         BindButtons();
+    }
+
+    private void ConfigureQuotasInput(TMP_InputField input, UnityEngine.Events.UnityAction<string> onEndEdit)
+    {
+        if (input == null)
+            return;
+
+        input.contentType = TMP_InputField.ContentType.IntegerNumber;
+        input.characterLimit = 2;
+        // Replaces the built-in Integer validation, which would still accept a leading '-'.
+        input.onValidateInput = (_, _, character) => character >= '0' && character <= '9' ? character : '\0';
+        input.onEndEdit.AddListener(onEndEdit);
+    }
+
+    private void HandleSinglePlayerQuotasEdited(string text)
+    {
+        int value = RunSettings.TryParse(text, out int parsed) ? parsed : RunSettings.SavedQuotasToWin;
+        RunSettings.SetQuotasToWin(value);
+        ShowQuotas(singlePlayerQuotasInput, singlePlayerQuotasHintText, value);
+    }
+
+    private void HandleLobbyQuotasEdited(string text)
+    {
+        NetworkSessionManager session = NetworkSessionManager.Instance;
+        if (session == null || !session.IsServer)
+            return;
+
+        int value = RunSettings.TryParse(text, out int parsed) ? parsed : session.QuotasToWin.Value;
+        RunSettings.SetQuotasToWin(value);
+        session.SetQuotasToWin(value);
+        ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, value);
+    }
+
+    private void ShowQuotas(TMP_InputField input, TMP_Text hint, int value)
+    {
+        if (input != null && !input.isFocused)
+            input.SetTextWithoutNotify(value.ToString());
+
+        if (hint != null)
+            hint.text = string.Format(quotasHintFormat, RunSettings.Describe(value));
     }
 
     private void Update()
@@ -166,6 +218,12 @@ public class MultiplayerMenuController : MonoBehaviour
             NetworkBootstrapper.Instance.Shutdown();
             Destroy(servicesRoot);
         }
+
+        // Commits a value still being typed when Play is clicked without leaving the field.
+        if (singlePlayerQuotasInput != null && RunSettings.TryParse(singlePlayerQuotasInput.text, out int typedQuotas))
+            RunSettings.SetQuotasToWin(typedQuotas);
+        else
+            RunSettings.SetQuotasToWin(RunSettings.SavedQuotasToWin);
 
         SceneManager.LoadScene("MainScene", LoadSceneMode.Single);
     }
@@ -506,6 +564,10 @@ public class MultiplayerMenuController : MonoBehaviour
             startGameButton.gameObject.SetActive(localIsHost);
             startGameButton.interactable = localIsHost && session.CanStartRun();
         }
+
+        if (lobbyQuotasInput != null)
+            lobbyQuotasInput.interactable = localIsHost;
+        ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, session.QuotasToWin.Value);
     }
 
     private void HandleClientConnected(ulong clientId)

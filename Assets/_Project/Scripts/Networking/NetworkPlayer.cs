@@ -49,6 +49,10 @@ public class NetworkPlayer : NetworkBehaviour
     private Coroutine outputCameraSearch;
     private PlayerBody playerBody;
     private bool hasInitialSpawnPose;
+    private string offlinePlayerName = "Player";
+
+    public string PlayerName => IsSpawned ? DisplayName.Value.ToString() : offlinePlayerName;
+    public ulong StatsClientId => IsSpawned ? OwnerClientId : 0;
 
     public Vector3 InitialSpawnPosition { get; private set; }
     public Quaternion InitialSpawnRotation { get; private set; } = Quaternion.identity;
@@ -209,6 +213,7 @@ public class NetworkPlayer : NetworkBehaviour
             safeName = safeName.Substring(0, 24);
 
         CacheInitialSpawnPose();
+        offlinePlayerName = safeName;
         ApplyLocalOwnership(true);
         ApplyCharacterSelection(characterIndex);
         SetPlayerNameLabel(safeName);

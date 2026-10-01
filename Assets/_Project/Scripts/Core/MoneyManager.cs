@@ -8,6 +8,8 @@ public class MoneyManager : MonoBehaviour
     [SerializeField, Min(0)] private int startingTeamMoney;
 
     public int TeamMoney { get; private set; }
+    // Everything the crew delivered this run; refunds and spending never touch it.
+    public int TotalEarned { get; private set; }
 
     public event Action OnMoneyChanged;
 
@@ -41,6 +43,15 @@ public class MoneyManager : MonoBehaviour
         OnMoneyChanged?.Invoke();
     }
 
+    public void AddEarnings(int amount)
+    {
+        if (IsNetworkClient() || amount <= 0)
+            return;
+
+        TotalEarned += amount;
+        AddMoney(amount);
+    }
+
     public bool TrySpendMoney(int amount)
     {
         if (IsNetworkClient())
@@ -63,11 +74,14 @@ public class MoneyManager : MonoBehaviour
             return;
 
         TeamMoney = Mathf.Max(startingTeamMoney, 0);
+        TotalEarned = 0;
         OnMoneyChanged?.Invoke();
     }
 
-    public void ApplyReplicatedMoney(int teamMoney)
+    public void ApplyReplicatedMoney(int teamMoney, int totalEarned)
     {
+        TotalEarned = totalEarned;
+
         if (TeamMoney == teamMoney)
             return;
 

@@ -24,7 +24,7 @@ public class TownExtractionResolver : MonoBehaviour
             trainSplineFollower.OnTownExitReached += ResolveTownExit;
 
         if (runManager != null)
-            runManager.OnDayChanged += ResetForNextDay;
+            runManager.OnPhaseChanged += HandlePhaseChanged;
     }
 
     private void OnDisable()
@@ -33,12 +33,14 @@ public class TownExtractionResolver : MonoBehaviour
             trainSplineFollower.OnTownExitReached -= ResolveTownExit;
 
         if (runManager != null)
-            runManager.OnDayChanged -= ResetForNextDay;
+            runManager.OnPhaseChanged -= HandlePhaseChanged;
     }
 
-    private void ResetForNextDay(int day)
+    // The crew may make several trips per quota, so every new trip needs its own extraction.
+    private void HandlePhaseChanged(RunPhase phase)
     {
-        extractionResolved = false;
+        if (phase == RunPhase.TravelingToTown)
+            extractionResolved = false;
     }
 
     private void ResolveTownExit()

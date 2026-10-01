@@ -1,14 +1,15 @@
 using TMPro;
 using UnityEngine;
 
-// Lives on the Finish Day entity: always-current stats, independent from Owner dialogue.
-public class FinishDayStatusUI : MonoBehaviour
+// Lives on the Pay Quota entity: always-current stats, independent from Owner dialogue.
+public class QuotaStatusUI : MonoBehaviour
 {
     [SerializeField] private RunManager runManager;
     [SerializeField] private QuotaManager quotaManager;
     [SerializeField] private MoneyManager moneyManager;
     [SerializeField] private TMP_Text statusText;
-    [SerializeField] private string statusFormat = "Day {0} / {1}\nMoney ${2:N0}\nDebt ${3:N0}\nQuota ${4:N0}";
+    [Tooltip("{0} = quota round, {1} = quotas to win (or \u221E), {2} = team money, {3} = quota.")]
+    [SerializeField] private string quotaStatusFormat = "Quota {0} / {1}\nMoney ${2:N0}\nQuota ${3:N0}";
 
     private void OnEnable()
     {
@@ -22,21 +23,18 @@ public class FinishDayStatusUI : MonoBehaviour
             moneyManager = MoneyManager.Instance;
 
         if (runManager != null)
-            runManager.OnDayChanged += HandleDayChanged;
+            runManager.OnRunStateChanged += Refresh;
 
         if (moneyManager != null)
             moneyManager.OnMoneyChanged += Refresh;
 
         if (quotaManager != null)
-        {
             quotaManager.OnQuotaProgressChanged += Refresh;
-            quotaManager.OnDebtChanged += Refresh;
-        }
 
         Refresh();
     }
 
-    // OnEnable can run before the managers' Awake initializes money, debt and quota.
+    // OnEnable can run before the managers' Awake initializes money and quota.
     private void Start()
     {
         Refresh();
@@ -45,21 +43,13 @@ public class FinishDayStatusUI : MonoBehaviour
     private void OnDisable()
     {
         if (runManager != null)
-            runManager.OnDayChanged -= HandleDayChanged;
+            runManager.OnRunStateChanged -= Refresh;
 
         if (moneyManager != null)
             moneyManager.OnMoneyChanged -= Refresh;
 
         if (quotaManager != null)
-        {
             quotaManager.OnQuotaProgressChanged -= Refresh;
-            quotaManager.OnDebtChanged -= Refresh;
-        }
-    }
-
-    private void HandleDayChanged(int day)
-    {
-        Refresh();
     }
 
     private void Refresh()
@@ -67,12 +57,11 @@ public class FinishDayStatusUI : MonoBehaviour
         if (statusText == null)
             return;
 
-        int day = runManager != null ? runManager.CurrentDay : 0;
-        int totalDays = runManager != null ? runManager.TotalDays : 0;
+        int round = runManager != null ? runManager.CurrentQuotaRound : 0;
+        string target = runManager != null ? RunSettings.Describe(runManager.QuotasToWin) : "-";
         int money = moneyManager != null ? moneyManager.TeamMoney : 0;
-        int debt = quotaManager != null ? quotaManager.DebtRemaining : 0;
         int quota = quotaManager != null ? quotaManager.EffectiveQuota : 0;
 
-        statusText.text = string.Format(statusFormat, day, totalDays, money, debt, quota);
+        statusText.text = string.Format(quotaStatusFormat, round, target, money, quota);
     }
 }

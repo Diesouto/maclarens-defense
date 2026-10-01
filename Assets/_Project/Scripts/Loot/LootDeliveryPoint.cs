@@ -41,8 +41,8 @@ public class LootDeliveryPoint : MonoBehaviour
         // Remove the item from the active loot registry.
         LootRegistry.Instance?.Unregister(lootItem);
 
-        // Delivered loot becomes shared team money. Quota payment happens later at Finish Day.
-        MoneyManager.Instance?.AddMoney(value);
+        // Delivered loot becomes shared team money. The quota is paid later, explicitly, in MacLarens.
+        MoneyManager.Instance?.AddEarnings(value);
 
         // Networked loot must be despawned (not destroyed) so every peer removes it.
         NetworkObject networkObject = lootItem.GetComponent<NetworkObject>();

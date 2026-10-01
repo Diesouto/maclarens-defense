@@ -16,7 +16,7 @@ public enum FailCause
 {
     None,
     TeamWipe,
-    QuotaFailed
+    TimeExpired
 }
 
 public class GameStateManager : MonoBehaviour

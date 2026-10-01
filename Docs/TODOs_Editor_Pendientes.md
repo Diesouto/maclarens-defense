@@ -4,6 +4,40 @@ Lista de tareas que requieren Unity Editor (prefabs, escena, referencias seriali
 se pueden completar solo con cambios de codigo. Añadir aqui cualquier tarea nueva mientras no haya
 acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en Play Mode.
 
+## P5.0 - Loop de cuotas cronometradas (2026-10-01)
+
+- [ ] Crear el asset `RunConfig` (Create > MacLarens > Run Config), ajustar `quotaAmounts`,
+      `quotaTimeLimits`, `infiniteGrowth`, `timeCarryOverFraction` (0.5) y `defaultQuotasToWin`, y
+      asignarlo en `RunManager.runConfig` de `MainScene`. Sin asset se usan los valores por defecto.
+- [ ] Añadir `QuotaTimerUI` al Canvas del HUD. Si no se asigna `timerText`, crea una etiqueta
+      centrada arriba; si se asigna, `visibilityRoot` no puede ser el mismo objeto del script.
+- [x] `CargoValueUI`: automatico. Esta en el `Canvas` world-space de `Train_3` y apaga ese
+      `Canvas` (texto + fondo) fuera de `Town`. `visibilityRoot` solo si se quiere otro objeto.
+- [ ] Objeto de Finish Day: ahora es `PayQuotaInteractable` + `QuotaStatusUI` (renombrados
+      manteniendo GUID). Revisar que siguen enlazados, renombrar el GameObject y el texto del
+      cartel. `QuotaStatusUI` usa un campo nuevo `quotaStatusFormat` (el antiguo se ignora).
+- [ ] `MacLarensOwner`: la ocultacion es automatica (usa el `Canvas` hijo del prefab). Solo falta
+      actualizar las frases serializadas, que aun hablan de deuda/dias.
+- [ ] `GameStateUI`: revisar `successTitle`/`successCauseText` serializados (hablan de deuda) y
+      asignar `statsText` si el panel es authored (si no, se crea uno dentro de `panelRoot`).
+- [ ] `MenuScene`: crear un `TMP_InputField` + texto de ayuda en el menu principal
+      (`singlePlayerQuotasInput`, `singlePlayerQuotasHintText`) y otro en el lobby
+      (`lobbyQuotasInput`, `lobbyQuotasHintText`). La validacion (solo digitos, 2 caracteres,
+      0-99, 0 = infinito) la aplica el codigo.
+- [ ] `RunManager` de `MainScene`: los campos antiguos `dayQuotas`/`failOnAnyMissedQuota` y
+      `QuotaManager.totalDebt` quedan huerfanos en la escena; se limpian al guardar.
+- [ ] Playtest:
+  - Comprar pocion y lazo empezando con $100.
+  - Canvas del Owner oculto al empezar, visible al hablar, oculto a los 10 s.
+  - Lanzar la pocion junto a un jugador herido: cura y no aparece el error de `MeshCollider`.
+  - Temporizador oculto hasta la primera salida; no se reinicia en viajes de ida y vuelta.
+  - Pagar la cuota: sube la siguiente y el temporizador arranca en la siguiente salida.
+  - Agotar el tiempo en el pueblo: `Fail` inmediato, todos mueren, mensaje de tiempo agotado.
+  - Ganar con 1 y 3 cuotas; modo infinito (0) no termina.
+  - Pantalla final con tiempo, dinero recaudado y kills/muertes/resurrecciones por jugador.
+  - Cliente: mismo temporizador, cuota y estadisticas que el host; solo el host edita las cuotas
+    del lobby.
+
 ## Interaccion, respawn y flavour (2026-10-01)
 
 - [ ] `InteractUI` del Canvas: asignar opcionalmente `keyHintText` (un TMP aparte para `[E]`). Si se

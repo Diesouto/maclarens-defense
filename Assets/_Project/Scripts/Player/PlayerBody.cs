@@ -92,9 +92,18 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     private void HandleDeath()
     {
+        if (IsRunActive && !NetworkRole.IsClientOnly)
+            RunManager.Instance?.Stats.RecordDeath(StatsClientId, StatsPlayerName);
+
         if (IsTeamWiped)
             GameStateManager.Instance?.SetFail(FailCause.TeamWipe);
     }
+
+    public ulong StatsClientId => networkPlayer != null ? networkPlayer.StatsClientId : 0;
+    public string StatsPlayerName => networkPlayer != null ? networkPlayer.PlayerName : name;
+
+    // Deaths caused by the run ending (time out) must not count against the crew.
+    private static bool IsRunActive => GameStateManager.Instance == null || GameStateManager.Instance.IsRunActive;
 
     public bool CanInteract(PlayerInteractor interactor)
     {
@@ -140,7 +149,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
         IsPendingRespawn = true;
     }
 
-    // Called by whoever resolves Town extraction, before RunManager reaches ResolvingDay.
+    // Called by whoever resolves Town extraction, before the train is back at MacLarens.
     public void Hide()
     {
         if (Carrier != null)
@@ -240,6 +249,9 @@ public class PlayerBody : MonoBehaviour, IInteractable
         health.Revive(healthFraction);
         if (playerController != null)
             playerController.Revive();
+
+        if (IsRunActive)
+            RunManager.Instance?.Stats.RecordRevive(StatsClientId, StatsPlayerName);
     }
 
     private void ResolveRespawnPose(Transform fallbackSpawnPoint, out Vector3 position, out Quaternion rotation)

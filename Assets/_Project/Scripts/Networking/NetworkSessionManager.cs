@@ -52,6 +52,10 @@ public class NetworkSessionManager : NetworkBehaviour
     public NetworkVariable<MultiplayerSessionState> SessionState = new();
     public NetworkVariable<ulong> HostClientId = new();
     public NetworkVariable<int> MaxPlayers = new();
+    public NetworkVariable<int> QuotasToWin = new(
+        RunSettings.DefaultQuotasToWin,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
     public NetworkList<LobbyPlayerEntry> Players = new();
 
     public event Action<ulong> OnPlayerJoined;
@@ -102,6 +106,7 @@ public class NetworkSessionManager : NetworkBehaviour
         playerLookup.Clear();
         Players.Clear();
         MaxPlayers.Value = maxPlayers;
+        QuotasToWin.Value = RunSettings.SavedQuotasToWin;
         SetSessionState(MultiplayerSessionState.Lobby);
         HostClientId.Value = NetworkManager.Singleton.LocalClientId;
         AddOrUpdatePlayer(HostClientId.Value, "Host", true, true);
@@ -134,6 +139,14 @@ public class NetworkSessionManager : NetworkBehaviour
 
         maxPlayers = Mathf.Clamp(requestedMaxPlayers, 1, 4);
         MaxPlayers.Value = maxPlayers;
+    }
+
+    public void SetQuotasToWin(int value)
+    {
+        if (!IsServer || SessionState.Value != MultiplayerSessionState.Lobby)
+            return;
+
+        QuotasToWin.Value = RunSettings.Sanitize(value);
     }
 
     public void AddOrUpdatePlayer(ulong clientId, string playerName, bool isHost, bool isReady, int characterIndex = 0)
@@ -243,6 +256,8 @@ public class NetworkSessionManager : NetworkBehaviour
         if (!CanStartRun())
             return;
 
+        // Only the host simulates RunManager; clients receive the value through NetworkRunState.
+        RunSettings.SetQuotasToWin(QuotasToWin.Value);
         SetSessionState(MultiplayerSessionState.Starting);
         SceneEventProgressStatus loadStatus = NetworkManager.Singleton.SceneManager.LoadScene("MainScene", LoadSceneMode.Single);
         if (loadStatus != SceneEventProgressStatus.Started)

@@ -4,8 +4,8 @@ using UnityEngine;
 
 // Resolves what happens to dead players' bodies once Town is left behind: a body still inside
 // Town at that moment is abandoned (quota penalty, respawns later); a body already carried out
-// (e.g. aboard the departing train) is recovered (no penalty). Both revive once the run reaches
-// ResolvingDay (train arrived at MacLarens), never earlier.
+// (e.g. aboard the departing train) is recovered (no penalty). Both revive once the train is back
+// at MacLarens, never earlier.
 public class BodyRecoveryManager : MonoBehaviour
 {
     public static BodyRecoveryManager Instance { get; private set; }
@@ -102,7 +102,8 @@ public class BodyRecoveryManager : MonoBehaviour
 
     private void HandlePhaseChanged(RunPhase phase)
     {
-        if (phase != RunPhase.ResolvingDay)
+        // Arrival back at MacLarens is the only MacLarens transition that happens mid-run.
+        if (phase != RunPhase.MacLarens || NetworkRole.IsClientOnly)
             return;
 
         foreach (PendingRespawn pending in pendingRespawns)

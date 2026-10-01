@@ -46,7 +46,10 @@ public class NetworkWeaponAuthority : NetworkBehaviour
             damage *= weaponData.headshotMultiplier;
 
         Vector3 direction = hitDirection.sqrMagnitude > 0.0001f ? hitDirection.normalized : (hitPoint - eye).normalized;
+        Health targetHealthComponent = targetObject.GetComponent<Health>();
+        targetHealthComponent?.SetPendingAttacker(OwnerClientId);
         targetHealth.ApplyServerDamage(damage, direction, Mathf.Clamp(hitForce, 0f, maxHitForce));
+        targetHealthComponent?.ClearPendingAttacker();
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]

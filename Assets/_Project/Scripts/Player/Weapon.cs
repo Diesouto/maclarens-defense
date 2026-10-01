@@ -27,6 +27,8 @@ public class Weapon : MonoBehaviour
     private int equippedRefillCount;
     private int shotId;
 
+    private ulong ShooterClientId => networkAuthority != null && networkAuthority.IsSpawned ? networkAuthority.OwnerClientId : 0;
+
     private void Awake()
     {
         if (inputHandler == null)
@@ -260,7 +262,10 @@ public class Weapon : MonoBehaviour
                 }
                 else
                 {
+                    Health targetHealth = explosiveTarget == null ? hit.collider.GetComponentInParent<Health>() : null;
+                    targetHealth?.SetPendingAttacker(ShooterClientId);
                     damageable.TakeDamage(damage, hitDirection, hitForce);
+                    targetHealth?.ClearPendingAttacker();
                 }
             }
 

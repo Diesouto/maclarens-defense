@@ -40,7 +40,7 @@ public class ThreatManager : MonoBehaviour
     {
         if (RunManager.Instance != null)
         {
-            RunManager.Instance.OnDayChanged += ResetThreat;
+            RunManager.Instance.OnQuotaRoundChanged += ResetThreat;
             RunManager.Instance.OnPhaseChanged += HandlePhaseChanged;
         }
     }
@@ -49,7 +49,7 @@ public class ThreatManager : MonoBehaviour
     {
         if (RunManager.Instance != null)
         {
-            RunManager.Instance.OnDayChanged -= ResetThreat;
+            RunManager.Instance.OnQuotaRoundChanged -= ResetThreat;
             RunManager.Instance.OnPhaseChanged -= HandlePhaseChanged;
         }
     }
@@ -76,21 +76,27 @@ public class ThreatManager : MonoBehaviour
 
     private bool IsThreatActiveInTown()
     {
-        if (RunManager.Instance != null &&
-            RunManager.Instance.CurrentPhase != RunPhase.Town &&
-            RunManager.Instance.CurrentPhase != RunPhase.LeavingTown)
-        {
+        if (!IsThreatPhase())
             return false;
-        }
 
         return InTownTrigger.Instance == null ||
             InTownTrigger.Instance.AnyPlayerInside;
     }
 
+    private static bool IsThreatPhase()
+    {
+        if (RunManager.Instance == null)
+            return true;
+
+        RunPhase phase = RunManager.Instance.CurrentPhase;
+        return phase == RunPhase.TravelingToTown || phase == RunPhase.Town;
+    }
+
     // First-time-only pickup threat is enforced by the caller (ItemInstance.HasTriggeredThreat), not here.
     public void RegisterLootPickup()
     {
-        AddThreat(lootPickupThreat);
+        if (IsThreatActiveInTown())
+            AddThreat(lootPickupThreat);
     }
 
     // Gunfire draws attention: killing makes the town angrier, not calmer.
@@ -158,7 +164,7 @@ public class ThreatManager : MonoBehaviour
 
     private void HandlePhaseChanged(RunPhase phase)
     {
-        if (phase != RunPhase.Town)
+        if (!IsThreatPhase())
             ResetThreat();
     }
 

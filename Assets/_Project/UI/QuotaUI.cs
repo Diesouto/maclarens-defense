@@ -8,7 +8,7 @@ public class QuotaUI : MonoBehaviour
     [SerializeField] private TMPro.TextMeshProUGUI statusText;
 
     [SerializeField] private string quotaFormat = "${0:N0} / ${1:N0}";
-    [SerializeField] private string quotaMetMessage = "Quota reached";
+    [SerializeField] private string quotaMetMessage = "Pay the quota in MacLarens";
     [SerializeField] private string quotaPendingMessage = "Quota pending";
 
     private void OnEnable()

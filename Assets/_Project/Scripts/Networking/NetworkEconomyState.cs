@@ -8,11 +8,7 @@ public class NetworkEconomyState : NetworkBehaviour
         0,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
-    public NetworkVariable<int> DebtPaid = new(
-        0,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server);
-    public NetworkVariable<int> DebtRemaining = new(
+    public NetworkVariable<int> TotalEarned = new(
         0,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
@@ -38,8 +34,7 @@ public class NetworkEconomyState : NetworkBehaviour
         }
 
         TeamMoney.OnValueChanged += HandleValueChanged;
-        DebtPaid.OnValueChanged += HandleValueChanged;
-        DebtRemaining.OnValueChanged += HandleValueChanged;
+        TotalEarned.OnValueChanged += HandleValueChanged;
         CurrentQuota.OnValueChanged += HandleValueChanged;
         CurrentCargoValue.OnValueChanged += HandleValueChanged;
         DeliveredValue.OnValueChanged += HandleValueChanged;
@@ -49,8 +44,7 @@ public class NetworkEconomyState : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         TeamMoney.OnValueChanged -= HandleValueChanged;
-        DebtPaid.OnValueChanged -= HandleValueChanged;
-        DebtRemaining.OnValueChanged -= HandleValueChanged;
+        TotalEarned.OnValueChanged -= HandleValueChanged;
         CurrentQuota.OnValueChanged -= HandleValueChanged;
         CurrentCargoValue.OnValueChanged -= HandleValueChanged;
         DeliveredValue.OnValueChanged -= HandleValueChanged;
@@ -60,10 +54,9 @@ public class NetworkEconomyState : NetworkBehaviour
 
     private void ApplyToManagers()
     {
-        MoneyManager.Instance?.ApplyReplicatedMoney(TeamMoney.Value);
+        MoneyManager.Instance?.ApplyReplicatedMoney(TeamMoney.Value, TotalEarned.Value);
         QuotaManager.Instance?.ApplyReplicatedState(
             CurrentQuota.Value,
-            DebtPaid.Value,
             CurrentCargoValue.Value,
             DeliveredValue.Value);
     }
@@ -81,15 +74,13 @@ public class NetworkEconomyState : NetworkBehaviour
             int teamMoney = Mathf.Max(MoneyManager.Instance.TeamMoney, 0);
             if (TeamMoney.Value != teamMoney)
                 TeamMoney.Value = teamMoney;
+            if (TotalEarned.Value != MoneyManager.Instance.TotalEarned)
+                TotalEarned.Value = MoneyManager.Instance.TotalEarned;
         }
 
         if (QuotaManager.Instance == null)
             return;
 
-        if (DebtPaid.Value != Mathf.Max(QuotaManager.Instance.DebtPaid, 0))
-            DebtPaid.Value = Mathf.Max(QuotaManager.Instance.DebtPaid, 0);
-        if (DebtRemaining.Value != Mathf.Max(QuotaManager.Instance.DebtRemaining, 0))
-            DebtRemaining.Value = Mathf.Max(QuotaManager.Instance.DebtRemaining, 0);
         if (CurrentQuota.Value != Mathf.Max(QuotaManager.Instance.EffectiveQuota, 0))
             CurrentQuota.Value = Mathf.Max(QuotaManager.Instance.EffectiveQuota, 0);
         if (CurrentCargoValue.Value != Mathf.Max(QuotaManager.Instance.CurrentCargoValue, 0))

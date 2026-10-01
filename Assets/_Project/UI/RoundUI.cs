@@ -14,19 +14,19 @@ public class RoundUI : MonoBehaviour
         if (runManager == null)
             return;
 
-        runManager.OnDayChanged += Refresh;
-        Refresh(runManager.CurrentDay);
+        runManager.OnRunStateChanged += Refresh;
+        Refresh();
     }
 
     private void OnDisable()
     {
         if (runManager != null)
-            runManager.OnDayChanged -= Refresh;
+            runManager.OnRunStateChanged -= Refresh;
     }
 
-    private void Refresh(int round)
+    private void Refresh()
     {
-        if (roundNumberText != null)
-            roundNumberText.text = round.ToString();
+        if (roundNumberText != null && runManager != null)
+            roundNumberText.text = $"{runManager.CurrentQuotaRound} / {RunSettings.Describe(runManager.QuotasToWin)}";
     }
 }

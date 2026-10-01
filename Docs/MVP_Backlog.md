@@ -228,6 +228,11 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 
 ## P5 - MVP freeze
 
+- `[P5.0][Core] Loop de cuotas cronometradas (sustituye dias y deuda)`
+  Resultado: el temporizador de cuota empieza al salir el tren de MacLarens; el equipo puede hacer tantos viajes como quiera, paga la cuota de forma explicita en MacLarens y pasa a una cuota mayor. Se gana al completar `QuotasToWin` cuotas (menu/lobby, 0 = infinito). Si se acaba el tiempo, `Fail` inmediato y todo el equipo muere.
+  Aceptacion: el temporizador no se reinicia entre viajes; pagar antes de tiempo arrastra `timeCarryOverFraction` del tiempo sobrante; se gana con N = 1 y N = 3; el modo infinito no termina; host y cliente ven el mismo temporizador y cuota; la pantalla final muestra tiempo, dinero recaudado y estadisticas por jugador.
+  Estado: codigo implementado (`RunManager`, `RunConfigSO`, `RunSettings`, `RunStatsTracker`, `PayQuotaInteractable`, `QuotaTimerUI`, `QuotaStatusUI`, replicacion en `NetworkRunState`/`NetworkEconomyState`/`NetworkSessionManager`). Falta wiring en el Editor y validar en Play Mode.
+
 - `[P5.1][Core] Crear GameStateManager`
   Resultado: cuatro estados globales (`Menu`, `Run`, `Success`, `Fail`) con entrada, salida y evento `OnStateChanged`.
   Aceptacion: `Fail` y `Success` detienen gameplay, spawning e interacciones; ningun sistema usa una fase funcional del run como estado global.
@@ -242,8 +247,7 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Aceptacion: no existe dinero individual; vender y comprar modifican el bote y todas las operaciones pasan por este manager.
 
 - `✅ [P5.4][Core] Convertir QuotaManager en deuda y cuotas`
-  Resultado: deuda total, deuda restante, cuota base, modificadores de cuota, deuda pagada y dias restantes separados de `CargoValue` y `TeamMoney`.
-  Aceptacion: `Finish Day` calcula la cuota efectiva, comprueba el dinero disponible, descuenta el pago de `TeamMoney` y suma exactamente ese pago a `DebtPaid`; `DeliveredValue` no se usa como deuda pagada.
+  Estado: sustituido por P5.0. La deuda y los dias desaparecen; `QuotaManager` solo gestiona cuota efectiva y modificadores.
 
 - `✅ [P5.5][Train] Completar entrega física de loot en MacLarens`
   Resultado: los `LootItem` fisicos que entran en `LootDeliveryPoint` se retiran del mundo/cargo y su valor se añade a `TeamMoney`.
@@ -253,7 +257,7 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
 - `✅ [P5.6][World] Crear fase MacLarens y Finish Day`
   Resultado: zona segura con venta, compras, curacion/municion, preparacion y accion explicita de cierre.
   Aceptacion: el equipo puede vender y comprar antes de cerrar; al pulsar `Finish Day` se bloquean nuevas compras y el resultado de la cuota queda fijado.
-  Estado: `FinishDayInteractable` implementado para `ResolvingDay`. `ShopStand` implementado: interactuable que entrega un `LootDataSO` y descuenta su `Price` de `TeamMoney`, disponible durante `RunPhase.MacLarens` y `RunPhase.ResolvingDay` (ambas representan estar en la zona segura) con dinero y espacio de inventario suficientes. Falta colocar y probar los objetos en escena.
+  Estado: `FinishDayInteractable` sustituido por `PayQuotaInteractable` (P5.0). `ShopStand` implementado: interactuable que entrega un `LootDataSO` y descuenta su `Price` de `TeamMoney`, disponible durante `RunPhase.MacLarens` con dinero y espacio de inventario suficientes. Falta colocar y probar los objetos en escena.
 
 - <span style="color:#2f81f7">✅ `[P5.7][Extraction] Resolver abandono del pueblo al partir el tren`</span>
   Resultado: la salida del tren cierra la expedicion y el fog limpia jugadores atrasados, cuerpos, enemigos, loot restante y entidades temporales antes del regreso.
@@ -269,18 +273,18 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: la muerte deja un cuerpo transportable; cuerpo a bordo revive al llegar al MacLarens y cuerpo abandonado respawnea alli con modificador de cuota.
   Aceptacion: la resolucion distingue cuerpo recuperado y abandonado; el wipe se evalua por separado y provoca `Fail` inmediato.
 
-- `[P5.9][Fail] Implementar team wipe y cuota fallida`
+- `[P5.9][Fail] Implementar team wipe y tiempo agotado`
   Resultado: todas las derrotas llegan a `GameState.Fail` con causa y resultado visibles.
-  Aceptacion: el wipe es inmediato; la cuota solo causa fallo al cerrar el ultimo dia sin dinero suficiente; `Restart` recarga una run limpia y `Main Menu` sale del flujo.
+  Aceptacion: el wipe es inmediato; quedarse sin tiempo provoca `Fail` inmediato con el mensaje "Te quedaste sin tiempo para pagar la cuota" y mata a todo el equipo; `Restart` recarga una run limpia y `Main Menu` sale del flujo.
 
-- `[P5.10][Success] Implementar deuda pagada`
-  Resultado: `DebtRemaining == 0` lleva a `GameState.Success`.
-  Aceptacion: el pago final se descuenta del bote, no se puede comprar ni continuar la run despues y se ofrecen `Play Again` y `Main Menu`.
+- `[P5.10][Success] Completar las cuotas objetivo`
+  Resultado: pagar la cuota numero `QuotasToWin` lleva a `GameState.Success` (nunca en modo infinito).
+  Aceptacion: el pago final se descuenta del bote, no se puede comprar ni continuar despues y se ofrecen `Play Again` y `Main Menu`.
 
 - `✅ [P5.11][Story] Crear Owner de MacLarens`
   Resultado: NPC interactuable que muestra dialogos ciclicos sin ownership de reglas ni de estado de la run.
   Aceptacion: los textos avanzan al interactuar (`texto 1 -> texto 2 -> texto 3 -> texto 1`); el dia, dinero y deuda se muestran en un componente separado (`FinishDayStatusUI`), no en el Owner.
-  Estado: `MacLarensOwner` simplificado a dialogo puro (sin leer RunManager/QuotaManager/MoneyManager). `FinishDayStatusUI` implementado en el objeto de Finish Day, se actualiza por eventos (`OnDayChanged`, `OnMoneyChanged`, `OnDebtChanged`, `OnQuotaProgressChanged`) y al activarse, no solo al interactuar..
+  Estado: `MacLarensOwner` simplificado a dialogo puro (sin leer RunManager/QuotaManager/MoneyManager). `QuotaStatusUI` (antes `FinishDayStatusUI`) implementado en el objeto de pago de cuota, se actualiza por eventos (`OnDayChanged`, `OnMoneyChanged`, `OnDebtChanged`, `OnQuotaProgressChanged`) y al activarse, no solo al interactuar..
 
 - `✅ [P5.12][UI] Completar HUD de Story Mode`
   Resultado: deuda, dinero, dia/cuotas, threat, inventario y `Cargo Value` son legibles y separados.
@@ -290,9 +294,9 @@ No se debe saltar de bloque salvo que el bloque anterior ya tenga validacion jug
   Resultado: Menú principal con opciones Play y Exit, pantalla de Success con Restart y Exit y pantalla de Defeat con Restart y Exit.
   Aceptacion: las pantallas son funcionales y aparecen cuando corresponde.
 
-- `[P5.14][Balance] Tunear economia, cuotas, dias y threat del Story Mode`
+- `[P5.14][Balance] Tunear economia, cuotas, tiempo y threat`
   Resultado: la run ofrece decisiones de riesgo reales y una ruta posible de victoria.
-  Aceptacion: se valida el flujo completo, una cuota persistente entre dias, un modificador por abandono, un team wipe, un fallo del ultimo dia y un pago de deuda completo.
+  Aceptacion: se valida el flujo completo, varios viajes por cuota, un modificador por abandono, un team wipe, un tiempo agotado y la victoria con N cuotas; `RunConfigSO` (cuotas, tiempos, `timeCarryOverFraction`) queda ajustado.
 
 - `[P5.15][Build] Generar build interna estable`
   Resultado: vertical slice portable y demostrable.
@@ -533,8 +537,7 @@ Regla de bloque: no se abre P6 hasta que P5 este cerrado y validado en Play Mode
 ## P8 - Post-MVP: Infinity Mode y cooperacion avanzada
 
 - `[Core] Infinity Mode`
-  Resultado: cuotas progresivamente mayores sin deuda final, con record de dinero, cuota y dias sobrevividos.
-  Aceptacion: separado de Story Mode y sin cambiar sus reglas de victoria o derrota.
+  Estado: incluido en P5.0 como `QuotasToWin = 0`. Pendiente solo guardar records (dinero, cuotas, tiempo) entre partidas.
 - `[UI] Menú de opciones de partida (fuego amigo...)`
 
 ## Reglas de prioridad

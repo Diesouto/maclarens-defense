@@ -1,20 +1,32 @@
 using System;
 using UnityEngine;
 
+// Owns the timed-quota loop: quota rounds, the quota timer, win/lose checks and run stats.
+// Server-authoritative; clients only mirror state through ApplyReplicatedRunState.
 public class RunManager : MonoBehaviour
 {
     public static RunManager Instance { get; private set; }
 
-    [SerializeField] private int[] dayQuotas = { 100, 150, 200 };
-    [Tooltip("If enabled, missing the quota fails the run immediately on any day instead of only on the last one.")]
-    [SerializeField] private bool failOnAnyMissedQuota = false;
+    [Tooltip("Quota amounts and time limits. When empty a default config is used.")]
+    [SerializeField] private RunConfigSO runConfig;
 
-    public int CurrentDay { get; private set; } = 1;
+    public int CurrentQuotaRound { get; private set; } = 1;
+    public int QuotasCompleted { get; private set; }
+    public int QuotasToWin { get; private set; }
+    public bool IsInfinite => QuotasToWin == RunSettings.InfiniteQuotas;
     public RunPhase CurrentPhase { get; private set; } = RunPhase.MacLarens;
-    public int TotalDays => dayQuotas != null ? dayQuotas.Length : 0;
 
-    public event Action<int> OnDayChanged;
+    public float TimeRemaining { get; private set; }
+    public bool IsTimerRunning { get; private set; }
+    // Hidden until the train first leaves for the current quota.
+    public bool HasTimerStarted { get; private set; }
+    public float ElapsedRunSeconds { get; private set; }
+
+    public RunStatsTracker Stats { get; } = new();
+
+    public event Action<int> OnQuotaRoundChanged;
     public event Action<RunPhase> OnPhaseChanged;
+    public event Action OnRunStateChanged;
 
     private void Awake()
     {
@@ -25,62 +37,70 @@ public class RunManager : MonoBehaviour
         }
 
         Instance = this;
+
+        if (runConfig == null)
+            runConfig = ScriptableObject.CreateInstance<RunConfigSO>();
     }
 
     private void OnDestroy()
     {
         if (Instance == this)
             Instance = null;
+
+        if (GameStateManager.Instance != null)
+            GameStateManager.Instance.OnStateChanged -= HandleGameStateChanged;
     }
 
     private void Start()
     {
+        if (GameStateManager.Instance != null)
+            GameStateManager.Instance.OnStateChanged += HandleGameStateChanged;
+
         GameStateManager.Instance?.StartRun();
         SetPhase(RunPhase.MacLarens);
-        ApplyQuotaForCurrentDay();
+
+        if (IsNetworkClient())
+            return;
+
+        QuotasToWin = RunSettings.HasValue ? RunSettings.QuotasToWin : runConfig.DefaultQuotasToWin;
+        StartQuotaRound(0f);
     }
 
-    public void ApplyQuotaForCurrentDay()
+    private void Update()
+    {
+        if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
+            return;
+
+        float deltaTime = Time.deltaTime;
+        ElapsedRunSeconds += deltaTime;
+
+        if (!IsTimerRunning)
+            return;
+
+        // Clients count down locally between replicated snapshots so the HUD stays smooth.
+        TimeRemaining = Mathf.Max(TimeRemaining - deltaTime, 0f);
+
+        if (TimeRemaining <= 0f && !IsNetworkClient())
+            HandleTimeExpired();
+    }
+
+    // Pushes the current round's base quota without touching the timer; safe to call repeatedly.
+    public void ApplyCurrentQuota()
     {
         if (IsNetworkClient())
             return;
 
-        if (dayQuotas == null || dayQuotas.Length == 0)
-            return;
-
-        int index = Mathf.Clamp(CurrentDay - 1, 0, dayQuotas.Length - 1);
-        int quota = dayQuotas[index];
-
-        if (QuotaManager.Instance != null)
-            QuotaManager.Instance.SetQuota(quota);
+        QuotaManager.Instance?.SetQuota(runConfig.GetQuota(CurrentQuotaRound));
     }
 
-    public void AdvanceDay()
+    private void StartQuotaRound(float carriedOverSeconds)
     {
-        if (IsNetworkClient())
-            return;
-
-        if (CurrentDay >= TotalDays)
-            return;
-
-        CurrentDay++;
-        SetPhase(RunPhase.MacLarens);
-        ApplyQuotaForCurrentDay();
-        OnDayChanged?.Invoke(CurrentDay);
-    }
-
-    public void ResetRun()
-    {
-        if (IsNetworkClient())
-            return;
-
-        CurrentDay = 1;
-        SetPhase(RunPhase.MacLarens);
-        GameStateManager.Instance?.StartRun();
-        MoneyManager.Instance?.ResetMoney();
-        QuotaManager.Instance?.ResetDebt();
-        ApplyQuotaForCurrentDay();
-        OnDayChanged?.Invoke(CurrentDay);
+        ApplyCurrentQuota();
+        TimeRemaining = runConfig.GetTimeLimit(CurrentQuotaRound) + Mathf.Max(carriedOverSeconds, 0f);
+        IsTimerRunning = false;
+        HasTimerStarted = false;
+        OnQuotaRoundChanged?.Invoke(CurrentQuotaRound);
+        OnRunStateChanged?.Invoke();
     }
 
     public void BeginDeparture(bool returningToMacLarens)
@@ -91,6 +111,13 @@ public class RunManager : MonoBehaviour
         SetPhase(returningToMacLarens
             ? RunPhase.LeavingTown
             : RunPhase.TravelingToTown);
+
+        if (!returningToMacLarens && !IsTimerRunning)
+        {
+            IsTimerRunning = true;
+            HasTimerStarted = true;
+            OnRunStateChanged?.Invoke();
+        }
     }
 
     public void HandleTrainArrived(TrainDestination destination)
@@ -100,7 +127,7 @@ public class RunManager : MonoBehaviour
 
         SetPhase(destination == TrainDestination.Town
             ? RunPhase.Town
-            : RunPhase.ResolvingDay);
+            : RunPhase.MacLarens);
     }
 
     public void HandleTownExit()
@@ -112,46 +139,74 @@ public class RunManager : MonoBehaviour
             SetPhase(RunPhase.ReturningToMacLarens);
     }
 
-    public void BeginDayResolution()
-    {
-        if (IsNetworkClient())
-            return;
+    public bool CanPayQuota =>
+        CurrentPhase == RunPhase.MacLarens &&
+        (GameStateManager.Instance == null || GameStateManager.Instance.IsRunActive) &&
+        QuotaManager.Instance != null && QuotaManager.Instance.QuotaMet;
 
-        SetPhase(RunPhase.ResolvingDay);
+    public bool PayQuota()
+    {
+        if (IsNetworkClient() || !CanPayQuota || MoneyManager.Instance == null)
+            return false;
+
+        float timeLeft = TimeRemaining;
+        if (!QuotaManager.Instance.TryPayCurrentQuota(MoneyManager.Instance))
+            return false;
+
+        QuotasCompleted++;
+
+        if (!IsInfinite && QuotasCompleted >= QuotasToWin)
+        {
+            IsTimerRunning = false;
+            OnRunStateChanged?.Invoke();
+            GameStateManager.Instance?.SetSuccess();
+            return true;
+        }
+
+        CurrentQuotaRound++;
+        StartQuotaRound(timeLeft * runConfig.TimeCarryOverFraction);
+        return true;
     }
 
-    public void FinishDay()
+    private void HandleTimeExpired()
     {
+        TimeRemaining = 0f;
+        IsTimerRunning = false;
+        OnRunStateChanged?.Invoke();
+
+        // Fail first: the resulting wipe must not overwrite the cause with TeamWipe.
+        GameStateManager.Instance?.SetFail(FailCause.TimeExpired);
+        KillAllPlayers();
+    }
+
+    private static void KillAllPlayers()
+    {
+        foreach (PlayerBody body in PlayerBody.AllBodies)
+        {
+            if (body == null || body.IsDead || !body.TryGetComponent(out Health health))
+                continue;
+
+            health.TakeDamage(health.MaxHealth, Vector3.up, 0f);
+        }
+    }
+
+    private void HandleGameStateChanged(GameState previousState, GameState nextState)
+    {
+        if (nextState != GameState.Success && nextState != GameState.Fail)
+            return;
+
+        IsTimerRunning = false;
+
         if (IsNetworkClient())
             return;
 
-        if (CurrentPhase != RunPhase.ResolvingDay ||
-            GameStateManager.Instance?.IsRunActive == false ||
-            QuotaManager.Instance == null ||
-            MoneyManager.Instance == null)
+        foreach (PlayerBody body in PlayerBody.AllBodies)
         {
-            return;
+            if (body != null)
+                Stats.EnsurePlayer(body.StatsClientId, body.StatsPlayerName);
         }
 
-        BeginDayResolution();
-
-        if (!QuotaManager.Instance.TryPayCurrentQuota(MoneyManager.Instance))
-        {
-            if (failOnAnyMissedQuota || CurrentDay >= TotalDays)
-                GameStateManager.Instance?.SetFail(FailCause.QuotaFailed);
-            else
-                AdvanceDay();
-
-            return;
-        }
-
-        if (QuotaManager.Instance.DebtRemaining <= 0)
-        {
-            GameStateManager.Instance?.SetSuccess();
-            return;
-        }
-
-        AdvanceDay();
+        OnRunStateChanged?.Invoke();
     }
 
     private void SetPhase(RunPhase nextPhase)
@@ -163,12 +218,25 @@ public class RunManager : MonoBehaviour
         OnPhaseChanged?.Invoke(nextPhase);
     }
 
-    public void ApplyReplicatedRunState(int day, RunPhase phase)
+    public void ApplyReplicatedRunState(int quotaRound, RunPhase phase, int quotasCompleted, int quotasToWin,
+        float timeRemaining, bool timerRunning, bool timerStarted, float elapsedRunSeconds)
     {
-        CurrentDay = Mathf.Max(day, 1);
+        bool roundChanged = CurrentQuotaRound != quotaRound;
+
+        CurrentQuotaRound = Mathf.Max(quotaRound, 1);
+        QuotasCompleted = quotasCompleted;
+        QuotasToWin = quotasToWin;
+        TimeRemaining = timeRemaining;
+        IsTimerRunning = timerRunning;
+        HasTimerStarted = timerStarted;
+        ElapsedRunSeconds = elapsedRunSeconds;
         SetPhase(phase);
+
+        if (roundChanged)
+            OnQuotaRoundChanged?.Invoke(CurrentQuotaRound);
+
+        OnRunStateChanged?.Invoke();
     }
 
     private static bool IsNetworkClient() => NetworkRole.IsClientOnly;
-
 }

@@ -73,12 +73,14 @@ Assets/_Project/Scripts/
 ### Core
 
 - `GameStateManager`: mantiene solo `Menu`, `Run`, `Success` y `Fail`, emite `OnStateChanged` y bloquea gameplay fuera de `Run`.
-- `RunManager`: controla dia actual, fases funcionales de `Run`, cierre del dia, team wipe y reset de run.
-- `MoneyManager`: unica fuente de `TeamMoney`; aplica ventas y gastos del equipo.
-- `QuotaManager`: controla deuda total, deuda restante, cuota base/efectiva, modificadores, dias restantes y pago de cuota al cerrar el dia. `DebtPaid` es el progreso real de deuda; `DeliveredValue` es solo valor entregado desde el tren.
+- `RunManager`: controla la ronda de cuota actual, cuotas completadas y objetivo (`QuotasToWin`, 0 = infinito), el temporizador de cuota, las fases funcionales de `Run`, el pago de cuota, la derrota por tiempo y las estadisticas de la partida (`RunStatsTracker`).
+- `MoneyManager`: unica fuente de `TeamMoney`; aplica ventas y gastos del equipo y acumula `TotalEarned` solo con entregas.
+- `QuotaManager`: controla cuota base/efectiva, modificadores y pago de la cuota con `TeamMoney`. No hay deuda; `DeliveredValue` es solo valor entregado en la ronda actual.
 - `ThreatManager`: controla amenaza actual, thresholds y eventos de escalado.
+- `RunConfigSO`: tuning estatico de cuotas por ronda, crecimiento infinito, tiempo por cuota y fraccion de tiempo arrastrado.
+- `RunSettings`: transporta `QuotasToWin` desde `MenuScene` a `MainScene` (PlayerPrefs + estatico).
 
-Las fases funcionales (`MacLarens`, `TravelingToTown`, `Town`, `LeavingTown`, `ReturningToMacLarens`, `ResolvingDay`) pertenecen a `RunManager`, no son estados globales. `GameStateManager` es el unico que cambia a `Success` o `Fail`.
+Las fases funcionales (`MacLarens`, `TravelingToTown`, `Town`, `LeavingTown`, `ReturningToMacLarens`) pertenecen a `RunManager`, no son estados globales. `GameStateManager` es el unico que cambia a `Success` o `Fail`.
 
 ### Player
 
@@ -129,9 +131,9 @@ El transporte no se mezcla con el contrato `IInteractable`: interactuar puede in
 
 ### World
 
-- `ShopStand`: punto de venta en MacLarens; entrega un `LootDataSO` al inventario y descuenta su `Price` de `TeamMoney`. Disponible mientras `GameState.Run` este activo y `RunPhase` sea `MacLarens` o `ResolvingDay`, con dinero y espacio de inventario suficientes. No conoce deuda ni cuota.
-- `FinishDayInteractable`: unico punto que llama a `RunManager.FinishDay()`.
-- `MacLarensOwner`: dialogo ciclico puro.
+- `ShopStand`: punto de venta en MacLarens; entrega un `LootDataSO` al inventario y descuenta su `Price` de `TeamMoney`. Disponible mientras `GameState.Run` este activo y `RunPhase` sea `MacLarens`, con dinero y espacio de inventario suficientes. No conoce la cuota.
+- `PayQuotaInteractable`: unico punto que llama a `RunManager.PayQuota()`.
+- `MacLarensOwner`: dialogo ciclico puro; su canvas aparece al hablar y se oculta tras `dialogueVisibleDuration`.
 
 ### Extraction
 
@@ -149,12 +151,13 @@ El transporte no se mezcla con el contrato `IInteractable`: interactuar puede in
 
 - `InteractUI`: prompt de uso y barras de progreso puntuales.
 - `InventoryUI`: slots y valor transportado.
-- `QuotaUI`: cuota efectiva, modificadores, cargo y estado de salida.
+- `QuotaUI`: cuota efectiva frente a dinero comun.
+- `CargoValueUI`: valor del cargamento; visible solo con el tren en `Town`.
+- `QuotaTimerUI`: tiempo restante de la cuota; oculto hasta la primera salida del tren de la ronda.
 - `ThreatUI`: lectura de amenaza actual.
-- `GameStateUI`: success, fail, next day y estados globales.
-- `StoryHUD`: deuda, dinero comun, dia y cuota; observa managers y no decide reglas.
+- `GameStateUI`: success, fail (team wipe o tiempo agotado) y estadisticas finales (tiempo, dinero recaudado, cuotas y estadisticas por jugador).
 - `MacLarensOwner`: dialogo ciclico puro, sin leer ni depender de `RunManager`/`QuotaManager`/`MoneyManager`.
-- `FinishDayStatusUI`: vive en el objeto de Finish Day; muestra dia, dinero, deuda y cuota, se refresca por eventos (`OnDayChanged`/`OnMoneyChanged`/`OnDebtChanged`/`OnQuotaProgressChanged`) y en `OnEnable`, no solo al interactuar.
+- `QuotaStatusUI`: vive en el objeto de pago de cuota; muestra ronda, objetivo, dinero y cuota, y se refresca por eventos.
 
 ## Contrato de interaccion recomendado
 
@@ -213,17 +216,26 @@ PlayerInteractor
     -> MacLarens permite vender, comprar y preparar
 ```
 
-### Finish Day
+### Pagar cuota
 
 ```text
-Player interactua con Finish Day
-    -> RunManager valida que el tren esta en MacLarens y no hay una resolucion activa
+Player interactua con Pay Quota en MacLarens
+    -> RunManager valida fase MacLarens, run activa y TeamMoney >= EffectiveQuota
     -> QuotaManager calcula EffectiveQuota = BaseQuota + Modifiers
-    -> QuotaManager comprueba TeamMoney >= EffectiveQuota
     -> MoneyManager descuenta EffectiveQuota
-    -> QuotaManager suma EffectiveQuota a DebtPaid y consume el dia
-    -> DebtRemaining == 0 ? Success : siguiente dia/cuota
-    -> Si es ultimo dia y no alcanza : Fail
+    -> QuotasCompleted >= QuotasToWin (y no infinito) ? Success
+    -> Si no: siguiente ronda con cuota mayor; el temporizador se para y se recarga
+       con tiempo base + tiempo sobrante * TimeCarryOverFraction
+```
+
+### Temporizador de cuota
+
+```text
+Tren sale de MacLarens (BeginDeparture hacia Town)
+    -> si el temporizador no corre, empieza; los viajes de ida y vuelta no lo reinician
+    -> llega a 0 sin pagar
+    -> GameStateManager.SetFail(TimeExpired) primero
+    -> todos los jugadores vivos mueren (esas muertes no cuentan en estadisticas)
 ```
 
 ### Escape
@@ -237,25 +249,25 @@ Players aboard
     -> InTownTrigger limpia jugadores, loot y entidades temporales; EnemyController limpia enemigos
     -> ThreatManager resetea threat y detiene su incremento fuera de Town
     -> RunManager cambia la fase a ReturningToMacLarens
-    -> Train llega a MacLarens y cambia a ResolvingDay
-    -> El cierre de MacLarens resuelve el dia; salir del pueblo no paga la cuota
+    -> Train llega a MacLarens y cambia a MacLarens; los cuerpos pendientes reviven
+    -> El pago de cuota es explicito en MacLarens; salir del pueblo no paga la cuota
 ```
 
 ### Observadores de estado
 
 ```text
 Run / Money / Quota / Threat / Inventory
-    ├── FinishDayStatusUI lee estado y se refresca por eventos
-    └── StoryHUD lee estado y muestra valores/modificadores temporales
+    ├── QuotaStatusUI lee estado y se refresca por eventos
+    └── HUD (QuotaUI, QuotaTimerUI, CargoValueUI, MoneyUI) lee estado y muestra valores
 ```
 
-`MacLarensOwner` solo cicla dialogo estatico; no lee estado de la run. `FinishDayStatusUI` y la UI no modifican dinero, deuda, fases, muerte ni condiciones de victoria/derrota.
+`MacLarensOwner` solo cicla dialogo estatico; no lee estado de la run. `QuotaStatusUI` y la UI no modifican dinero, cuota, fases, muerte ni condiciones de victoria/derrota.
 
 ## Datos tuneables que si merecen ScriptableObject
 
 - `WeaponDataSO` ya existente
 - `LootDataSO`
-- `DayQuotaTableSO` o `RunConfigSO`
+- `RunConfigSO`
 - `ThreatTuningSO`
 
 Opcionales mas adelante:
@@ -330,12 +342,13 @@ Cuando llegue fase 6, la autoridad recomendada es esta:
 
 - La cuota se alcanza al depositar, no al recoger.
 - Llegar a cuota desbloquea salida; no auto-termina la run.
-- La entrega convierte loot en `TeamMoney`; `CargoValue` no es dinero ni deuda pagada.
-- La cuota se comprueba solo en `Finish Day`, despues de vender y comprar.
-- La deuda pagada se descuenta del dinero al cerrar el dia y persiste entre dias.
+- La entrega convierte loot en `TeamMoney`; `CargoValue` no es dinero.
+- Loop de cuotas cronometradas: el temporizador empieza cuando el tren sale de MacLarens; el equipo puede ir y volver al pueblo cuantas veces quiera mientras quede tiempo.
+- La cuota se paga de forma explicita en MacLarens; pagar antes de tiempo arrastra una fraccion del tiempo sobrante a la siguiente cuota.
+- Se gana al completar `QuotasToWin` cuotas (configurable en el menu/lobby; 0 = infinito).
 - Los modificadores de cuota tienen una fuente identificable y se muestran temporalmente, por ejemplo `Quota: $2,000 [+ $500 - jugador abandonado]`.
-- Team wipe termina el run inmediatamente; una cuota fallida espera al cierre del ultimo dia.
-- El modo historia entra en el MVP; Infinity Mode queda post-MVP.
+- Team wipe termina el run inmediatamente; quedarse sin tiempo tambien, y mata al equipo.
+- Infinity Mode es el mismo loop con `QuotasToWin = 0`; las cuotas siguen creciendo con `infiniteGrowth`.
 - El pueblo debe resolverse en una sola escena jugable principal.
 - La representacion fisica del loot en el tren es opcional; `CargoValue` y la entrega no lo son.
 
