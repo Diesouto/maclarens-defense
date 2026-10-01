@@ -44,6 +44,12 @@ public class PlayerBody : MonoBehaviour, IInteractable
     public BodyCarrier Carrier { get; private set; }
     public bool IsBeingCarried => Carrier != null;
 
+    // Where the corpse actually is: the ragdoll's hips, not the root it died on.
+    public Vector3 BodyPosition => ragdollController != null && ragdollController.IsRagdollActive &&
+        ragdollController.RootRigidbody != null
+            ? ragdollController.RootRigidbody.position
+            : transform.position;
+
     // Set once a manager has queued this body for a MacLarens respawn, so it isn't queued twice
     // (e.g. lost down a DeathFloor mid-day, then still found "inside Town" at extraction).
     public bool IsPendingRespawn { get; private set; }
@@ -191,15 +197,17 @@ public class PlayerBody : MonoBehaviour, IInteractable
         hiddenColliders.Clear();
     }
 
-    // Revives this body back into a playable state. A recovered body (never hidden) revives
-    // wherever it physically ended up (e.g. aboard the train); an abandoned/lost one (hidden)
-    // snaps to the fallback spawn point instead, since its last position is meaningless.
-    public void Revive(Transform fallbackSpawnPoint)
+    // Revives this body back into a playable state. A recovered body (never hidden) stands up where
+    // its ragdoll lies (e.g. aboard the train, or where a potion hit it); an abandoned/lost one
+    // (hidden) snaps to the fallback spawn point instead, since its last position is meaningless.
+    public void Revive(Transform fallbackSpawnPoint, float healthFraction = 1f)
     {
         if (!IsDead || NetworkRole.IsClientOnly)
             return;
 
         bool wasHidden = IsHidden;
+        Vector3 standPosition = ragdollController != null ? ragdollController.GetStandPosition(~0) : transform.position;
+        Quaternion standRotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
         if (Carrier != null)
             Carrier.Drop();
@@ -216,21 +224,23 @@ public class PlayerBody : MonoBehaviour, IInteractable
             ragdollController.DisableRagdoll();
 
         if (wasHidden && fallbackSpawnPoint != null)
-            TeleportTo(fallbackSpawnPoint);
+            TeleportTo(fallbackSpawnPoint.position, fallbackSpawnPoint.rotation);
+        else if (!wasHidden)
+            TeleportTo(standPosition, standRotation);
 
-        health.Revive();
+        health.Revive(healthFraction);
         if (playerController != null)
             playerController.Revive();
     }
 
-    private void TeleportTo(Transform target)
+    private void TeleportTo(Vector3 position, Quaternion rotation)
     {
         if (networkPlayer != null && networkPlayer.IsSpawned)
-            networkPlayer.TeleportFromServer(target.position, target.rotation);
+            networkPlayer.TeleportFromServer(position, rotation);
         else if (TryGetComponent(out PlayerMotor motor))
-            motor.Teleport(target.position, target.rotation);
+            motor.Teleport(position, rotation);
         else
-            transform.SetPositionAndRotation(target.position, target.rotation);
+            transform.SetPositionAndRotation(position, rotation);
     }
 
     // Remote peers only see the replicated health come back; mirror the host-side revive locally.

@@ -40,12 +40,14 @@ public class BreakableOnImpact : MonoBehaviour
         ApplyBreak();
     }
 
-    // Healing consumables (e.g. a thrown potion) splash every living player in range when they shatter.
+    // Healing consumables (e.g. a thrown potion) splash every player in range when they shatter,
+    // and bring back any corpse lying in the splash (no quota penalty).
     private void HealPlayersInRange()
     {
         if (!TryGetComponent(out LootItem lootItem) || lootItem.Data == null || lootItem.Data.BreakHealPercent <= 0f)
             return;
 
+        float healPercent = lootItem.Data.BreakHealPercent;
         float sqrRadius = lootItem.Data.BreakHealRadius * lootItem.Data.BreakHealRadius;
         foreach (PlayerController player in PlayerController.ActivePlayers)
         {
@@ -54,7 +56,16 @@ public class BreakableOnImpact : MonoBehaviour
                 !player.TryGetComponent(out Health playerHealth))
                 continue;
 
-            playerHealth.Heal(playerHealth.MaxHealth * lootItem.Data.BreakHealPercent);
+            playerHealth.Heal(playerHealth.MaxHealth * healPercent);
+        }
+
+        foreach (PlayerBody body in PlayerBody.AllBodies)
+        {
+            if (body == null || !body.IsDead || body.IsHidden ||
+                (body.BodyPosition - transform.position).sqrMagnitude > sqrRadius)
+                continue;
+
+            body.Revive(null, healPercent);
         }
     }
 

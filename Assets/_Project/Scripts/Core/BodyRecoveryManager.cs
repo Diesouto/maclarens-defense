@@ -102,7 +102,7 @@ public class BodyRecoveryManager : MonoBehaviour
 
     private void HandlePhaseChanged(RunPhase phase)
     {
-        if (phase != RunPhase.ResolvingDay || pendingRespawns.Count == 0)
+        if (phase != RunPhase.ResolvingDay)
             return;
 
         foreach (PendingRespawn pending in pendingRespawns)
@@ -117,5 +117,12 @@ public class BodyRecoveryManager : MonoBehaviour
         }
 
         pendingRespawns.Clear();
+
+        // Anyone who died after leaving Town (on the train, in MacLarens) made it back: free revive.
+        foreach (PlayerBody body in PlayerBody.AllBodies)
+        {
+            if (body != null && body.IsDead && !body.IsHidden)
+                body.Revive(macLarensRespawnPoint);
+        }
     }
 }

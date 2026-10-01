@@ -89,7 +89,7 @@ public class PlayerKnockdown : NetworkBehaviour
         if (health.IsDead)
             yield break;
 
-        Vector3 standPosition = FindStandPosition();
+        Vector3 standPosition = ragdoll.GetStandPosition(groundMask);
         Quaternion standRotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
         ragdoll.DisableRagdoll();
@@ -102,23 +102,6 @@ public class PlayerKnockdown : NetworkBehaviour
 
         if (playerController != null)
             playerController.SetKnockedDown(false);
-    }
-
-    // The root stays where the blast hit; the body lands wherever the hips flew.
-    private Vector3 FindStandPosition()
-    {
-        Rigidbody hips = ragdoll.RootRigidbody;
-        if (hips == null)
-            return transform.position;
-
-        Vector3 origin = hips.position + Vector3.up;
-        foreach (RaycastHit hit in Physics.RaycastAll(origin, Vector3.down, 5f, groundMask, QueryTriggerInteraction.Ignore))
-        {
-            if (!hit.collider.transform.IsChildOf(transform))
-                return hit.point;
-        }
-
-        return hips.position;
     }
 
     private void HandleDeath()

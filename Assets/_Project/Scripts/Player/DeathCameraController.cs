@@ -87,8 +87,15 @@ public class DeathCameraController : MonoBehaviour
     {
         spectateTargets.Clear();
 
+        // Follow the ragdoll's hips: the root stays where the player died while the body gets carried away.
         if (corpse != null)
-            spectateTargets.Add(corpse);
+        {
+            Transform corpseTarget = corpse;
+            if (corpse.TryGetComponent(out CharacterRagdollController ragdoll) && ragdoll.RootRigidbody != null)
+                corpseTarget = ragdoll.RootRigidbody.transform;
+
+            spectateTargets.Add(corpseTarget);
+        }
 
         foreach (PlayerController player in PlayerController.ActivePlayers)
         {

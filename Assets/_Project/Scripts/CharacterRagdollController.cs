@@ -126,6 +126,25 @@ public class CharacterRagdollController : MonoBehaviour
             animator.enabled = true;
     }
 
+    // The root stays where the body fell; the ragdoll may have been carried or blown elsewhere.
+    public Vector3 GetStandPosition(LayerMask groundMask)
+    {
+        if (RootRigidbody == null)
+            return transform.position;
+
+        Vector3 origin = RootRigidbody.position + Vector3.up;
+        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, 5f, groundMask, QueryTriggerInteraction.Ignore);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (!hit.collider.transform.IsChildOf(transform))
+                return hit.point;
+        }
+
+        return RootRigidbody.position;
+    }
+
     private T GetChildComponent<T>() where T : Component
     {
         Transform current = transform;

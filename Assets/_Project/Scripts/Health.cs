@@ -118,8 +118,8 @@ public class Health : MonoBehaviour, IDamageable
             networkHealth.SyncFromHealth();
     }
 
-    // Brings a dead entity fully back; callers own repositioning and ragdoll/control reset.
-    public void Revive()
+    // Brings a dead entity back; callers own repositioning and ragdoll/control reset.
+    public void Revive(float healthFraction = 1f)
     {
         if (NetworkRole.IsClientOnly)
             return;
@@ -127,7 +127,7 @@ public class Health : MonoBehaviour, IDamageable
         if (!IsDead)
             return;
 
-        CurrentHealth = maxHealth;
+        CurrentHealth = Mathf.Max(1f, maxHealth * Mathf.Clamp01(healthFraction));
         OnHealthChanged?.Invoke(CurrentHealth);
         if (networkHealth != null)
             networkHealth.SyncFromHealth();
