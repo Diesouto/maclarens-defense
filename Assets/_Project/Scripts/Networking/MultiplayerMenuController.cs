@@ -28,6 +28,8 @@ public class MultiplayerMenuController : MonoBehaviour
     [SerializeField] private Button nextCharacterButton;
     [SerializeField] private GameObject playerPreviewPrefab;
     [SerializeField] private Transform modelPosition;
+    [Tooltip("Layer applied to the whole preview so a dedicated preview camera can render it alone. -1 keeps the prefab layers.")]
+    [SerializeField] private int previewLayer = -1;
 
     [Header("Multiplayer Actions")]
     [SerializeField] private Button hostButton;
@@ -351,20 +353,39 @@ public class MultiplayerMenuController : MonoBehaviour
 
         foreach (MonoBehaviour behaviour in previewInstance.GetComponentsInChildren<MonoBehaviour>(true))
             behaviour.enabled = false;
+        // Camera, Light and AudioListener derive from Behaviour, not MonoBehaviour, so the loop above misses them.
+        foreach (Behaviour behaviour in previewInstance.GetComponentsInChildren<Behaviour>(true))
+        {
+            if (behaviour is Camera || behaviour is Light || behaviour is AudioListener)
+                behaviour.enabled = false;
+        }
+        // Destroyed rather than disabled: Awake still runs on a disabled component when previewRoot is
+        // activated, and this one would re-layer the model and strip that layer from a live camera.
+        foreach (PlayerBodyVisibility visibility in previewInstance.GetComponentsInChildren<PlayerBodyVisibility>(true))
+            Destroy(visibility);
         foreach (Collider previewCollider in previewInstance.GetComponentsInChildren<Collider>(true))
             previewCollider.enabled = false;
         foreach (Rigidbody previewRigidbody in previewInstance.GetComponentsInChildren<Rigidbody>(true))
             previewRigidbody.isKinematic = true;
         foreach (Canvas previewCanvas in previewInstance.GetComponentsInChildren<Canvas>(true))
             previewCanvas.enabled = false;
-        foreach (AudioListener previewListener in previewInstance.GetComponentsInChildren<AudioListener>(true))
-            previewListener.enabled = false;
+
+        if (previewLayer >= 0 && previewLayer < 32)
+            SetLayerRecursively(previewInstance.transform, previewLayer);
 
         previewModels = FindCharacterModels(previewInstance.transform);
         if (previewModels.Length == 0)
             Debug.LogError("MultiplayerMenuController: Player prefab contains no Character_* models.", playerPreviewPrefab);
 
         previewRoot.SetActive(false);
+    }
+
+    private static void SetLayerRecursively(Transform root, int layer)
+    {
+        root.gameObject.layer = layer;
+
+        for (int i = 0; i < root.childCount; i++)
+            SetLayerRecursively(root.GetChild(i), layer);
     }
 
     private static Transform[] FindCharacterModels(Transform root)

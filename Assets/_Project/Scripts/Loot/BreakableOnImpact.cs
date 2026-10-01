@@ -11,9 +11,14 @@ public class BreakableOnImpact : MonoBehaviour
     [SerializeField] private GameObject[] brokenPrefabs;
     [Tooltip("Seconds before local debris is cleaned up; 0 keeps it forever.")]
     [SerializeField, Min(0f)] private float debrisLifetime = 20f;
+    [Tooltip("Outward impulse applied to each shard so the pieces scatter instead of dropping straight down.")]
+    [SerializeField, Min(0f)] private float debrisForce = 3f;
+    [SerializeField, Min(0.01f)] private float debrisRadius = 1f;
+    [SerializeField, Min(0f)] private float debrisTorque = 2f;
     [SerializeField] private AudioClip breakSound;
 
     private bool hasBroken;
+    private bool breakPending;
 
     public void CopySettingsFrom(BreakableOnImpact source)
     {
@@ -24,14 +29,28 @@ public class BreakableOnImpact : MonoBehaviour
         brokenPrefab = source.brokenPrefab;
         brokenPrefabs = source.brokenPrefabs;
         debrisLifetime = source.debrisLifetime;
+        debrisForce = source.debrisForce;
+        debrisRadius = source.debrisRadius;
+        debrisTorque = source.debrisTorque;
         breakSound = source.breakSound;
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (NetworkRole.IsClientOnly || hasBroken || collision.relativeVelocity.magnitude < breakVelocity)
+        if (NetworkRole.IsClientOnly || hasBroken || breakPending ||
+            collision.relativeVelocity.magnitude < breakVelocity)
             return;
 
+        // Breaking destroys components, which Unity forbids from inside a physics callback.
+        breakPending = true;
+    }
+
+    private void Update()
+    {
+        if (!breakPending)
+            return;
+
+        breakPending = false;
         Break();
     }
 
@@ -121,7 +140,15 @@ public class BreakableOnImpact : MonoBehaviour
 
             GameObject piece = InstantiateDebris(piecePrefab, position, rotation);
             foreach (Rigidbody pieceBody in piece.GetComponentsInChildren<Rigidbody>())
+            {
                 pieceBody.linearVelocity = velocity;
+
+                if (debrisForce > 0f)
+                    pieceBody.AddExplosionForce(debrisForce, position, debrisRadius, 0.2f, ForceMode.Impulse);
+
+                if (debrisTorque > 0f)
+                    pieceBody.AddTorque(Random.insideUnitSphere * debrisTorque, ForceMode.Impulse);
+            }
 
             if (debrisLifetime > 0f)
                 Destroy(piece, debrisLifetime);
@@ -129,6 +156,8 @@ public class BreakableOnImpact : MonoBehaviour
     }
 
     // Staged under an inactive parent so network components are removed before their Awake runs.
+    // DestroyImmediate is required here (Destroy is deferred, so Awake would still see them) and is
+    // only legal because the break is deferred out of the physics callback.
     private static GameObject InstantiateDebris(GameObject prefab, Vector3 position, Quaternion rotation)
     {
         GameObject staging = new GameObject("DebrisStaging");

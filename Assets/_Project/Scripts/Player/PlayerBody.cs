@@ -13,6 +13,9 @@ public class PlayerBody : MonoBehaviour, IInteractable
     public static IReadOnlyList<PlayerBody> AllBodies => allBodies;
 
     [SerializeField, Min(0f)] private float carryHoldDuration = 2f;
+    [SerializeField] private LayerMask respawnGroundMask = ~0;
+    [SerializeField, Min(0.1f)] private float groundSnapHeight = 3f;
+    [SerializeField, Min(0f)] private float respawnGroundOffset = 0.1f;
 
     // A wipe only makes sense once at least one player has actually spawned.
     public static bool IsTeamWiped
@@ -223,14 +226,47 @@ public class PlayerBody : MonoBehaviour, IInteractable
         if (ragdollController != null)
             ragdollController.DisableRagdoll();
 
-        if (wasHidden && fallbackSpawnPoint != null)
-            TeleportTo(fallbackSpawnPoint.position, fallbackSpawnPoint.rotation);
-        else if (!wasHidden)
+        if (wasHidden)
+        {
+            // An abandoned body must never keep the ragdoll's last position: it died under the map or off-limits.
+            ResolveRespawnPose(fallbackSpawnPoint, out Vector3 respawnPosition, out Quaternion respawnRotation);
+            TeleportTo(respawnPosition, respawnRotation);
+        }
+        else
+        {
             TeleportTo(standPosition, standRotation);
+        }
 
         health.Revive(healthFraction);
         if (playerController != null)
             playerController.Revive();
+    }
+
+    private void ResolveRespawnPose(Transform fallbackSpawnPoint, out Vector3 position, out Quaternion rotation)
+    {
+        if (fallbackSpawnPoint != null)
+        {
+            position = fallbackSpawnPoint.position;
+            rotation = fallbackSpawnPoint.rotation;
+        }
+        else if (networkPlayer != null && networkPlayer.HasInitialSpawnPose)
+        {
+            position = networkPlayer.InitialSpawnPosition;
+            rotation = networkPlayer.InitialSpawnRotation;
+        }
+        else
+        {
+            Debug.LogWarning($"{nameof(PlayerBody)}: no respawn point and no cached spawn pose; reviving in place.", this);
+            position = transform.position;
+            rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+            return;
+        }
+
+        if (Physics.Raycast(position + Vector3.up * groundSnapHeight, Vector3.down,
+                out RaycastHit hit, groundSnapHeight * 2f, respawnGroundMask, QueryTriggerInteraction.Ignore))
+        {
+            position = hit.point + Vector3.up * respawnGroundOffset;
+        }
     }
 
     private void TeleportTo(Vector3 position, Quaternion rotation)

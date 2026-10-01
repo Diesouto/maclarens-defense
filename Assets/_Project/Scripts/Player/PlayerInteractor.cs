@@ -12,6 +12,8 @@ public class PlayerInteractor : MonoBehaviour
     private IInteractable currentInteractable;
     private IInteractable holdTarget;
     private float holdStartedAt;
+    private bool canInteractWithCurrent;
+    private string lastPromptText;
 
     // Prefer this player's own view camera: Camera.main can resolve to another player's camera in multiplayer.
     public Camera InteractionCamera => playerController != null && playerController.ViewCamera != null
@@ -46,7 +48,7 @@ public class PlayerInteractor : MonoBehaviour
     {
         UpdateTarget();
 
-        if (currentInteractable == null || input == null)
+        if (currentInteractable == null || input == null || !canInteractWithCurrent)
         {
             CancelHold();
             return;
@@ -104,14 +106,23 @@ public class PlayerInteractor : MonoBehaviour
     private void UpdateTarget()
     {
         IInteractable nextInteractable = FindInteractable();
+        bool nextCanInteract = nextInteractable != null && nextInteractable.CanInteract(this);
+        string nextPrompt = nextInteractable == null ? null : nextInteractable.GetPrompt(this);
 
-        if (nextInteractable == currentInteractable)
+        if (nextInteractable == currentInteractable &&
+            nextCanInteract == canInteractWithCurrent &&
+            nextPrompt == lastPromptText)
+        {
             return;
+        }
 
         currentInteractable = nextInteractable;
+        canInteractWithCurrent = nextCanInteract;
+        lastPromptText = nextPrompt;
         RefreshPrompt();
     }
 
+    // Blocked interactables are still returned so the prompt can explain why (greyed out) instead of vanishing.
     private IInteractable FindInteractable()
     {
         Camera viewCamera = InteractionCamera;
@@ -122,16 +133,12 @@ public class PlayerInteractor : MonoBehaviour
         if (!Physics.Raycast(ray, out RaycastHit hit, interactionDistance, interactionMask, QueryTriggerInteraction.Ignore))
             return null;
 
-        IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
-        if (interactable == null || !interactable.CanInteract(this))
-            return null;
-
-        return interactable;
+        return hit.collider.GetComponentInParent<IInteractable>();
     }
 
     private void RefreshPrompt()
     {
-        if (interactUI == null || holdTarget != null)
+        if (interactUI == null)
             return;
 
         if (currentInteractable == null)
@@ -140,6 +147,6 @@ public class PlayerInteractor : MonoBehaviour
             return;
         }
 
-        interactUI.ShowPrompt(currentInteractable.GetPrompt(this));
+        interactUI.ShowPrompt(currentInteractable.GetPrompt(this), canInteractWithCurrent);
     }
 }

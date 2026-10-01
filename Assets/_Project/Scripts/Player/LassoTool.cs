@@ -8,7 +8,13 @@ public class LassoTool : NetworkBehaviour
 {
     [Header("Gameplay")]
     [SerializeField, Min(1f)] private float range = 15f;
+    [Tooltip("Reach at zero charge; a full charge reaches range.")]
+    [SerializeField, Min(1f)] private float minimumRange = 5f;
     [SerializeField, Min(0f)] private float cooldown = 1.5f;
+    [Tooltip("Seconds of holding fire for a full-power throw.")]
+    [SerializeField, Min(0.05f)] private float chargeDuration = 1.5f;
+    [Tooltip("Fraction of the pull force applied at zero charge.")]
+    [SerializeField, Range(0f, 1f)] private float minimumChargeForceFraction = 0.35f;
     [SerializeField, Min(0f)] private float playerPullForce = 12f;
     [SerializeField, Min(0f)] private float playerKnockdownDuration = 2.5f;
     [Tooltip("Seconds a lassoed object takes to fly into the thrower's hands.")]
@@ -68,20 +74,24 @@ public class LassoTool : NetworkBehaviour
         return line;
     }
 
-    public void TryThrow(Ray aim)
+    public float ChargeDuration => chargeDuration;
+
+    public void TryThrow(Ray aim, float charge = 1f)
     {
         if (Time.time - lastThrowTime < cooldown)
             return;
 
         lastThrowTime = Time.time;
+        charge = Mathf.Clamp01(charge);
+        float chargedRange = Mathf.Lerp(Mathf.Min(minimumRange, range), range, charge);
 
-        Vector3 endPoint = aim.origin + aim.direction * range;
+        Vector3 endPoint = aim.origin + aim.direction * chargedRange;
         Transform endTarget = null;
-        if (TryFindTarget(aim, out RaycastHit hit))
+        if (TryFindTarget(aim, chargedRange, out RaycastHit hit))
         {
             endPoint = hit.point;
             endTarget = hit.collider.transform;
-            RequestPull(hit);
+            RequestPull(hit, charge);
         }
 
         PlayRope(endPoint, endTarget);
@@ -89,9 +99,9 @@ public class LassoTool : NetworkBehaviour
             ShowRopeRpc(endPoint);
     }
 
-    private bool TryFindTarget(Ray aim, out RaycastHit result)
+    private bool TryFindTarget(Ray aim, float searchRange, out RaycastHit result)
     {
-        RaycastHit[] hits = Physics.RaycastAll(aim, range, ~0, QueryTriggerInteraction.Ignore);
+        RaycastHit[] hits = Physics.RaycastAll(aim, searchRange, ~0, QueryTriggerInteraction.Ignore);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         foreach (RaycastHit hit in hits)
@@ -107,7 +117,7 @@ public class LassoTool : NetworkBehaviour
         return false;
     }
 
-    private void RequestPull(RaycastHit hit)
+    private void RequestPull(RaycastHit hit, float charge)
     {
         PlayerKnockdown targetPlayer = hit.collider.GetComponentInParent<PlayerKnockdown>();
         Rigidbody targetBody = targetPlayer == null ? hit.rigidbody : null;
@@ -116,13 +126,13 @@ public class LassoTool : NetworkBehaviour
 
         if (!NetworkRole.IsClientOnly)
         {
-            ApplyPull(targetPlayer, targetBody);
+            ApplyPull(targetPlayer, targetBody, charge);
             return;
         }
 
         NetworkObject targetObject = targetPlayer != null ? targetPlayer.NetworkObject : targetBody.GetComponent<NetworkObject>();
         if (targetObject != null && targetObject.IsSpawned)
-            RequestPullServerRpc(targetObject, hit.point);
+            RequestPullServerRpc(targetObject, hit.point, charge);
     }
 
     // In a session only bodies that own a NetworkObject are pulled, so the host's push replicates.
@@ -136,7 +146,7 @@ public class LassoTool : NetworkBehaviour
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
-    private void RequestPullServerRpc(NetworkObjectReference targetReference, Vector3 hitPoint, RpcParams rpcParams = default)
+    private void RequestPullServerRpc(NetworkObjectReference targetReference, Vector3 hitPoint, float charge, RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId ||
             !targetReference.TryGet(out NetworkObject targetObject) || targetObject == null)
@@ -156,7 +166,7 @@ public class LassoTool : NetworkBehaviour
             return;
 
         lastServerThrowTime = Time.time;
-        ApplyPull(targetPlayer, targetBody);
+        ApplyPull(targetPlayer, targetBody, Mathf.Clamp01(charge));
     }
 
     private bool IsHoldingLasso()
@@ -165,8 +175,10 @@ public class LassoTool : NetworkBehaviour
             inventory.ActiveItem.ItemType == InventoryItemType.Tool;
     }
 
-    private void ApplyPull(PlayerKnockdown targetPlayer, Rigidbody targetBody)
+    private void ApplyPull(PlayerKnockdown targetPlayer, Rigidbody targetBody, float charge)
     {
+        float chargedPullForce = playerPullForce * Mathf.Lerp(minimumChargeForceFraction, 1f, Mathf.Clamp01(charge));
+
         if (targetPlayer != null)
         {
             if (targetPlayer.gameObject == gameObject)
@@ -175,7 +187,7 @@ public class LassoTool : NetworkBehaviour
             // Knockdown pushes away from its origin, so mirror the thrower behind the target to pull it in.
             Vector3 targetPosition = targetPlayer.transform.position;
             Vector3 mirroredOrigin = targetPosition + (targetPosition - transform.position);
-            targetPlayer.KnockDownFromServer(mirroredOrigin, playerPullForce, playerKnockdownDuration);
+            targetPlayer.KnockDownFromServer(mirroredOrigin, chargedPullForce, playerKnockdownDuration);
             return;
         }
 

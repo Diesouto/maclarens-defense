@@ -24,10 +24,17 @@ public class NetworkTrainState : NetworkBehaviour
         0f,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    // The countdown bar is local to whoever pulled the lever, so everyone else needs this to stay blocked.
+    public NetworkVariable<bool> IsCountdownActive = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
     [SerializeField] private TrainSplineFollower train;
     [SerializeField] private TrainDeparture departure;
     [SerializeField] private RunManager runManager;
+
+    private ulong departureRequesterId;
 
     private void Awake()
     {
@@ -86,9 +93,14 @@ public class NetworkTrainState : NetworkBehaviour
             return;
 
         if (IsServer)
+        {
+            departureRequesterId = NetworkManager.LocalClientId;
             BeginDeparture();
+        }
         else
+        {
             RequestDepartureServerRpc();
+        }
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -110,6 +122,8 @@ public class NetworkTrainState : NetworkBehaviour
         if (playerHealth != null && playerHealth.IsDead)
             return;
 
+        departureRequesterId = senderId;
+
         float distance = Vector3.Distance(client.PlayerObject.transform.position, departure.transform.position);
         if (distance > 4f)
         {
@@ -129,12 +143,21 @@ public class NetworkTrainState : NetworkBehaviour
 
     public void BroadcastDepartureCountdown(float duration)
     {
-        if (IsServer)
-            DepartureCountdownRpc(duration);
+        if (!IsServer)
+            return;
+
+        IsCountdownActive.Value = true;
+        DepartureCountdownRpc(duration, RpcTarget.Single(departureRequesterId, RpcTargetUse.Temp));
     }
 
-    [Rpc(SendTo.ClientsAndHost)]
-    private void DepartureCountdownRpc(float duration)
+    public void ClearDepartureCountdown()
+    {
+        if (IsServer)
+            IsCountdownActive.Value = false;
+    }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void DepartureCountdownRpc(float duration, RpcParams rpcParams)
     {
         departure?.ShowDepartureCountdown(duration);
     }

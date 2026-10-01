@@ -68,12 +68,23 @@ public class ShopStand : MonoBehaviour, IInteractable
         PlayerInventory inventory = interactor != null ? interactor.GetComponent<PlayerInventory>() : null;
         if (IsAmmoRefill(inventory))
         {
-            return inventory.ActiveWeaponNeedsAmmo(lootData)
-                ? $"Refill {lootData.DisplayName} ammo (${AmmoRefillPrice:N0})"
-                : $"{lootData.DisplayName} ammo is full";
+            if (!inventory.ActiveWeaponNeedsAmmo(lootData))
+                return $"{lootData.DisplayName} ammo is full";
+
+            return moneyManager != null && moneyManager.TeamMoney < AmmoRefillPrice
+                ? $"Refill {lootData.DisplayName} ammo (${AmmoRefillPrice:N0}) - not enough money"
+                : $"Refill {lootData.DisplayName} ammo (${AmmoRefillPrice:N0})";
         }
 
-        return $"Buy {lootData.DisplayName} (${lootData.Price:N0})";
+        string buyText = $"Buy {lootData.DisplayName} (${lootData.Price:N0})";
+
+        if (moneyManager != null && moneyManager.TeamMoney < lootData.Price)
+            return $"{buyText} - not enough money";
+
+        if (inventory != null && !inventory.CanAdd(lootData))
+            return $"{buyText} - no space";
+
+        return buyText;
     }
 
     public void Interact(PlayerInteractor interactor)

@@ -6,8 +6,14 @@ using UnityEngine;
 public class InteractUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI interactText;
+    [Tooltip("Optional separate label for the key hint. When empty, the hint is prepended as a first line of interactText.")]
+    [SerializeField] private TextMeshProUGUI keyHintText;
+    [SerializeField] private string interactKeyLabel = "E";
     [SerializeField] private Image interactProgressBar;
     [SerializeField] private Image interactProgressBarBackground;
+    [SerializeField] private Color availableColor = Color.white;
+    [Tooltip("Used when the object is interactable in principle but blocked right now (no money, full inventory...).")]
+    [SerializeField] private Color blockedColor = new Color(0.55f, 0.55f, 0.55f, 1f);
 
     private Coroutine progressCoroutine;
     private string defaultText = "";
@@ -22,13 +28,13 @@ public class InteractUI : MonoBehaviour
         SetVisible(false);
     }
 
-    public void ShowPrompt(string displayText)
+    public void ShowPrompt(string displayText, bool canInteract = true)
     {
+        SetPromptText(displayText, canInteract);
+
+        // A running progress bar owns its own visibility; only the text is refreshed under it.
         if (IsInProgress)
             return;
-
-        if (interactText != null)
-            interactText.text = string.IsNullOrEmpty(displayText) ? defaultText : displayText;
 
         SetPromptVisible(true);
     }
@@ -100,9 +106,7 @@ public class InteractUI : MonoBehaviour
     {
         IsInProgress = true;
         SetVisible(true);
-
-        if (interactText != null)
-            interactText.text = string.IsNullOrEmpty(displayText) ? defaultText : displayText;
+        SetPromptText(displayText, true);
 
         if (interactProgressBar != null)
             interactProgressBar.fillAmount = 0f;
@@ -127,9 +131,7 @@ public class InteractUI : MonoBehaviour
     {
         IsInProgress = true;
         SetVisible(true);
-
-        if (interactText != null)
-            interactText.text = string.IsNullOrEmpty(displayText) ? defaultText : displayText;
+        SetPromptText(displayText, true);
 
         if (interactProgressBar != null)
             interactProgressBar.fillAmount = 0f;
@@ -149,10 +151,32 @@ public class InteractUI : MonoBehaviour
         progressCoroutine = null;
     }
 
+    private void SetPromptText(string displayText, bool canInteract)
+    {
+        string body = string.IsNullOrEmpty(displayText) ? defaultText : displayText;
+        Color color = canInteract ? availableColor : blockedColor;
+        string hint = string.IsNullOrEmpty(interactKeyLabel) ? string.Empty : $"[{interactKeyLabel}]";
+
+        if (keyHintText != null)
+        {
+            keyHintText.text = hint;
+            keyHintText.color = color;
+        }
+        else if (!string.IsNullOrEmpty(hint) && !string.IsNullOrEmpty(body))
+        {
+            body = $"{hint}\n{body}";
+        }
+
+        if (interactText == null)
+            return;
+
+        interactText.text = body;
+        interactText.color = color;
+    }
+
     private void ResetUI()
     {
-        if (interactText != null)
-            interactText.text = defaultText;
+        SetPromptText(null, true);
 
         if (interactProgressBar != null)
             interactProgressBar.fillAmount = 0f;
@@ -162,6 +186,9 @@ public class InteractUI : MonoBehaviour
     {
         if (interactText != null)
             interactText.gameObject.SetActive(visible);
+
+        if (keyHintText != null)
+            keyHintText.gameObject.SetActive(visible);
 
         if (interactProgressBar != null)
             interactProgressBar.gameObject.SetActive(visible);
@@ -174,6 +201,9 @@ public class InteractUI : MonoBehaviour
     {
         if (interactText != null)
             interactText.gameObject.SetActive(visible);
+
+        if (keyHintText != null)
+            keyHintText.gameObject.SetActive(visible);
 
         if (interactProgressBar != null)
             interactProgressBar.gameObject.SetActive(false);

@@ -4,6 +4,32 @@ Lista de tareas que requieren Unity Editor (prefabs, escena, referencias seriali
 se pueden completar solo con cambios de codigo. Añadir aqui cualquier tarea nueva mientras no haya
 acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en Play Mode.
 
+## Interaccion, respawn y flavour (2026-10-01)
+
+- [ ] `InteractUI` del Canvas: asignar opcionalmente `keyHintText` (un TMP aparte para `[E]`). Si se
+      deja vacio, el hint se antepone como primera linea de `interactText`. Ajustar
+      `interactKeyLabel`, `availableColor` y `blockedColor` (gris por defecto).
+- [ ] `TrainDeparture` de `Train_3`: tunear `departureHoldDuration` (2 s por defecto). La barra de
+      hold y el countdown de salida ahora solo los ve el jugador que acciona la palanca; el resto
+      queda bloqueado por `NetworkTrainState.IsCountdownActive`.
+- [ ] `PlayerBody` de `Player.prefab`: revisar `respawnGroundMask`, `groundSnapHeight` y
+      `respawnGroundOffset` (el revive abandonado ahora siempre teletransporta: punto asignado ->
+      pose de spawn inicial -> aviso en consola).
+- [ ] `MultiplayerMenuController`: `previewLayer` (-1 = usar las layers del prefab). Si se quiere
+      aislar el preview con una camara dedicada, crear la layer y asignarla aqui.
+- [ ] `LootDataSO` de consumibles (`PotionSO`, licores): ajustar `useDuration` (3 s por defecto).
+- [ ] `PlayerController`: `maximumDrunkStacks` (3 por defecto); las borracheras ahora suman duracion
+      e intensidad.
+- [ ] `LassoTool` de `Player.prefab`: ajustar `chargeDuration`, `minimumRange` y
+      `minimumChargeForceFraction`.
+- [ ] `BreakableOnImpact` de las botellas/barriles: ajustar `debrisForce`, `debrisRadius` y
+      `debrisTorque` para que los trozos salgan disparados.
+- [ ] `MoneyUI`: ajustar `countDuration`, `gainColor`, `lossColor` y `neutralColor`.
+- [ ] Playtest: prompt `[E]` en dos lineas, prompt gris con motivo (sin dinero / sin espacio /
+      municion llena), hold del tren que se resetea al soltar, beber con hold de 3 s, dos borracheras
+      seguidas, lazo a media carga vs carga completa, romper una botella sin errores de consola y
+      contador de dinero subiendo en verde / bajando en rojo.
+
 ## P5.8 - Cuerpo recuperable y penalizacion
 
 - [x] Añadir `PlayerBody` y `BodyCarrier` al prefab `Assets/_Project/Prefabs/Player.prefab`.

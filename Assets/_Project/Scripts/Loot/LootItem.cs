@@ -80,6 +80,10 @@ public class LootItem : MonoBehaviour, IInteractable
         if (lootData == null)
             return "Loot";
 
+        PlayerInventory inventory = interactor != null ? interactor.GetComponent<PlayerInventory>() : null;
+        if (inventory != null && !inventory.CanAdd(lootData))
+            return $"{lootData.DisplayName} - no space";
+
         return $"Pick up {lootData.DisplayName} ({lootData.Value})";
     }
 

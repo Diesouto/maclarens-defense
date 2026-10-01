@@ -42,6 +42,8 @@ public class LootDataSO : ScriptableObject
     [SerializeField, Range(0f, 1f)] private float drinkHealPercent;
     [Tooltip("Seconds of drunk camera wobble after drinking; 0 = none.")]
     [SerializeField, Min(0f)] private float drunkDuration;
+    [Tooltip("Seconds the fire button must be held to finish drinking it.")]
+    [SerializeField, Min(0f)] private float useDuration = 3f;
     [Tooltip("Fraction of max health restored to every player in range when the item breaks (needs BreakableOnImpact).")]
     [SerializeField, Range(0f, 1f)] private float breakHealPercent;
     [SerializeField, Min(0f)] private float breakHealRadius = 3f;
@@ -77,6 +79,7 @@ public class LootDataSO : ScriptableObject
     public bool IsConsumable => itemType == InventoryItemType.Consumable;
     public float DrinkHealPercent => drinkHealPercent;
     public float DrunkDuration => drunkDuration;
+    public float UseDuration => useDuration;
     public float BreakHealPercent => breakHealPercent;
     public float BreakHealRadius => breakHealRadius;
 }

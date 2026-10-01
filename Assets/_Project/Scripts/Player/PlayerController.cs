@@ -34,6 +34,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float drunkRoll = 8f;
     [SerializeField] private float drunkYawWobble = 4f;
     [SerializeField] private float drunkPitchWobble = 3f;
+    [Tooltip("How many drinks can stack; each stack multiplies the wobble intensity.")]
+    [SerializeField, Min(1)] private int maximumDrunkStacks = 3;
 
     private PlayerInputHandler input;
     private PlayerMotor motor;
@@ -56,10 +58,16 @@ public class PlayerController : MonoBehaviour
     private float throwChargeStartedAt;
     private bool isChargingThrow;
     private bool isChargingBodyThrow;
+    private bool isConsuming;
+    private float consumeStartedAt;
+    private LootDataSO consumingItem;
+    private bool isChargingLasso;
+    private float lassoChargeStartedAt;
     private ItemHolder itemHolder;
     private NetworkPlayer networkPlayer;
     private float drunkEndTime;
     private float drunkTotalDuration = 1f;
+    private int drunkStacks;
 
     private bool IsLocalPlayer => networkPlayer == null || networkPlayer == NetworkPlayer.Local;
 
@@ -245,10 +253,13 @@ public class PlayerController : MonoBehaviour
             cameraTransform.localRotation = Quaternion.Euler(smoothedPitch + pitchWobble, 0f, roll);
     }
 
+    // Drinks stack: each one adds its full duration on top of what is left and deepens the wobble, up to a cap.
     public void ApplyDrunk(float duration)
     {
-        drunkEndTime = Mathf.Max(drunkEndTime, Time.time + duration);
-        drunkTotalDuration = Mathf.Max(duration, 0.01f);
+        float remaining = Mathf.Max(drunkEndTime - Time.time, 0f);
+        drunkStacks = remaining > 0f ? Mathf.Min(drunkStacks + 1, maximumDrunkStacks) : 1;
+        drunkEndTime = Time.time + remaining + duration;
+        drunkTotalDuration = Mathf.Max(remaining + duration, 0.01f);
     }
 
     // Full strength for most of the effect, easing out over its last third.
@@ -256,9 +267,12 @@ public class PlayerController : MonoBehaviour
     {
         float remaining = drunkEndTime - Time.time;
         if (remaining <= 0f)
+        {
+            drunkStacks = 0;
             return 0f;
+        }
 
-        return Mathf.Clamp01(remaining / (drunkTotalDuration / 3f));
+        return Mathf.Clamp01(remaining / (drunkTotalDuration / 3f)) * Mathf.Max(drunkStacks, 1);
     }
 
     private void HandleItemConsumed(LootDataSO item)
@@ -369,17 +383,18 @@ public class PlayerController : MonoBehaviour
 
         if (inventory.ActiveItem.IsConsumable)
         {
-            if (input.FirePressed && !isChargingThrow)
-                inventory.TryConsumeActive();
+            HandleConsumeInput();
             return;
         }
 
         if (inventory.ActiveItem.ItemType == InventoryItemType.Tool)
         {
-            if (input.FirePressed && !isChargingThrow && lasso != null)
-                lasso.TryThrow(GetAimRay());
+            HandleLassoInput();
             return;
         }
+
+        CancelConsume();
+        CancelLassoCharge();
 
         if (!inventory.ActiveItem.IsWeapon)
             return;
@@ -389,6 +404,95 @@ public class PlayerController : MonoBehaviour
             return;
 
         weapon.HandleInput(input.FirePressed, input.FireHeld, input.ReloadPressed);
+    }
+
+    private void HandleConsumeInput()
+    {
+        float useDuration = inventory.ActiveItem.UseDuration;
+        if (useDuration <= 0f)
+        {
+            if (input.FirePressed && !isChargingThrow)
+                inventory.TryConsumeActive();
+            return;
+        }
+
+        if (input.FirePressed && !isChargingThrow && !isConsuming)
+        {
+            isConsuming = true;
+            consumeStartedAt = Time.time;
+            consumingItem = inventory.ActiveItem;
+            interactUI?.StartHeldProgress(useDuration, "Drinking...");
+            return;
+        }
+
+        if (!isConsuming)
+            return;
+
+        // Swapping the item mid-drink must not consume whatever ended up in hand.
+        if (!input.FireHeld || isChargingThrow || inventory.ActiveItem != consumingItem)
+        {
+            CancelConsume();
+            return;
+        }
+
+        if (Time.time - consumeStartedAt < useDuration)
+            return;
+
+        isConsuming = false;
+        consumingItem = null;
+        interactUI?.FinishProgress();
+        inventory.TryConsumeActive();
+    }
+
+    private void CancelConsume()
+    {
+        if (!isConsuming)
+            return;
+
+        isConsuming = false;
+        consumingItem = null;
+        interactUI?.CancelProgress();
+    }
+
+    private void HandleLassoInput()
+    {
+        if (lasso == null)
+            return;
+
+        if (input.FirePressed && !isChargingThrow && !isChargingLasso)
+        {
+            isChargingLasso = true;
+            lassoChargeStartedAt = Time.time;
+            interactUI?.StartHeldProgress(lasso.ChargeDuration, "Lasso...");
+            return;
+        }
+
+        if (!isChargingLasso)
+            return;
+
+        if (isChargingThrow)
+        {
+            CancelLassoCharge();
+            return;
+        }
+
+        if (!input.FireReleased && input.FireHeld)
+            return;
+
+        float charge = Mathf.Clamp01((Time.time - lassoChargeStartedAt) /
+            Mathf.Max(lasso.ChargeDuration, 0.01f));
+        isChargingLasso = false;
+        interactUI?.FinishProgress();
+        lasso.TryThrow(GetAimRay(), charge);
+    }
+
+    private void CancelLassoCharge()
+    {
+        if (!isChargingLasso)
+            return;
+
+        isChargingLasso = false;
+        interactUI?.CancelProgress();
     }
 
     private Ray GetAimRay()

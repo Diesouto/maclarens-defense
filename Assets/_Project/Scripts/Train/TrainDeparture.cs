@@ -6,6 +6,8 @@ using UnityEngine;
 public class TrainDeparture : MonoBehaviour, IInteractable
 {
     [SerializeField] private float departurePrepDuration = 5f;
+    [Tooltip("Seconds the interact button must be held to start the train.")]
+    [SerializeField, Min(0f)] private float departureHoldDuration = 2f;
     [SerializeField] private InteractUI interactUI;
     [SerializeField] private RunManager runManager;
     [SerializeField] private TrainSplineFollower trainSplineFollower;
@@ -58,13 +60,16 @@ public class TrainDeparture : MonoBehaviour, IInteractable
     public bool CanInteract(PlayerInteractor interactor)
     {
         bool replicatedBusy = networkTrainState != null && networkTrainState.IsSpawned &&
-            (networkTrainState.IsMoving.Value || isCountdownVisible);
+            (networkTrainState.IsMoving.Value || networkTrainState.IsCountdownActive.Value);
 
         return !IsDeparting &&
                !HasDeparted &&
+               !isCountdownVisible &&
                !replicatedBusy &&
                (GameStateManager.Instance == null || GameStateManager.Instance.IsRunActive);
     }
+
+    public float HoldDuration => departureHoldDuration;
 
     public string GetPrompt(PlayerInteractor interactor)
     {
@@ -97,7 +102,7 @@ public class TrainDeparture : MonoBehaviour, IInteractable
         BeginAuthoritativeDeparture();
     }
 
-    // Runs on every machine so each player sees the countdown on their own HUD.
+    // Runs only on the player who pulled the lever; everyone else is gated by NetworkTrainState.IsCountdownActive.
     public void ShowDepartureCountdown(float duration)
     {
         if (countdownRoutine != null)
@@ -138,6 +143,9 @@ public class TrainDeparture : MonoBehaviour, IInteractable
 
         IsDeparting = false;
         HasDeparted = true;
+
+        if (networkTrainState != null && networkTrainState.IsSpawned)
+            networkTrainState.ClearDepartureCountdown();
 
         if (runManager == null)
             runManager = RunManager.Instance;

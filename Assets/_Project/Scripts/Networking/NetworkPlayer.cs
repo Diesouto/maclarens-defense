@@ -48,6 +48,21 @@ public class NetworkPlayer : NetworkBehaviour
     private WorldSpaceBillboard nameplateBillboard;
     private Coroutine outputCameraSearch;
     private PlayerBody playerBody;
+    private bool hasInitialSpawnPose;
+
+    public Vector3 InitialSpawnPosition { get; private set; }
+    public Quaternion InitialSpawnRotation { get; private set; } = Quaternion.identity;
+    public bool HasInitialSpawnPose => hasInitialSpawnPose;
+
+    private void CacheInitialSpawnPose()
+    {
+        if (hasInitialSpawnPose)
+            return;
+
+        hasInitialSpawnPose = true;
+        InitialSpawnPosition = transform.position;
+        InitialSpawnRotation = transform.rotation;
+    }
 
     public void MarkAbandoned()
     {
@@ -150,6 +165,8 @@ public class NetworkPlayer : NetworkBehaviour
 
     protected override void OnNetworkPostSpawn()
     {
+        CacheInitialSpawnPose();
+
         // Spawn data is applied after Awake; without this the owner's CharacterController drags it back to the origin.
         if (IsOwner && playerMotor != null)
             playerMotor.Teleport(transform.position, transform.rotation);
@@ -191,6 +208,7 @@ public class NetworkPlayer : NetworkBehaviour
         if (safeName.Length > 24)
             safeName = safeName.Substring(0, 24);
 
+        CacheInitialSpawnPose();
         ApplyLocalOwnership(true);
         ApplyCharacterSelection(characterIndex);
         SetPlayerNameLabel(safeName);
