@@ -57,10 +57,7 @@ public class MultiplayerMenuController : MonoBehaviour
     [SerializeField] private RelayJoinCodeManager relayManager;
 
     [Header("Match Settings")]
-    [Tooltip("Main menu field used for single-player runs. Digits only, 0 = infinite.")]
-    [SerializeField] private TMP_InputField singlePlayerQuotasInput;
-    [SerializeField] private TMP_Text singlePlayerQuotasHintText;
-    [Tooltip("Lobby field; editable by the host only, read-only mirror for clients.")]
+    [Tooltip("Shared setup field; editable offline and by the multiplayer host.")]
     [SerializeField] private TMP_InputField lobbyQuotasInput;
     [SerializeField] private TMP_Text lobbyQuotasHintText;
     [SerializeField] private string quotasHintFormat = "Cuotas para ganar (0 = infinito): {0}";
@@ -70,6 +67,7 @@ public class MultiplayerMenuController : MonoBehaviour
     private const int MaximumNameLength = 24;
     private bool isConnecting;
     private bool networkCallbacksBound;
+    private bool isOfflineSetup;
     private string activeJoinCode = string.Empty;
     private NetworkSessionManager boundSession;
     private GameObject previewRoot;
@@ -84,9 +82,8 @@ public class MultiplayerMenuController : MonoBehaviour
         playerNameInput?.SetTextWithoutNotify(PlayerPrefs.GetString(PlayerNameKey, "Player"));
         CreateCharacterPreview();
         ApplyCharacterIndex(PlayerPrefs.GetInt(CharacterIndexKey, 0));
-        ConfigureQuotasInput(singlePlayerQuotasInput, HandleSinglePlayerQuotasEdited);
-        ConfigureQuotasInput(lobbyQuotasInput, HandleLobbyQuotasEdited);
-        ShowQuotas(singlePlayerQuotasInput, singlePlayerQuotasHintText, RunSettings.SavedQuotasToWin);
+        ConfigureQuotasInput(lobbyQuotasInput, HandleQuotasEdited);
+        ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, RunSettings.SavedQuotasToWin);
         ValidateReferences();
         BindButtons();
     }
@@ -103,22 +100,16 @@ public class MultiplayerMenuController : MonoBehaviour
         input.onEndEdit.AddListener(onEndEdit);
     }
 
-    private void HandleSinglePlayerQuotasEdited(string text)
+    private void HandleQuotasEdited(string text)
     {
-        int value = RunSettings.TryParse(text, out int parsed) ? parsed : RunSettings.SavedQuotasToWin;
+        int fallback = RunSettings.SavedQuotasToWin;
+        int value = RunSettings.TryParse(text, out int parsed) ? parsed : fallback;
         RunSettings.SetQuotasToWin(value);
-        ShowQuotas(singlePlayerQuotasInput, singlePlayerQuotasHintText, value);
-    }
 
-    private void HandleLobbyQuotasEdited(string text)
-    {
         NetworkSessionManager session = NetworkSessionManager.Instance;
-        if (session == null || !session.IsServer)
-            return;
+        if (!isOfflineSetup && session != null && session.IsServer)
+            session.SetQuotasToWin(value);
 
-        int value = RunSettings.TryParse(text, out int parsed) ? parsed : session.QuotasToWin.Value;
-        RunSettings.SetQuotasToWin(value);
-        session.SetQuotasToWin(value);
         ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, value);
     }
 
@@ -139,7 +130,7 @@ public class MultiplayerMenuController : MonoBehaviour
 
     private void BindButtons()
     {
-        AddListener(singlePlayerButton, LoadSinglePlayer);
+        AddListener(singlePlayerButton, ShowSinglePlayerSetup);
         AddListener(openMultiplayerButton, ShowMultiplayerScreen);
         AddListener(previousCharacterButton, () => ChangeCharacter(-1));
         AddListener(nextCharacterButton, () => ChangeCharacter(1));
@@ -185,12 +176,6 @@ public class MultiplayerMenuController : MonoBehaviour
         Require(joinCodeInput, nameof(joinCodeInput));
         Require(connectButton, nameof(connectButton));
         Require(joinBackButton, nameof(joinBackButton));
-        Require(lobbyStatusText, nameof(lobbyStatusText));
-        Require(lobbyJoinCodeText, nameof(lobbyJoinCodeText));
-        Require(lobbyPlayerCountText, nameof(lobbyPlayerCountText));
-        Require(lobbyPlayerListText, nameof(lobbyPlayerListText));
-        Require(readyButton, nameof(readyButton));
-        Require(readyButtonText, nameof(readyButtonText));
         Require(startGameButton, nameof(startGameButton));
         Require(leaveLobbyButton, nameof(leaveLobbyButton));
         if (relayManager == null)
@@ -203,15 +188,25 @@ public class MultiplayerMenuController : MonoBehaviour
             Debug.LogError($"{nameof(MultiplayerMenuController)}: assign {fieldName} in the Inspector.", this);
     }
 
-    private void LoadSinglePlayer()
+    private void ShowSinglePlayerSetup()
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             SetLobbyStatus("Leave the multiplayer session before starting a single-player run.");
+            isOfflineSetup = false;
             ShowLobbyScreen();
             return;
         }
 
+        isOfflineSetup = true;
+        ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, RunSettings.SavedQuotasToWin);
+        SetLobbyStatus("Single-player setup");
+        RefreshLobby();
+        ShowLobbyScreen();
+    }
+
+    private void StartSinglePlayerRun()
+    {
         if (NetworkBootstrapper.Instance != null)
         {
             GameObject servicesRoot = NetworkBootstrapper.Instance.gameObject;
@@ -220,7 +215,7 @@ public class MultiplayerMenuController : MonoBehaviour
         }
 
         // Commits a value still being typed when Play is clicked without leaving the field.
-        if (singlePlayerQuotasInput != null && RunSettings.TryParse(singlePlayerQuotasInput.text, out int typedQuotas))
+        if (lobbyQuotasInput != null && RunSettings.TryParse(lobbyQuotasInput.text, out int typedQuotas))
             RunSettings.SetQuotasToWin(typedQuotas);
         else
             RunSettings.SetQuotasToWin(RunSettings.SavedQuotasToWin);
@@ -251,6 +246,7 @@ public class MultiplayerMenuController : MonoBehaviour
     private void ShowLobbyScreen()
     {
         SetScreen(lobbyScreen);
+        RefreshLobby();
     }
 
     private void SetScreen(GameObject selectedScreen)
@@ -282,6 +278,7 @@ public class MultiplayerMenuController : MonoBehaviour
             return;
         }
 
+        isOfflineSetup = false;
         isConnecting = true;
         activeJoinCode = string.Empty;
         SetLobbyStatus("Creating Relay room...");
@@ -319,6 +316,7 @@ public class MultiplayerMenuController : MonoBehaviour
             return;
         }
 
+        isOfflineSetup = false;
         isConnecting = true;
         activeJoinCode = joinCodeInput == null ? string.Empty : joinCodeInput.text.Trim().ToUpperInvariant();
         SetLobbyStatus("Joining Relay room...");
@@ -482,6 +480,12 @@ public class MultiplayerMenuController : MonoBehaviour
 
     private void StartGame()
     {
+        if (isOfflineSetup)
+        {
+            StartSinglePlayerRun();
+            return;
+        }
+
         NetworkSessionManager session = NetworkSessionManager.Instance;
         if (session != null && session.IsServer && session.CanStartRun())
             session.StartRun();
@@ -489,6 +493,13 @@ public class MultiplayerMenuController : MonoBehaviour
 
     private void LeaveLobby()
     {
+        if (isOfflineSetup)
+        {
+            isOfflineSetup = false;
+            ShowMainMenuScreen();
+            return;
+        }
+
         relayManager?.LeaveSession();
         UnbindSession();
         activeJoinCode = string.Empty;
@@ -521,14 +532,23 @@ public class MultiplayerMenuController : MonoBehaviour
 
     private void RefreshLobby()
     {
+        if (isOfflineSetup)
+        {
+            SetOfflineSetupPresentation();
+            return;
+        }
+
         BindSession();
         NetworkSessionManager session = NetworkSessionManager.Instance;
         if (session == null || !session.IsSpawned)
         {
+            SetOnlineSetupPresentation(false);
             if (lobbyPlayerCountText != null)
                 lobbyPlayerCountText.text = "Players: connecting...";
             return;
         }
+
+        SetOnlineSetupPresentation(true);
 
         if (lobbyPlayerCountText != null)
             lobbyPlayerCountText.text = $"Players: {session.Players.Count}/{Mathf.Max(1, session.MaxPlayers.Value)}";
@@ -568,6 +588,84 @@ public class MultiplayerMenuController : MonoBehaviour
         if (lobbyQuotasInput != null)
             lobbyQuotasInput.interactable = localIsHost;
         ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, session.QuotasToWin.Value);
+    }
+
+    private void SetOfflineSetupPresentation()
+    {
+        SetLobbyTitle("Configuración de partida");
+        SetActive(lobbyJoinCodeText != null ? lobbyJoinCodeText.gameObject : null, false);
+        SetActive(lobbyPlayerCountText != null ? lobbyPlayerCountText.gameObject : null, false);
+        SetActive(lobbyPlayerListText != null ? lobbyPlayerListText.gameObject : null, false);
+        SetActive(readyButton != null ? readyButton.gameObject : null, false);
+        if (lobbyStatusText != null)
+        {
+            lobbyStatusText.gameObject.SetActive(true);
+            lobbyStatusText.text = "Single-player setup";
+        }
+
+        if (startGameButton != null)
+        {
+            startGameButton.gameObject.SetActive(true);
+            startGameButton.interactable = true;
+        }
+
+        if (leaveLobbyButton != null)
+        {
+            leaveLobbyButton.gameObject.SetActive(true);
+            SetButtonLabel(leaveLobbyButton, "Back");
+        }
+
+        if (lobbyQuotasInput != null)
+            lobbyQuotasInput.interactable = true;
+        ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, RunSettings.SavedQuotasToWin);
+    }
+
+    private void SetOnlineSetupPresentation(bool connected)
+    {
+        SetLobbyTitle("Lobby");
+        SetActive(lobbyJoinCodeText != null ? lobbyJoinCodeText.gameObject : null, true);
+        SetActive(lobbyPlayerCountText != null ? lobbyPlayerCountText.gameObject : null, true);
+        SetActive(lobbyPlayerListText != null ? lobbyPlayerListText.gameObject : null, true);
+        SetActive(readyButton != null ? readyButton.gameObject : null, connected);
+        if (!connected)
+        {
+            if (startGameButton != null)
+            {
+                startGameButton.gameObject.SetActive(false);
+                startGameButton.interactable = false;
+            }
+
+            if (lobbyQuotasInput != null)
+                lobbyQuotasInput.interactable = false;
+        }
+
+        if (leaveLobbyButton != null)
+        {
+            leaveLobbyButton.gameObject.SetActive(true);
+            SetButtonLabel(leaveLobbyButton, "Leave Lobby");
+        }
+    }
+
+    private static void SetButtonLabel(Button button, string label)
+    {
+        TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+            text.text = label;
+    }
+
+    private void SetLobbyTitle(string title)
+    {
+        if (lobbyScreen == null)
+            return;
+
+        foreach (TMP_Text text in lobbyScreen.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (text.text == "Lobby" || text.gameObject.name == "LobbyTitle")
+            {
+                text.text = title;
+                return;
+            }
+        }
     }
 
     private void HandleClientConnected(ulong clientId)

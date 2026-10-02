@@ -20,10 +20,9 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       actualizar las frases serializadas, que aun hablan de deuda/dias.
 - [ ] `GameStateUI`: revisar `successTitle`/`successCauseText` serializados (hablan de deuda) y
       asignar `statsText` si el panel es authored (si no, se crea uno dentro de `panelRoot`).
-- [ ] `MenuScene`: crear un `TMP_InputField` + texto de ayuda en el menu principal
-      (`singlePlayerQuotasInput`, `singlePlayerQuotasHintText`) y otro en el lobby
-      (`lobbyQuotasInput`, `lobbyQuotasHintText`). La validacion (solo digitos, 2 caracteres,
-      0-99, 0 = infinito) la aplica el codigo.
+- [x] `MenuScene`: Singleplayer y Host/Join reutilizan el mismo panel de configuracion y el mismo
+      `lobbyQuotasInput`/`lobbyQuotasHintText`. Singleplayer lo abre en modo offline, sin crear
+      sala Relay/NGO; en lobby solo el host puede editarlo. No crear un segundo campo.
 - [ ] `RunManager` de `MainScene`: los campos antiguos `dayQuotas`/`failOnAnyMissedQuota` y
       `QuotaManager.totalDebt` quedan huerfanos en la escena; se limpian al guardar.
 - [ ] Playtest:
