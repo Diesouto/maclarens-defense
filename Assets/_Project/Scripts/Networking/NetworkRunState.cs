@@ -97,6 +97,9 @@ public class NetworkRunState : NetworkBehaviour
 
     private void SyncFromManager()
     {
+        if (!runManager.IsInitialized)
+            return;
+
         if (QuotaRound.Value != runManager.CurrentQuotaRound)
             QuotaRound.Value = runManager.CurrentQuotaRound;
         if (CurrentPhase.Value != runManager.CurrentPhase)

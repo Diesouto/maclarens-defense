@@ -20,6 +20,7 @@ public class RunManager : MonoBehaviour
     public bool IsTimerRunning { get; private set; }
     // Hidden until the train first leaves for the current quota.
     public bool HasTimerStarted { get; private set; }
+    public bool IsInitialized { get; private set; }
     public float ElapsedRunSeconds { get; private set; }
 
     public RunStatsTracker Stats { get; } = new();
@@ -99,6 +100,7 @@ public class RunManager : MonoBehaviour
         TimeRemaining = runConfig.GetTimeLimit(CurrentQuotaRound) + Mathf.Max(carriedOverSeconds, 0f);
         IsTimerRunning = false;
         HasTimerStarted = false;
+        IsInitialized = true;
         OnQuotaRoundChanged?.Invoke(CurrentQuotaRound);
         OnRunStateChanged?.Invoke();
     }
@@ -229,6 +231,7 @@ public class RunManager : MonoBehaviour
         TimeRemaining = timeRemaining;
         IsTimerRunning = timerRunning;
         HasTimerStarted = timerStarted;
+        IsInitialized = true;
         ElapsedRunSeconds = elapsedRunSeconds;
         SetPhase(phase);
 

@@ -9,8 +9,10 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 - [ ] Crear el asset `RunConfig` (Create > MacLarens > Run Config), ajustar `quotaAmounts`,
       `quotaTimeLimits`, `infiniteGrowth`, `timeCarryOverFraction` (0.5) y `defaultQuotasToWin`, y
       asignarlo en `RunManager.runConfig` de `MainScene`. Sin asset se usan los valores por defecto.
-- [ ] Añadir `QuotaTimerUI` al Canvas del HUD. Si no se asigna `timerText`, crea una etiqueta
-      centrada arriba; si se asigna, `visibilityRoot` no puede ser el mismo objeto del script.
+- [x] `QuotaTimerUI` ya está en el Canvas del HUD con `timerText` enlazado. El prefab tenía
+      `visibilityRoot` apuntando al mismo GameObject del script, lo que lo desactivaba para
+      siempre; el código ahora redirige ese caso al objeto del texto. Debe permanecer oculto en
+      MacLarens y mostrarse al iniciar el primer viaje a Town.
 - [x] `CargoValueUI`: automatico. Esta en el `Canvas` world-space de `Train_3` y apaga ese
       `Canvas` (texto + fondo) fuera de `Town`. `visibilityRoot` solo si se quiere otro objeto.
 - [ ] Objeto de Finish Day: ahora es `PayQuotaInteractable` + `QuotaStatusUI` (renombrados

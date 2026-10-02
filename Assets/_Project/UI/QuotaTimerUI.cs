@@ -21,6 +21,9 @@ public class QuotaTimerUI : MonoBehaviour
         if (timerText == null)
             timerText = CreateDefaultLabel();
 
+        if (visibilityRoot == gameObject)
+            visibilityRoot = timerText.gameObject;
+
         if (visibilityRoot == null && timerText != null && timerText.gameObject != gameObject)
             visibilityRoot = timerText.gameObject;
     }
