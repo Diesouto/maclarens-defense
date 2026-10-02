@@ -557,53 +557,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &4815162342108151623
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1207550392961441791}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0315c79e1f7b37f4782e0ecac943473e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  healthUI: {fileID: 0}
-  inventoryUI: {fileID: 0}
-  bulletsUI: {fileID: 0}
-  interactUI: {fileID: 0}
---- !u!114 &4815162342108151624
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1207550392961441791}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74ede2e21fd07f14793fa42c1b083b7e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameStateUI
-  gameStateManager: {fileID: 0}
-  panelRoot: {fileID: 0}
-  titleText: {fileID: 0}
-  causeText: {fileID: 0}
-  restartButton: {fileID: 0}
-  mainMenuButton: {fileID: 0}
---- !u!114 &4815162342108151625
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1207550392961441791}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d2f8a91c4e34b7fa6b0c3d2e1f4a5b7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DamageFeedback
-  overlay: {fileID: 0}
 --- !u!224 &8010260929253875201
 RectTransform:
   m_ObjectHideFlags: 0
@@ -624,6 +577,7 @@ RectTransform:
   - {fileID: 773076231228414587}
   - {fileID: 4395516054252085527}
   - {fileID: 6799344551520176091}
+  - {fileID: 840364870689897647}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -694,6 +648,76 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &4815162342108151623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1207550392961441791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0315c79e1f7b37f4782e0ecac943473e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  healthUI: {fileID: 0}
+  inventoryUI: {fileID: 0}
+  bulletsUI: {fileID: 0}
+  interactUI: {fileID: 0}
+  damageFeedback: {fileID: 0}
+--- !u!114 &4815162342108151624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1207550392961441791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74ede2e21fd07f14793fa42c1b083b7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameStateUI
+  gameStateManager: {fileID: 0}
+  panelRoot: {fileID: 0}
+  titleText: {fileID: 0}
+  causeText: {fileID: 0}
+  statsText: {fileID: 0}
+  restartButton: {fileID: 0}
+  mainMenuButton: {fileID: 0}
+  successTitle: Quotas paid!
+  failTitle: Defeat
+  successCauseText: MacLarens is safe. The crew made it.
+  teamWipeCauseText: The whole crew went down.
+  timeExpiredCauseText: Te quedaste sin tiempo para pagar la cuota
+  waitingForHostText: Waiting for the host to restart...
+  runStatsFormat: 'Run time: {0}
+
+    Money collected: ${1:N0}
+
+    Quotas paid:
+    {2} / {3}'
+  playerStatsFormat: '{0}  -  Kills: {1}   Deaths: {2}   Revives: {3}'
+--- !u!114 &4815162342108151625
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1207550392961441791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d2f8a91c4e34b7fa6b0c3d2e1f4a5b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageFeedback
+  overlay: {fileID: 0}
+  flashColor: {r: 0.75, g: 0, b: 0, a: 1}
+  hitFlashAlpha: 0.45
+  flashFadeSpeed: 1.5
+  lowHealthThreshold: 0.35
+  lowHealthMaxAlpha: 0.25
+  shakeAmplitude: 0.06
+  shakeDuration: 0.25
+  shakeFrequency: 30
 --- !u!1 &1341961027390590804
 GameObject:
   m_ObjectHideFlags: 0
@@ -2712,6 +2736,199 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &5448007121800880597
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 840364870689897647}
+  - component: {fileID: 3284752505241712302}
+  m_Layer: 5
+  m_Name: Timer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &840364870689897647
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5448007121800880597}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8124982804148834495}
+  m_Father: {fileID: 8010260929253875201}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -48}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &3284752505241712302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5448007121800880597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1159238fe140274a9cfd0e12160ce27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuotaTimerUI
+  runManager: {fileID: 0}
+  timerText: {fileID: 7558066478796601312}
+  visibilityRoot: {fileID: 5448007121800880597}
+  timerFormat: '{0:00}:{1:00}'
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  warningColor: {r: 0.95, g: 0.3, b: 0.3, a: 1}
+  warningThresholdSeconds: 60
+--- !u!1 &5581154216038082165
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8124982804148834495}
+  - component: {fileID: 1953425204025316551}
+  - component: {fileID: 7558066478796601312}
+  m_Layer: 5
+  m_Name: TimerText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8124982804148834495
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5581154216038082165}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 840364870689897647}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 200, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &1953425204025316551
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5581154216038082165}
+  m_CullTransparentMesh: 1
+--- !u!114 &7558066478796601312
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5581154216038082165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 10:00
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 79459efec17a4d00a321bdcc27bbc385, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 36
+  m_fontSizeBase: 36
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 1
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 0
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &5816897313461388682
 GameObject:
   m_ObjectHideFlags: 0
@@ -3166,6 +3383,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoundUI
   roundNumberText: {fileID: 2626478859397559717}
+  runManager: {fileID: 0}
 --- !u!1 &7830436215032271523
 GameObject:
   m_ObjectHideFlags: 0
@@ -3330,6 +3548,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoneyUI
   moneyText: {fileID: 1847615660685867592}
+  moneyManager: {fileID: 0}
+  countDuration: 0.5
+  neutralColor: {r: 1, g: 1, b: 1, a: 1}
+  gainColor: {r: 0.35, g: 0.9, b: 0.4, a: 1}
+  lossColor: {r: 0.95, g: 0.35, b: 0.35, a: 1}
 --- !u!1 &8133633859153883923
 GameObject:
   m_ObjectHideFlags: 0
@@ -4074,5 +4297,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractUI
   interactText: {fileID: 7006227726204830882}
+  keyHintText: {fileID: 0}
+  interactKeyLabel: E
   interactProgressBar: {fileID: 1790812934676894410}
   interactProgressBarBackground: {fileID: 5471023096606348441}
+  availableColor: {r: 1, g: 1, b: 1, a: 1}
+  blockedColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}

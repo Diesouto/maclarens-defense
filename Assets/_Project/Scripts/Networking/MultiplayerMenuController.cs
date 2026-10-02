@@ -592,7 +592,7 @@ public class MultiplayerMenuController : MonoBehaviour
 
     private void SetOfflineSetupPresentation()
     {
-        SetLobbyTitle("Configuración de partida");
+        SetLobbyTitle("Ajustes partida");
         SetActive(lobbyJoinCodeText != null ? lobbyJoinCodeText.gameObject : null, false);
         SetActive(lobbyPlayerCountText != null ? lobbyPlayerCountText.gameObject : null, false);
         SetActive(lobbyPlayerListText != null ? lobbyPlayerListText.gameObject : null, false);

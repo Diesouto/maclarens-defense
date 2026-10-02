@@ -80448,6 +80448,10 @@ PrefabInstance:
       propertyPath: health
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 3284752505241712302, guid: 2ef3f5b15d28ec14997d9498c55a7c0c, type: 3}
+      propertyPath: runManager
+      value: 
+      objectReference: {fileID: 720582679}
     - target: {fileID: 3350452099666364059, guid: 2ef3f5b15d28ec14997d9498c55a7c0c, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -102623,6 +102627,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 720582679}
     - target: {fileID: 5875397124053728660, guid: 24f0cf1edcff8ec44aefc446e5b22134, type: 3}
+      propertyPath: dialogueRoot
+      value: 
+      objectReference: {fileID: 3044429380863204885}
+    - target: {fileID: 5875397124053728660, guid: 24f0cf1edcff8ec44aefc446e5b22134, type: 3}
       propertyPath: moneyManager
       value: 
       objectReference: {fileID: 9173174584782406585}
@@ -102630,6 +102638,10 @@ PrefabInstance:
       propertyPath: quotaManager
       value: 
       objectReference: {fileID: 2132375709}
+    - target: {fileID: 5875397124053728660, guid: 24f0cf1edcff8ec44aefc446e5b22134, type: 3}
+      propertyPath: dialogueVisibleDuration
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 5875397124053728660, guid: 24f0cf1edcff8ec44aefc446e5b22134, type: 3}
       propertyPath: dialogueLines.Array.size
       value: 6
@@ -102670,6 +102682,11 @@ PrefabInstance:
       insertIndex: 1
       addedObject: {fileID: 1160781934}
   m_SourcePrefab: {fileID: 100100000, guid: 24f0cf1edcff8ec44aefc446e5b22134, type: 3}
+--- !u!1 &3044429380863204885 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7931540642393441628, guid: 24f0cf1edcff8ec44aefc446e5b22134, type: 3}
+  m_PrefabInstance: {fileID: 3044429380863204884}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &3537048292041715063
 PrefabInstance:
   m_ObjectHideFlags: 0
