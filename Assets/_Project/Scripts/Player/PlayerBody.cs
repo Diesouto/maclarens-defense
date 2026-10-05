@@ -92,6 +92,12 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     private void HandleDeath()
     {
+        // A dead carrier must not keep dragging a body around (or take it into Town extraction).
+        if (!NetworkRole.IsClientOnly && TryGetComponent(out BodyCarrier carrier) && carrier.IsCarryingBody)
+            carrier.Drop();
+
+        BodyRecoveryManager.Instance?.NotifyDeath(this);
+
         if (IsRunActive && !NetworkRole.IsClientOnly)
             RunManager.Instance?.Stats.RecordDeath(StatsClientId, StatsPlayerName);
 
@@ -212,7 +218,8 @@ public class PlayerBody : MonoBehaviour, IInteractable
     // Revives this body back into a playable state. A recovered body (never hidden) stands up where
     // its ragdoll lies (e.g. aboard the train, or where a potion hit it); an abandoned/lost one
     // (hidden) snaps to the fallback spawn point instead, since its last position is meaningless.
-    public void Revive(Transform fallbackSpawnPoint, float healthFraction = 1f)
+    // respawnAtSpawn forces the spawn pose even for a recovered body (used for the MacLarens return).
+    public void Revive(Transform fallbackSpawnPoint, float healthFraction = 1f, bool respawnAtSpawn = false)
     {
         if (!IsDead || NetworkRole.IsClientOnly)
             return;
@@ -235,7 +242,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
         if (ragdollController != null)
             ragdollController.DisableRagdoll();
 
-        if (wasHidden)
+        if (wasHidden || respawnAtSpawn)
         {
             // An abandoned body must never keep the ragdoll's last position: it died under the map or off-limits.
             ResolveRespawnPose(fallbackSpawnPoint, out Vector3 respawnPosition, out Quaternion respawnRotation);

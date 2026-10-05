@@ -7,6 +7,9 @@ public class PlayerPoseController : MonoBehaviour
     [SerializeField] private Transform itemHoldPointPistol;
     [SerializeField] private Transform itemHoldPointShotgun;
     [SerializeField] private Transform itemHoldPointOther;
+    [Tooltip("Sockets under the right-hand bone; where remote players see held items.")]
+    [SerializeField] private Transform thirdPersonPistolHoldPoint;
+    [SerializeField] private Transform thirdPersonShotgunHoldPoint;
 
     private static readonly int ItemAnimationProfileHash = Animator.StringToHash("ItemAnimationProfile");
     private static readonly int IsWeaponEquippedHash = Animator.StringToHash("IsWeaponEquipped");
@@ -40,8 +43,21 @@ public class PlayerPoseController : MonoBehaviour
         animator.SetBool(IsCarryingItemHash, activeItem != null && profile == ItemAnimationProfile.Carry);
     }
 
-    public Transform GetItemHoldPoint(ItemAnimationProfile profile)
+    public Transform GetItemHoldPoint(ItemAnimationProfile profile, bool thirdPerson = false)
     {
+        if (thirdPerson)
+        {
+            Transform thirdPersonPoint = profile switch
+            {
+                ItemAnimationProfile.Pistol => thirdPersonPistolHoldPoint,
+                ItemAnimationProfile.Shotgun => thirdPersonShotgunHoldPoint,
+                _ => null
+            };
+
+            if (thirdPersonPoint != null)
+                return thirdPersonPoint;
+        }
+
         return profile switch
         {
             ItemAnimationProfile.Pistol => itemHoldPointPistol,

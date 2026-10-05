@@ -10,15 +10,18 @@ public class BodyCarrier : MonoBehaviour
 {
     [SerializeField] private Transform carryPoint;
     [SerializeField, Min(0f)] private float followSpeed = 12f;
+    [SerializeField, Min(0.5f)] private float snapDistance = 2.5f;
+    [SerializeField, Min(0f)] private float maxFollowSpeed = 25f;
 
     public PlayerBody CarriedBody { get; private set; }
     public bool IsCarryingBody => CarriedBody != null;
 
     private Rigidbody carriedRoot;
-    private bool carriedRootHadGravity;
+    private readonly List<Rigidbody> gravityDisabledBodies = new();
     private CharacterRagdollController carriedRagdoll;
     private Collider[] carrierColliders;
     private NetworkBodyCarrier networkAuthority;
+    private Vector3 lastCarryPointPosition;
 
     private void Awake()
     {
@@ -34,8 +37,37 @@ public class BodyCarrier : MonoBehaviour
         if (carriedRoot == null)
             return;
 
-        Vector3 toTarget = carryPoint.position - carriedRoot.position;
-        carriedRoot.linearVelocity = toTarget * followSpeed;
+        // The body was revived (ragdoll off) while carried: stop dragging it.
+        if (carriedRagdoll != null && !carriedRagdoll.IsRagdollActive)
+        {
+            ReleaseCarry();
+            return;
+        }
+
+        Vector3 carryPosition = carryPoint.position;
+        Vector3 carrierVelocity = (carryPosition - lastCarryPointPosition) / Time.fixedDeltaTime;
+        lastCarryPointPosition = carryPosition;
+
+        Vector3 toTarget = carryPosition - carriedRoot.position;
+
+        // Fell behind (fast carrier, train, snag): move the whole ragdoll instead of stretching its joints.
+        if (toTarget.magnitude > snapDistance)
+        {
+            foreach (Rigidbody bone in carriedRagdoll.RagdollRigidbodies)
+            {
+                if (bone == null)
+                    continue;
+
+                bone.position += toTarget;
+                bone.linearVelocity = Vector3.zero;
+                bone.angularVelocity = Vector3.zero;
+            }
+
+            return;
+        }
+
+        // Feed-forward the carrier's own velocity so the body keeps pace instead of trailing by spring lag.
+        carriedRoot.linearVelocity = Vector3.ClampMagnitude(toTarget * followSpeed + carrierVelocity, maxFollowSpeed);
     }
 
     public bool TryPickUp(PlayerBody body)
@@ -68,8 +100,17 @@ public class BodyCarrier : MonoBehaviour
         carriedRoot = root;
         body.AttachTo(this);
 
-        carriedRootHadGravity = root.useGravity;
-        root.useGravity = false;
+        gravityDisabledBodies.Clear();
+        foreach (Rigidbody bone in ragdoll.RagdollRigidbodies)
+        {
+            if (bone == null || !bone.useGravity)
+                continue;
+
+            bone.useGravity = false;
+            gravityDisabledBodies.Add(bone);
+        }
+
+        lastCarryPointPosition = carryPoint.position;
 
         SetIgnoreBodyCollisions(ragdoll, true);
 
@@ -131,8 +172,13 @@ public class BodyCarrier : MonoBehaviour
 
         PlayerBody body = CarriedBody;
 
-        if (carriedRoot != null)
-            carriedRoot.useGravity = carriedRootHadGravity;
+        foreach (Rigidbody bone in gravityDisabledBodies)
+        {
+            if (bone != null)
+                bone.useGravity = true;
+        }
+
+        gravityDisabledBodies.Clear();
 
         SetIgnoreBodyCollisions(carriedRagdoll, false);
 

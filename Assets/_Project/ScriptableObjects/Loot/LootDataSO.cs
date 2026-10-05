@@ -58,6 +58,11 @@ public class LootDataSO : ScriptableObject
     [SerializeField] private Vector3 heldPositionOffset = Vector3.zero;
     [SerializeField] private Vector3 heldRotationOffset = Vector3.zero;
 
+    [Header("Third Person (seen by other players)")]
+    [Tooltip("Local offset under the hand socket, used only on remote players' copies of the character.")]
+    [SerializeField] private Vector3 thirdPersonPositionOffset = Vector3.zero;
+    [SerializeField] private Vector3 thirdPersonRotationOffset = Vector3.zero;
+
     public string ItemId => string.IsNullOrEmpty(itemId) ? name : itemId;
     public string DisplayName => displayName;
     public Sprite Icon => icon;
@@ -71,6 +76,8 @@ public class LootDataSO : ScriptableObject
     public float RigidbodyMass => rigidbodyMass;
     public Vector3 HeldPositionOffset => heldPositionOffset;
     public Vector3 HeldRotationOffset => heldRotationOffset;
+    public Vector3 ThirdPersonPositionOffset => thirdPersonPositionOffset;
+    public Vector3 ThirdPersonRotationOffset => thirdPersonRotationOffset;
     public bool IsHeavy => isHeavy;
     public bool IsTwoHanded => isTwoHanded;
     public ItemAnimationProfile AnimationProfile => animationProfile;

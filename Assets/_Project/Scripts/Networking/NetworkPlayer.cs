@@ -44,6 +44,7 @@ public class NetworkPlayer : NetworkBehaviour
 
     private Vector3 lastServerPosition;
     private TrainPassenger trainPassenger;
+    private NetworkTransform networkTransform;
     private Transform[] characterModels;
     private WorldSpaceBillboard nameplateBillboard;
     private Coroutine outputCameraSearch;
@@ -88,8 +89,7 @@ public class NetworkPlayer : NetworkBehaviour
 
         if (IsOwner)
         {
-            if (playerMotor != null)
-                playerMotor.Teleport(position, rotation);
+            ApplyOwnerTeleport(position, rotation);
             return;
         }
 
@@ -98,11 +98,23 @@ public class NetworkPlayer : NetworkBehaviour
         TeleportOwnerRpc(position, rotation);
     }
 
-    [Rpc(SendTo.Owner)]
-    private void TeleportOwnerRpc(Vector3 position, Quaternion rotation)
+    // NetworkTransform would otherwise interpolate from the old pose, sweeping the body through the map.
+    private void ApplyOwnerTeleport(Vector3 position, Quaternion rotation)
     {
         if (playerMotor != null)
             playerMotor.Teleport(position, rotation);
+
+        if (playerController != null)
+            playerController.SyncLookToTransform();
+
+        if (networkTransform != null && networkTransform.CanCommitToTransform)
+            networkTransform.Teleport(position, rotation, transform.localScale);
+    }
+
+    [Rpc(SendTo.Owner)]
+    private void TeleportOwnerRpc(Vector3 position, Quaternion rotation)
+    {
+        ApplyOwnerTeleport(position, rotation);
     }
 
     private void Awake()
@@ -123,6 +135,7 @@ public class NetworkPlayer : NetworkBehaviour
             playerMotor = GetComponent<PlayerMotor>();
 
         trainPassenger = GetComponent<TrainPassenger>();
+        networkTransform = GetComponent<NetworkTransform>();
         playerBody = GetComponent<PlayerBody>();
 
         if (playerCameras == null || playerCameras.Length == 0)

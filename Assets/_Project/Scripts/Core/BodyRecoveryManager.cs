@@ -11,7 +11,9 @@ public class BodyRecoveryManager : MonoBehaviour
     public static BodyRecoveryManager Instance { get; private set; }
 
     [SerializeField] private Transform macLarensRespawnPoint;
-    [SerializeField, Min(0)] private int abandonedBodyQuotaPenalty = 500;
+    [SerializeField, Min(0)] private int lostBodyMoneyPenalty = 500;
+    [Tooltip("Players who die while the train is at MacLarens (never inside Town) respawn on their own after this delay.")]
+    [SerializeField, Min(0f)] private float stationRespawnDelay = 5f;
 
     private RunManager runManager;
 
@@ -70,7 +72,8 @@ public class BodyRecoveryManager : MonoBehaviour
                 continue;
 
             PlayerController owner = body.GetComponent<PlayerController>();
-            bool leftBehind = InTownTrigger.Instance == null || InTownTrigger.Instance.IsPlayerInsideTown(owner);
+            bool leftBehind = (InTownTrigger.Instance == null || InTownTrigger.Instance.IsPlayerInsideTown(owner)) &&
+                !IsRecoverable(body);
 
             if (leftBehind)
                 body.Hide();
@@ -94,10 +97,42 @@ public class BodyRecoveryManager : MonoBehaviour
         QueueRespawn(body, withPenalty: true);
     }
 
+    // Deaths at the station never touch Town extraction and the arrival revive already happened,
+    // so nothing else would ever bring these players back.
+    public void NotifyDeath(PlayerBody body)
+    {
+        if (NetworkRole.IsClientOnly || body == null)
+            return;
+
+        if (runManager == null)
+            runManager = RunManager.Instance;
+
+        if (runManager == null || runManager.CurrentPhase != RunPhase.MacLarens)
+            return;
+
+        StartCoroutine(RespawnAtStationAfterDelay(body));
+    }
+
+    private System.Collections.IEnumerator RespawnAtStationAfterDelay(PlayerBody body)
+    {
+        yield return new WaitForSeconds(stationRespawnDelay);
+
+        bool runActive = GameStateManager.Instance == null || GameStateManager.Instance.IsRunActive;
+        if (body != null && runActive && body.IsDead && !body.IsPendingRespawn &&
+            runManager.CurrentPhase == RunPhase.MacLarens)
+            body.Revive(macLarensRespawnPoint, 1f, true);
+    }
+
     private void QueueRespawn(PlayerBody body, bool withPenalty)
     {
         body.MarkPendingRespawn();
         pendingRespawns.Add(new PendingRespawn { Body = body, WithPenalty = withPenalty });
+    }
+
+    // The only natural ways home: lying on the train or in a living player's hands.
+    private static bool IsRecoverable(PlayerBody body)
+    {
+        return body.IsBeingCarried || TrainCargo.IsBodyAboard(body);
     }
 
     private void HandlePhaseChanged(RunPhase phase)
@@ -111,19 +146,25 @@ public class BodyRecoveryManager : MonoBehaviour
             if (pending.Body == null)
                 continue;
 
-            pending.Body.Revive(macLarensRespawnPoint);
+            pending.Body.Revive(macLarensRespawnPoint, 1f, pending.WithPenalty);
 
             if (pending.WithPenalty)
-                QuotaManager.Instance?.AddQuotaModifier(abandonedBodyQuotaPenalty, "jugador abandonado");
+                MoneyManager.Instance?.ApplyPenalty(lostBodyMoneyPenalty);
         }
 
         pendingRespawns.Clear();
 
-        // Anyone who died after leaving Town (on the train, in MacLarens) made it back: free revive.
+        // Anyone still dead and not hidden: recovered if aboard/carried, otherwise lost with a penalty.
         foreach (PlayerBody body in PlayerBody.AllBodies)
         {
-            if (body != null && body.IsDead && !body.IsHidden)
-                body.Revive(macLarensRespawnPoint);
+            if (body == null || !body.IsDead || body.IsHidden)
+                continue;
+
+            bool recovered = IsRecoverable(body);
+            if (!recovered)
+                MoneyManager.Instance?.ApplyPenalty(lostBodyMoneyPenalty);
+
+            body.Revive(macLarensRespawnPoint, 1f, !recovered);
         }
     }
 }

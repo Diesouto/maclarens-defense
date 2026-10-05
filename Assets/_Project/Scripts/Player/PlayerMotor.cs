@@ -27,9 +27,11 @@ public class PlayerMotor : MonoBehaviour
     // CharacterController caches its own position, so direct transform writes get undone on the next Move().
     public void Teleport(Vector3 position, Quaternion rotation)
     {
+        bool wasEnabled = controller.enabled;
         controller.enabled = false;
         transform.SetPositionAndRotation(position, rotation);
-        controller.enabled = true;
+        // A ragdolled body keeps its CharacterController off; the revive re-enables it.
+        controller.enabled = wasEnabled;
         velocity = Vector3.zero;
     }
 

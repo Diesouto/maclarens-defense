@@ -803,7 +803,7 @@ Transform:
   m_GameObject: {fileID: 1324120675452231041}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.7119999, z: 0.38}
+  m_LocalPosition: {x: 0, y: 1.661, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -836,7 +836,7 @@ MonoBehaviour:
     FieldOfView: 60.000004
     OrthographicSize: 10
     NearClipPlane: 0.01
-    FarClipPlane: 5000
+    FarClipPlane: 1000
     Dutch: 0
     ModeOverride: 0
     PhysicalProperties:
@@ -1873,6 +1873,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6067405258954865500}
   - component: {fileID: 2520730515985291377}
+  - component: {fileID: 2565198172539020823}
   m_Layer: 0
   m_Name: SM_Chr_Cowboy_01
   m_TagString: Untagged
@@ -1926,6 +1927,60 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &2565198172539020823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3664244100368481041}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9daae8dacbe55784c8e957c684c50f19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBodyVisibility
+  playerCamera: {fileID: 3869243256191491695}
+  hiddenFromOwnCameraRoots:
+  - {fileID: 6067405258954865500}
+  - {fileID: 5456200992991252787}
+  - {fileID: 8795147591449599643}
+  - {fileID: 4035675719011173152}
+  - {fileID: 1385865959844685358}
+  - {fileID: 9139769756087359841}
+  - {fileID: 3095968288585471735}
+  - {fileID: 1525143367480473371}
+  - {fileID: 7251624213358529676}
+--- !u!1 &3684938785961145803
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 397915288944976667}
+  m_Layer: 0
+  m_Name: 3rdPersonItemHoldPointShotgun
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &397915288944976667
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3684938785961145803}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.41786712, z: 0, w: 0.9085082}
+  m_LocalPosition: {x: -0.083, y: 1.322, z: 0.311}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4691649494528451186}
+  m_LocalEulerAnglesHint: {x: 0, y: -49.4, z: 0}
 --- !u!1 &3915104580194426237
 GameObject:
   m_ObjectHideFlags: 0
@@ -2799,6 +2854,8 @@ Transform:
   - {fileID: 408399513450918475}
   - {fileID: 8419686460595407342}
   - {fileID: 3217351372630524805}
+  - {fileID: 5309821483319910902}
+  - {fileID: 397915288944976667}
   - {fileID: 3292151647886653030}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2851,9 +2908,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bed7b46cb3b6654fa9d793567ff770b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 5
-  sprintSpeed: 8
-  heavyCarrySpeedMultiplier: 0.5
+  walkSpeed: 3
+  sprintSpeed: 6
+  heavyCarrySpeedMultiplier: 0.65
   jumpHeight: 2
   gravity: -25
   groundMask:
@@ -2886,7 +2943,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af6b9bbda55b5d9488677c07e12fa22d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
-  interactionCamera: {fileID: 0}
+  interactionCamera: {fileID: 3869243256191491695}
   interactUI: {fileID: 0}
   interactionDistance: 3
   interactionMask:
@@ -2905,7 +2962,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraTransform: {fileID: 408399513450918475}
-  mainCamera: {fileID: 0}
+  mainCamera: {fileID: 3869243256191491695}
   ragdollCameraAnchor: {fileID: 2487617200157583898}
   lookSensitivity: 5
   lookSmoothing: 10
@@ -2951,6 +3008,8 @@ MonoBehaviour:
   itemHoldPointPistol: {fileID: 8419686460595407342}
   itemHoldPointShotgun: {fileID: 8419686460595407342}
   itemHoldPointOther: {fileID: 3217351372630524805}
+  thirdPersonPistolHoldPoint: {fileID: 5309821483319910902}
+  thirdPersonShotgunHoldPoint: {fileID: 397915288944976667}
 --- !u!114 &9181120398824042980
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2965,6 +3024,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemHolder
   inventory: {fileID: 5452146451401481602}
   poseController: {fileID: 1848756857575416761}
+  networkPlayer: {fileID: -6544112166950087562}
 --- !u!114 &8362558454854477792
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3397,7 +3457,7 @@ MonoBehaviour:
   ropeMaterial: {fileID: 0}
   ropeColor: {r: 0.55, g: 0.4, b: 0.22, a: 1}
   ropeWidth: 0.03
-  ropeOrigin: {fileID: 0}
+  ropeOrigin: {fileID: 3217351372630524805}
   ropeSegments: 20
   ropeSag: 1.5
   ropeDuration: 0.6
@@ -4057,6 +4117,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5174652142546798996}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7201496551072451452
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5309821483319910902}
+  m_Layer: 0
+  m_Name: 3rdPersonItemHoldPointPistol
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5309821483319910902
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7201496551072451452}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.25839755, z: 0, w: 0.9660387}
+  m_LocalPosition: {x: -0.323, y: 1.409, z: 0.429}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4691649494528451186}
+  m_LocalEulerAnglesHint: {x: 0, y: -29.95, z: 0}
 --- !u!1 &7308229538737484407
 GameObject:
   m_ObjectHideFlags: 0

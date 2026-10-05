@@ -9,6 +9,7 @@ using UnityEngine.InputSystem;
 // same idea as PEAK's spectator camera.
 // Requires a CinemachineBrain on the player's FPS Camera: enabling deathCamera is enough for the
 // brain to blend control away from PlayerController's manual rotation, no second Camera needed.
+[DefaultExecutionOrder(-50)]
 public class DeathCameraController : MonoBehaviour
 {
     public static DeathCameraController Instance { get; private set; }
@@ -18,6 +19,12 @@ public class DeathCameraController : MonoBehaviour
 
     [SerializeField] private float activationDelay = 3f;
     [SerializeField] private CinemachineCamera deathCamera;
+    [SerializeField, Min(0.01f)] private float corpseFollowSmoothTime = 0.4f;
+
+    // Smoothed, rotation-free stand-in for the corpse: a carried/tossed ragdoll jerks around too much to follow directly.
+    private Transform corpseProxy;
+    private Transform corpseSource;
+    private Vector3 corpseProxyVelocity;
 
     private readonly List<Transform> spectateTargets = new();
     private readonly List<Camera> suppressedCameras = new();
@@ -87,14 +94,21 @@ public class DeathCameraController : MonoBehaviour
     {
         spectateTargets.Clear();
 
+        corpseSource = null;
+
         // Follow the ragdoll's hips: the root stays where the player died while the body gets carried away.
         if (corpse != null)
         {
-            Transform corpseTarget = corpse;
+            corpseSource = corpse;
             if (corpse.TryGetComponent(out CharacterRagdollController ragdoll) && ragdoll.RootRigidbody != null)
-                corpseTarget = ragdoll.RootRigidbody.transform;
+                corpseSource = ragdoll.RootRigidbody.transform;
 
-            spectateTargets.Add(corpseTarget);
+            if (corpseProxy == null)
+                corpseProxy = new GameObject("DeathCameraCorpseTarget").transform;
+
+            corpseProxy.SetPositionAndRotation(corpseSource.position, Quaternion.identity);
+            corpseProxyVelocity = Vector3.zero;
+            spectateTargets.Add(corpseProxy);
         }
 
         foreach (PlayerController player in PlayerController.ActivePlayers)
@@ -105,6 +119,15 @@ public class DeathCameraController : MonoBehaviour
 
         currentTargetIndex = 0;
         ApplyTarget();
+    }
+
+    private void LateUpdate()
+    {
+        if (corpseProxy == null || corpseSource == null)
+            return;
+
+        corpseProxy.position = Vector3.SmoothDamp(corpseProxy.position, corpseSource.position,
+            ref corpseProxyVelocity, corpseFollowSmoothTime);
     }
 
     private void Update()
@@ -146,8 +169,15 @@ public class DeathCameraController : MonoBehaviour
             activateRoutine = null;
         }
 
+        corpseSource = null;
         RestorePlayerCameras();
         SetActiveCamera(false);
+    }
+
+    private void OnDestroy()
+    {
+        if (corpseProxy != null)
+            Destroy(corpseProxy.gameObject);
     }
 
     private void SetActiveCamera(bool active)

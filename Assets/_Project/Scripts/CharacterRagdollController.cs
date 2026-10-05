@@ -20,6 +20,7 @@ public class CharacterRagdollController : MonoBehaviour
     public bool IsRagdollActive => isRagdollActive;
     public Rigidbody RootRigidbody { get; private set; }
     public IReadOnlyList<Collider> RagdollColliders => ragdollColliders;
+    public IReadOnlyList<Rigidbody> RagdollRigidbodies => ragdollRigidbodies;
 
     private void Awake()
     {
@@ -101,6 +102,16 @@ public class CharacterRagdollController : MonoBehaviour
 
         StopAllCoroutines();
 
+        // Kinematic bodies reject velocity writes, so clear motion while they are still dynamic.
+        foreach (var rb in ragdollRigidbodies)
+        {
+            if (rb == null || rb.isKinematic)
+                continue;
+
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
         SetRagdollState(false);
 
         for (int i = 0; i < ragdollTransforms.Count; i++)
@@ -111,15 +122,6 @@ public class CharacterRagdollController : MonoBehaviour
 
             ragdollTransform.localPosition = bindLocalPositions[i];
             ragdollTransform.localRotation = bindLocalRotations[i];
-        }
-
-        foreach (var rb in ragdollRigidbodies)
-        {
-            if (rb == null)
-                continue;
-
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
         }
 
         if (animator != null)

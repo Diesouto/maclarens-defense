@@ -1,10 +1,11 @@
+using Unity.Netcode;
 using UnityEngine;
 
 // Moves the given renderers to the "CameraHidden" layer and excludes that layer from the local
 // player's own camera, so the player only sees hands/feet (whatever is left on default layers)
 // while everyone else's camera (or a future spectator/other-player camera) still renders them in
-// full, since only this camera's culling mask is touched.
-public class PlayerBodyVisibility : MonoBehaviour
+// full, since only this camera's culling mask is touched. Only applied on the owning instance (or offline).
+public class PlayerBodyVisibility : NetworkBehaviour
 {
     private const string HiddenLayerName = "CameraHidden";
 
@@ -12,10 +13,31 @@ public class PlayerBodyVisibility : MonoBehaviour
     [Tooltip("Roots (e.g. head, torso, arms, legs) whose renderers should be invisible to this player's own camera. Leave hands/feet out of this list.")]
     [SerializeField] private Transform[] hiddenFromOwnCameraRoots;
 
+    private bool applied;
+
     private void Awake()
     {
         if (playerCamera == null)
             playerCamera = GetComponentInChildren<Camera>();
+    }
+
+    private void Start()
+    {
+        if (!IsSpawned)
+            Apply();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+            Apply();
+    }
+
+    private void Apply()
+    {
+        if (applied)
+            return;
+        applied = true;
 
         int hiddenLayer = LayerMask.NameToLayer(HiddenLayerName);
         if (hiddenLayer < 0)

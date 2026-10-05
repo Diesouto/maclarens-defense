@@ -7,6 +7,7 @@ public class ItemHolder : MonoBehaviour
 
     [SerializeField] private PlayerInventory inventory;
     [SerializeField] private PlayerPoseController poseController;
+    [SerializeField] private NetworkPlayer networkPlayer;
 
     private GameObject currentHeldVisual;
     private LootDataSO currentItem;
@@ -18,6 +19,9 @@ public class ItemHolder : MonoBehaviour
 
     public Weapon RuntimeWeapon => playerWeapon;
 
+    // Remote copies show the item in the hand bone; the local player sees the camera-framed hold point.
+    private bool UseThirdPersonView => networkPlayer != null && networkPlayer != NetworkPlayer.Local;
+
     private void Awake()
     {
         if (inventory == null)
@@ -25,6 +29,9 @@ public class ItemHolder : MonoBehaviour
 
         if (poseController == null)
             poseController = GetComponent<PlayerPoseController>();
+
+        if (networkPlayer == null)
+            networkPlayer = GetComponent<NetworkPlayer>();
 
         residentWeapon = GetComponentInChildren<Weapon>(true);
         playerWeapon = residentWeapon;
@@ -34,8 +41,24 @@ public class ItemHolder : MonoBehaviour
             inventory.OnInventoryChanged += Refresh;
     }
 
+    private void OnEnable()
+    {
+        NetworkPlayer.LocalPlayerChanged += HandleLocalPlayerChanged;
+    }
+
+    private void OnDisable()
+    {
+        NetworkPlayer.LocalPlayerChanged -= HandleLocalPlayerChanged;
+    }
+
     private void Start()
     {
+        Refresh();
+    }
+
+    private void HandleLocalPlayerChanged(NetworkPlayer _)
+    {
+        hasRefreshed = false;
         Refresh();
     }
 
@@ -70,15 +93,19 @@ public class ItemHolder : MonoBehaviour
             return;
         }
 
-        Transform holdPoint = poseController != null ? poseController.GetItemHoldPoint(item.AnimationProfile) : transform;
+        bool thirdPerson = UseThirdPersonView;
+        Transform holdPoint = poseController != null ? poseController.GetItemHoldPoint(item.AnimationProfile, thirdPerson) : transform;
         if (holdPoint == null)
             holdPoint = transform;
+
+        Vector3 heldPosition = thirdPerson ? item.ThirdPersonPositionOffset : item.HeldPositionOffset;
+        Quaternion heldRotation = Quaternion.Euler(thirdPerson ? item.ThirdPersonRotationOffset : item.HeldRotationOffset);
 
         if (item.IsWeapon && item.HeldPrefab == null && residentWeapon != null)
         {
             residentWeapon.transform.SetParent(holdPoint, false);
-            residentWeapon.transform.localPosition = item.HeldPositionOffset;
-            residentWeapon.transform.localRotation = Quaternion.Euler(item.HeldRotationOffset);
+            residentWeapon.transform.localPosition = heldPosition;
+            residentWeapon.transform.localRotation = heldRotation;
             residentWeapon.transform.localScale = Vector3.one;
             residentWeapon.SyncWithActiveItem();
             SetPlayerWeapon(residentWeapon);
@@ -90,8 +117,8 @@ public class ItemHolder : MonoBehaviour
             return;
 
         currentHeldVisual = InstantiateHeldVisual(visualPrefab, holdPoint);
-        currentHeldVisual.transform.localPosition = item.HeldPositionOffset;
-        currentHeldVisual.transform.localRotation = Quaternion.Euler(item.HeldRotationOffset);
+        currentHeldVisual.transform.localPosition = heldPosition;
+        currentHeldVisual.transform.localRotation = heldRotation;
         currentHeldVisual.transform.localScale = Vector3.one;
 
         if (item.IsWeapon)

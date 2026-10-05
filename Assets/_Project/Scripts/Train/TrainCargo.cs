@@ -9,7 +9,33 @@ public class TrainCargo : MonoBehaviour
 
     public IReadOnlyCollection<LootItem> ItemsInCargo => itemsInCargo;
 
+    private static readonly List<TrainCargo> allCargo = new();
+
     private readonly HashSet<LootItem> itemsInCargo = new();
+    // Ragdolls have many colliders, so count them per body instead of toggling on first enter/exit.
+    private readonly Dictionary<PlayerBody, int> bodyColliderCounts = new();
+
+    public static bool IsBodyAboard(PlayerBody body)
+    {
+        foreach (TrainCargo cargo in allCargo)
+        {
+            if (cargo != null && cargo.bodyColliderCounts.ContainsKey(body))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void OnEnable()
+    {
+        allCargo.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        allCargo.Remove(this);
+        bodyColliderCounts.Clear();
+    }
 
     private void Awake()
     {
@@ -33,6 +59,14 @@ public class TrainCargo : MonoBehaviour
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
             !NetworkManager.Singleton.IsServer)
             return;
+
+        PlayerBody body = other.GetComponentInParent<PlayerBody>();
+        if (body != null)
+        {
+            bodyColliderCounts.TryGetValue(body, out int count);
+            bodyColliderCounts[body] = count + 1;
+            return;
+        }
 
         LootItem lootItem = other.GetComponentInParent<LootItem>();
 
@@ -62,6 +96,20 @@ public class TrainCargo : MonoBehaviour
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
             !NetworkManager.Singleton.IsServer)
             return;
+
+        PlayerBody body = other.GetComponentInParent<PlayerBody>();
+        if (body != null)
+        {
+            if (bodyColliderCounts.TryGetValue(body, out int count))
+            {
+                if (count <= 1)
+                    bodyColliderCounts.Remove(body);
+                else
+                    bodyColliderCounts[body] = count - 1;
+            }
+
+            return;
+        }
 
         LootItem lootItem = other.GetComponentInParent<LootItem>();
 

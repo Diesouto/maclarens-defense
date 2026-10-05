@@ -52,6 +52,16 @@ public class MoneyManager : MonoBehaviour
         AddMoney(amount);
     }
 
+    // Unlike TrySpendMoney this may push TeamMoney below zero.
+    public void ApplyPenalty(int amount)
+    {
+        if (IsNetworkClient() || amount <= 0)
+            return;
+
+        TeamMoney -= amount;
+        OnMoneyChanged?.Invoke();
+    }
+
     public bool TrySpendMoney(int amount)
     {
         if (IsNetworkClient())

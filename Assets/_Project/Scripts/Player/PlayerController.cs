@@ -592,6 +592,13 @@ public class PlayerController : MonoBehaviour
         enabled = false;
     }
 
+    // After a teleport, otherwise the next LateUpdate snaps the body back to the old heading.
+    public void SyncLookToTransform()
+    {
+        yaw = transform.eulerAngles.y;
+        smoothedYaw = yaw;
+    }
+
     // Called by PlayerBody once its Health has been revived; hands control back to the player.
     public void Revive()
     {

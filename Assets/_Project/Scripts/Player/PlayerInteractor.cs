@@ -7,6 +7,7 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] private float interactionDistance = 3f;
     [SerializeField] private LayerMask interactionMask = ~0;
 
+    private readonly RaycastHit[] hitBuffer = new RaycastHit[16];
     private PlayerInputHandler input;
     private PlayerController playerController;
     private IInteractable currentInteractable;
@@ -130,10 +131,22 @@ public class PlayerInteractor : MonoBehaviour
             return null;
 
         Ray ray = viewCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
-        if (!Physics.Raycast(ray, out RaycastHit hit, interactionDistance, interactionMask, QueryTriggerInteraction.Ignore))
-            return null;
+        int count = Physics.RaycastNonAlloc(ray, hitBuffer, interactionDistance, interactionMask, QueryTriggerInteraction.Ignore);
+        float closest = float.MaxValue;
+        Collider closestCollider = null;
 
-        return hit.collider.GetComponentInParent<IInteractable>();
+        // Own body colliders are see-through so they never block or become the target.
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit hit = hitBuffer[i];
+            if (hit.distance >= closest || hit.collider.transform.IsChildOf(transform))
+                continue;
+
+            closest = hit.distance;
+            closestCollider = hit.collider;
+        }
+
+        return closestCollider == null ? null : closestCollider.GetComponentInParent<IInteractable>();
     }
 
     private void RefreshPrompt()
