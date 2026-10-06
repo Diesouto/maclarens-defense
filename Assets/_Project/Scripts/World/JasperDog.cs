@@ -105,7 +105,7 @@ public class JasperDog : MonoBehaviour, IInteractable
 
     public string GetPrompt(PlayerInteractor interactor)
     {
-        return $"Pet {dogName}";
+        return $"Acariciar {dogName}";
     }
 
     public void Interact(PlayerInteractor interactor)

@@ -544,14 +544,14 @@ public class MultiplayerMenuController : MonoBehaviour
         {
             SetOnlineSetupPresentation(false);
             if (lobbyPlayerCountText != null)
-                lobbyPlayerCountText.text = "Players: connecting...";
+                lobbyPlayerCountText.text = "Jugadores: conectando...";
             return;
         }
 
         SetOnlineSetupPresentation(true);
 
         if (lobbyPlayerCountText != null)
-            lobbyPlayerCountText.text = $"Players: {session.Players.Count}/{Mathf.Max(1, session.MaxPlayers.Value)}";
+            lobbyPlayerCountText.text = $"Jugadores: {session.Players.Count}/{Mathf.Max(1, session.MaxPlayers.Value)}";
 
         StringBuilder playersText = new StringBuilder();
         ulong localClientId = NetworkManager.Singleton == null ? ulong.MaxValue : NetworkManager.Singleton.LocalClientId;
@@ -562,8 +562,8 @@ public class MultiplayerMenuController : MonoBehaviour
             if (playersText.Length > 0)
                 playersText.AppendLine();
             playersText.Append(player.PlayerName.ToString());
-            playersText.Append(player.IsHost ? "  (HOST)" : "");
-            playersText.Append(player.IsReady ? "  READY" : "  NOT READY");
+            playersText.Append(player.IsHost ? "  (ANFITRIÓN)" : "");
+            playersText.Append(player.IsReady ? "  LISTO" : "  NO LISTO");
             playersText.Append("  [").Append(player.CharacterIndex).Append(']');
 
             if (player.ClientId == localClientId)
@@ -574,11 +574,11 @@ public class MultiplayerMenuController : MonoBehaviour
         }
 
         if (lobbyPlayerListText != null)
-            lobbyPlayerListText.text = playersText.Length == 0 ? "Waiting for players..." : playersText.ToString();
+            lobbyPlayerListText.text = playersText.Length == 0 ? "Esperando jugadores..." : playersText.ToString();
         if (readyButton != null)
             readyButton.gameObject.SetActive(!localIsHost);
         if (readyButtonText != null)
-            readyButtonText.text = localIsReady ? "Cancel ready" : "Ready";
+            readyButtonText.text = localIsReady ? "Cancelar" : "Listo";
         if (startGameButton != null)
         {
             startGameButton.gameObject.SetActive(localIsHost);
@@ -600,7 +600,7 @@ public class MultiplayerMenuController : MonoBehaviour
         if (lobbyStatusText != null)
         {
             lobbyStatusText.gameObject.SetActive(true);
-            lobbyStatusText.text = "Single-player setup";
+            lobbyStatusText.text = "Ajustes singleplayer";
         }
 
         if (startGameButton != null)
@@ -612,7 +612,7 @@ public class MultiplayerMenuController : MonoBehaviour
         if (leaveLobbyButton != null)
         {
             leaveLobbyButton.gameObject.SetActive(true);
-            SetButtonLabel(leaveLobbyButton, "Back");
+            SetButtonLabel(leaveLobbyButton, "Volver");
         }
 
         if (lobbyQuotasInput != null)
@@ -642,7 +642,7 @@ public class MultiplayerMenuController : MonoBehaviour
         if (leaveLobbyButton != null)
         {
             leaveLobbyButton.gameObject.SetActive(true);
-            SetButtonLabel(leaveLobbyButton, "Leave Lobby");
+            SetButtonLabel(leaveLobbyButton, "Salir del Lobby");
         }
     }
 
@@ -674,7 +674,7 @@ public class MultiplayerMenuController : MonoBehaviour
             return;
 
         isConnecting = false;
-        SetLobbyStatus("Connected to lobby.");
+        SetLobbyStatus("Conectado al lobby.");
         BindSession();
         RefreshLobby();
     }
@@ -686,7 +686,7 @@ public class MultiplayerMenuController : MonoBehaviour
             return;
 
         isConnecting = false;
-        SetLobbyStatus("Disconnected from host.");
+        SetLobbyStatus("Desconectado del anfitrión.");
     }
 
     private void SetLobbyStatus(string value)

@@ -5,12 +5,6 @@ using UnityEngine;
 public class NetworkThreatState : NetworkBehaviour
 {
     public static NetworkThreatState Instance { get; private set; }
-    [System.Serializable]
-    private struct PlayerCountMultiplier
-    {
-        [Range(1, 4)] public int playerCount;
-        [Min(0f)] public float value;
-    }
 
     public NetworkVariable<float> CurrentThreat = new(
         0f,
@@ -31,13 +25,6 @@ public class NetworkThreatState : NetworkBehaviour
 
     [SerializeField] private ThreatManager threatManager;
     [SerializeField] private EnemySpawner enemySpawner;
-    [SerializeField] private PlayerCountMultiplier[] playerCountMultipliers =
-    {
-        new PlayerCountMultiplier { playerCount = 1, value = 1f },
-        new PlayerCountMultiplier { playerCount = 2, value = 1.25f },
-        new PlayerCountMultiplier { playerCount = 3, value = 1.5f },
-        new PlayerCountMultiplier { playerCount = 4, value = 1.75f }
-    };
 
     public float CurrentThreatMultiplier { get; private set; } = 1f;
 
@@ -98,7 +85,7 @@ public class NetworkThreatState : NetworkBehaviour
         int playerCount = Mathf.Clamp(NetworkManager.Singleton.ConnectedClientsIds.Count, 1, 4);
         if (PlayerCount.Value != playerCount)
             PlayerCount.Value = playerCount;
-        CurrentThreatMultiplier = ResolveMultiplier(PlayerCount.Value);
+        CurrentThreatMultiplier = RunManager.Instance != null ? RunManager.Instance.Scaling.threat : 1f;
 
         if (threatManager != null)
         {
@@ -113,20 +100,5 @@ public class NetworkThreatState : NetworkBehaviour
             if (AliveEnemyCount.Value != enemySpawner.AliveEnemyCount)
                 AliveEnemyCount.Value = enemySpawner.AliveEnemyCount;
         }
-    }
-
-    public float ResolveMultiplier(int connectedPlayers)
-    {
-        int clampedCount = Mathf.Clamp(connectedPlayers, 1, 4);
-        if (playerCountMultipliers != null)
-        {
-            foreach (PlayerCountMultiplier entry in playerCountMultipliers)
-            {
-                if (entry.playerCount == clampedCount)
-                    return entry.value;
-            }
-        }
-
-        return 1f;
     }
 }

@@ -1,9 +1,4 @@
 - Connect sounds (bell hiss when it begins moving and rail sounds) on the train movement
 - Ajustar número de enemigos en threat
-- Añadir más posiciones de enemigos
 - Ajustar valor y probabilidad de los items
-- Decorar edificios vacíos y poner LootItems
 - Meter memes
-- Traducir textos
-- Añadir nuevos enemigos y LootItems a los existentes
-- Animación de levantarse

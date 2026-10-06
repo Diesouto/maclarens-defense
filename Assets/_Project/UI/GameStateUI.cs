@@ -16,18 +16,18 @@ public class GameStateUI : MonoBehaviour
     [SerializeField] private Button restartButton;
     [SerializeField] private Button mainMenuButton;
 
-    [SerializeField] private string successTitle = "Quotas paid!";
-    [SerializeField] private string failTitle = "Defeat";
-    [SerializeField] private string successCauseText = "MacLarens is safe. The crew made it.";
-    [SerializeField] private string teamWipeCauseText = "The whole crew went down.";
-    [SerializeField] private string timeExpiredCauseText = "Te quedaste sin tiempo para pagar la cuota";
-    [SerializeField] private string waitingForHostText = "Waiting for the host to restart...";
+    [SerializeField] private string successTitle = "¡Deuda pagada!";
+    [SerializeField] private string failTitle = "Derrota";
+    [SerializeField] private string successCauseText = "La deuda con el MacLarens está saldada.";
+    [SerializeField] private string teamWipeCauseText = "Vaya parguelas, todos han muerto.";
+    [SerializeField] private string timeExpiredCauseText = "Te quedaste sin tiempo para pagar la deuda";
+    [SerializeField] private string waitingForHostText = "Esperando al anfitrión...";
 
     [Header("Stats")]
     [Tooltip("{0} = run time, {1} = total money earned, {2} = quotas completed, {3} = quotas to win.")]
-    [SerializeField] private string runStatsFormat = "Run time: {0}\nMoney collected: ${1:N0}\nQuotas paid: {2} / {3}";
+    [SerializeField] private string runStatsFormat = "Tiempo de partida: {0}\nDinero recaudado: ${1:N0}\nCuotas pagadas: {2} / {3}";
     [Tooltip("{0} = player, {1} = enemies killed, {2} = deaths, {3} = revives.")]
-    [SerializeField] private string playerStatsFormat = "{0}  -  Kills: {1}   Deaths: {2}   Revives: {3}";
+    [SerializeField] private string playerStatsFormat = "{0}  -  Muertes: {2}   Asesinatos: {1}   Revives: {3}";
 
     private RunManager runManager;
     private MoneyManager moneyManager;
@@ -209,7 +209,7 @@ public class GameStateUI : MonoBehaviour
         causeText = CreateText("Cause", panelRoot.transform, 40f, new Vector2(0f, 210f), new Vector2(1400f, 80f));
         statsText = CreateText("Stats", panelRoot.transform, 32f, new Vector2(0f, -20f), new Vector2(1400f, 360f));
         restartButton = CreateButton("RestartButton", panelRoot.transform, "Restart", new Vector2(-180f, -300f), out _);
-        mainMenuButton = CreateButton("MainMenuButton", panelRoot.transform, "Main Menu", new Vector2(180f, -300f), out _);
+        mainMenuButton = CreateButton("MainMenuButton", panelRoot.transform, "Menú Principal", new Vector2(180f, -300f), out _);
         panelRoot.transform.SetAsLastSibling();
     }
 

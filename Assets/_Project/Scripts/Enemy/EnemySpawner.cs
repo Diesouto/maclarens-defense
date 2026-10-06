@@ -23,11 +23,11 @@ public class EnemySpawner : MonoBehaviour
     [Header("Threat Intensity")]
     [SerializeField] private ThreatSpawnSettings[] intensityLevels =
     {
-        new ThreatSpawnSettings { level = ThreatLevel.Calm, maxAliveEnemies = 2, spawnInterval = 8f },
-        new ThreatSpawnSettings { level = ThreatLevel.Low, maxAliveEnemies = 4, spawnInterval = 6f },
-        new ThreatSpawnSettings { level = ThreatLevel.Medium, maxAliveEnemies = 6, spawnInterval = 4f },
-        new ThreatSpawnSettings { level = ThreatLevel.High, maxAliveEnemies = 9, spawnInterval = 3f },
-        new ThreatSpawnSettings { level = ThreatLevel.Critical, maxAliveEnemies = 12, spawnInterval = 2f },
+        new ThreatSpawnSettings { level = ThreatLevel.Calm, maxAliveEnemies = 1, spawnInterval = 10f },
+        new ThreatSpawnSettings { level = ThreatLevel.Low, maxAliveEnemies = 3, spawnInterval = 8f },
+        new ThreatSpawnSettings { level = ThreatLevel.Medium, maxAliveEnemies = 5, spawnInterval = 6f },
+        new ThreatSpawnSettings { level = ThreatLevel.High, maxAliveEnemies = 7, spawnInterval = 4.5f },
+        new ThreatSpawnSettings { level = ThreatLevel.Critical, maxAliveEnemies = 10, spawnInterval = 3.5f },
     };
 
     [Header("Spawn Settings")]
@@ -54,7 +54,7 @@ public class EnemySpawner : MonoBehaviour
     private void Start()
     {
         if (spawnOnStart)
-            spawnTimer = GetCurrentSettings().spawnInterval;
+            spawnTimer = ScaledInterval(GetCurrentSettings());
 
         ghostTimer = ghostSpawnDelay;
 
@@ -119,7 +119,7 @@ public class EnemySpawner : MonoBehaviour
 
         ThreatSpawnSettings settings = GetCurrentSettings();
 
-        if (aliveEnemies.Count - residentEnemies.Count >= settings.maxAliveEnemies)
+        if (aliveEnemies.Count - residentEnemies.Count >= ScaledCap(settings))
             return;
 
         spawnTimer -= Time.deltaTime;
@@ -127,8 +127,20 @@ public class EnemySpawner : MonoBehaviour
         if (spawnTimer <= 0f)
         {
             TrySpawnEnemy();
-            spawnTimer = settings.spawnInterval;
+            spawnTimer = ScaledInterval(settings);
         }
+    }
+
+    private static int ScaledCap(ThreatSpawnSettings settings)
+    {
+        float multiplier = RunManager.Instance != null ? RunManager.Instance.Scaling.enemyCap : 1f;
+        return Mathf.Max(Mathf.RoundToInt(settings.maxAliveEnemies * multiplier), 1);
+    }
+
+    private static float ScaledInterval(ThreatSpawnSettings settings)
+    {
+        float multiplier = RunManager.Instance != null ? RunManager.Instance.Scaling.spawnInterval : 1f;
+        return settings.spawnInterval * multiplier;
     }
 
     private void UpdateGhostSpawning()

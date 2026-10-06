@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ed568a963a8fa449afd94179edf7de5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThreatManager
-  threatPerSecond: 1
-  lootPickupThreat: 5
+  threatPerSecond: 0.35
+  lootPickupThreat: 4
+  enemyKillThreat: 0.5
   maxThreat: 100

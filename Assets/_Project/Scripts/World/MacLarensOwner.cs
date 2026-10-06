@@ -44,7 +44,7 @@ public class MacLarensOwner : MonoBehaviour, IInteractable
 
     public string GetPrompt(PlayerInteractor interactor)
     {
-        return "Talk to Owner";
+        return "Bobby Conbares";
     }
 
     public void Interact(PlayerInteractor interactor)

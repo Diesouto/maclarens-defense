@@ -44,4 +44,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e52e4cc2651b2144a999ab6bf1b42e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoneyManager
-  startingTeamMoney: 0
+  startingTeamMoney: 150

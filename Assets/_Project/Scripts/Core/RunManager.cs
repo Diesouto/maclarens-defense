@@ -9,10 +9,15 @@ public class RunManager : MonoBehaviour
 
     [Tooltip("Quota amounts and time limits. When empty a default config is used.")]
     [SerializeField] private RunConfigSO runConfig;
+    [Tooltip("Pause the quota timer while the train is at MacLarens.")]
+    [SerializeField] private bool pauseTimerAtMacLarens = true;
 
     public int CurrentQuotaRound { get; private set; } = 1;
     public int QuotasCompleted { get; private set; }
     public int QuotasToWin { get; private set; }
+    // Locked when the run starts so late joins/leaves don't shift the quota mid-run.
+    public int PlayerCount { get; private set; } = 1;
+    public RunConfigSO.PlayerScaling Scaling => runConfig.GetPlayerScaling(PlayerCount);
     public bool IsInfinite => QuotasToWin == RunSettings.InfiniteQuotas;
     public RunPhase CurrentPhase { get; private set; } = RunPhase.MacLarens;
 
@@ -63,6 +68,11 @@ public class RunManager : MonoBehaviour
         if (IsNetworkClient())
             return;
 
+        Unity.Netcode.NetworkManager network = Unity.Netcode.NetworkManager.Singleton;
+        PlayerCount = network != null && network.IsListening
+            ? Mathf.Clamp(network.ConnectedClientsIds.Count, 1, 4)
+            : 1;
+
         QuotasToWin = RunSettings.HasValue ? RunSettings.QuotasToWin : runConfig.DefaultQuotasToWin;
         StartQuotaRound(0f);
     }
@@ -91,7 +101,7 @@ public class RunManager : MonoBehaviour
         if (IsNetworkClient())
             return;
 
-        QuotaManager.Instance?.SetQuota(runConfig.GetQuota(CurrentQuotaRound));
+        QuotaManager.Instance?.SetQuota(runConfig.GetQuota(CurrentQuotaRound, PlayerCount));
     }
 
     private void StartQuotaRound(float carriedOverSeconds)
@@ -130,6 +140,12 @@ public class RunManager : MonoBehaviour
         SetPhase(destination == TrainDestination.Town
             ? RunPhase.Town
             : RunPhase.MacLarens);
+
+        if (destination != TrainDestination.MacLarens || !pauseTimerAtMacLarens || !IsTimerRunning)
+            return;
+
+        IsTimerRunning = false;
+        OnRunStateChanged?.Invoke();
     }
 
     public void HandleTownExit()

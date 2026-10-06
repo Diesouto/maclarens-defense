@@ -126,7 +126,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     public string GetPrompt(PlayerInteractor interactor)
     {
-        return "Carry Body";
+        return "Cargar Cuerpo";
     }
 
     float IInteractable.HoldDuration => carryHoldDuration;

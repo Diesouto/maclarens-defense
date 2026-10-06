@@ -74,11 +74,11 @@ public class TrainDeparture : MonoBehaviour, IInteractable
     public string GetPrompt(PlayerInteractor interactor)
     {
         if (trainSplineFollower == null)
-            return "Return to MacLarens";
+            return "Volver al MacLarens";
 
         return trainSplineFollower.CurrentStation == TrainDestination.Town
-            ? "Return to MacLarens"
-            : "Depart to Town";
+            ? "Volver al MacLarens"
+            : "Ir a Ponteareas";
     }
 
     public void Interact(PlayerInteractor interactor)

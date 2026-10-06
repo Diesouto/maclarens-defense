@@ -17,7 +17,7 @@ MonoBehaviour:
   icon: {fileID: 0}
   value: 500
   price: 0
-  spawnWeight: 100
+  spawnWeight: 50
   itemType: 0
   isHeavy: 1
   isTwoHanded: 1

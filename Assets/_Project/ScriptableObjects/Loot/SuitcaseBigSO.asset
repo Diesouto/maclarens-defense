@@ -17,7 +17,7 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 30a0eec7d940c0a46953bf9183328e19, type: 3}
   value: 300
   price: 0
-  spawnWeight: 10
+  spawnWeight: 25
   itemType: 0
   isHeavy: 1
   isTwoHanded: 1

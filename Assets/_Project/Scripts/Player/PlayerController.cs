@@ -13,7 +13,7 @@ public class PlayerController : MonoBehaviour
     public static IReadOnlyList<PlayerController> ActivePlayers => activePlayers;
 
     public bool IsAlive => gameObject.activeInHierarchy && (health == null || !health.IsDead) &&
-        (body == null || !body.IsHidden);
+        (body == null || !body.IsHidden) && (knockdown == null || !knockdown.IsGettingUp);
 
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private Camera mainCamera;
@@ -47,6 +47,7 @@ public class PlayerController : MonoBehaviour
     private Health health;
     private PlayerBody body;
     private Animator animator;
+    private PlayerKnockdown knockdown;
     private float yaw;
     private float pitch;
     private float smoothedYaw;
@@ -84,6 +85,7 @@ public class PlayerController : MonoBehaviour
         lasso = GetComponent<LassoTool>();
         health = GetComponent<Health>();
         body = GetComponent<PlayerBody>();
+        knockdown = GetComponent<PlayerKnockdown>();
         animator = GetComponentInChildren<Animator>();
         activePlayers.Add(this);
 
@@ -143,7 +145,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (IsKnockedDown)
+        if (IsKnockedDown || (knockdown != null && knockdown.IsGettingUp))
             return;
 
         HandleLook();

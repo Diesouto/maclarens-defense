@@ -22,13 +22,13 @@ public class PayQuotaInteractable : MonoBehaviour, IInteractable
     public string GetPrompt(PlayerInteractor interactor)
     {
         int quota = QuotaManager.Instance != null ? QuotaManager.Instance.EffectiveQuota : 0;
-        string payText = $"Pay quota (${quota:N0})";
+        string payText = $"Pagar deuda (${quota:N0})";
 
         if (Run != null && Run.CurrentPhase != RunPhase.MacLarens)
-            return $"{payText} - train not in MacLarens";
+            return $"{payText} - el tren no está en el MacLarens";
 
         if (QuotaManager.Instance != null && !QuotaManager.Instance.QuotaMet)
-            return $"{payText} - not enough money";
+            return $"{payText} - no hay suficiente dinero";
 
         return payText;
     }

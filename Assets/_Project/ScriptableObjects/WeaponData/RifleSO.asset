@@ -21,8 +21,8 @@ MonoBehaviour:
   fireRate: 6
   automatic: 0
   magazineSize: 8
-  maxAmmo: 24
-  reloadTime: 6
+  maxAmmo: 32
+  reloadTime: 3.5
   muzzleFlash: {fileID: 0}
   hitEffect: {fileID: 0}
   shotSound: {fileID: 0}

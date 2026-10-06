@@ -44,5 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 772721a084a59f54fa8376f908bf94f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootSpawner
-  maxActiveLoot: 15
+  minActiveLoot: 10
+  maxActiveLoot: 40
+  quotaToLootScale: 160
   spawnOnStart: 1

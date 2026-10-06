@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96c96ef2f3ac171439e7470a717308be, type: 3}
   m_Name: GunpowderBarrelExplosion
   m_EditorClassIdentifier: Assembly-CSharp::ExplosionEffectSO
-  radius: 20
-  maxDamage: 80
+  radius: 8
+  maxDamage: 60
   force: 30
   upwardsModifier: 3
   knockdownDuration: 5

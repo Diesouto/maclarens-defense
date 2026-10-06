@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e39269607b66cd4abe1684aae11dba5, type: 3}
   m_Name: RunConfig
   m_EditorClassIdentifier: Assembly-CSharp::RunConfigSO
-  quotaAmounts: 10270000b036000050460000
-  infiniteGrowth: 1.35
+  quotaAmounts: 080700008c0a0000d80e0000
+  infiniteGrowth: 1.3
   quotaTimeLimits:
   - 600
+  - 660
   - 720
-  - 840
   timeCarryOverFraction: 0.5
   defaultQuotasToWin: 3

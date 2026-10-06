@@ -10,14 +10,19 @@ public class PlayerKnockdown : NetworkBehaviour
 {
     [SerializeField, Min(0.1f)] private float minimumUpForce = 0.35f;
     [SerializeField] private LayerMask groundMask = ~0;
+    [Tooltip("Seconds the get-up animation plays; the player can't move or be targeted meanwhile.")]
+    [SerializeField, Min(0f)] private float getUpDuration = 1.5f;
 
     private Health health;
     private CharacterRagdollController ragdoll;
     private PlayerController playerController;
     private PlayerMotor motor;
+    private Animator animator;
     private Coroutine recoverRoutine;
+    private Coroutine getUpRoutine;
 
     public bool IsKnockedDown { get; private set; }
+    public bool IsGettingUp { get; private set; }
 
     private void Awake()
     {
@@ -25,6 +30,7 @@ public class PlayerKnockdown : NetworkBehaviour
         ragdoll = GetComponent<CharacterRagdollController>();
         playerController = GetComponent<PlayerController>();
         motor = GetComponent<PlayerMotor>();
+        animator = GetComponentInChildren<Animator>();
     }
 
     private void OnEnable()
@@ -64,6 +70,8 @@ public class PlayerKnockdown : NetworkBehaviour
         direction = direction.sqrMagnitude > 0.001f ? direction.normalized : transform.forward;
         direction = (direction + Vector3.up * minimumUpForce).normalized;
 
+        CancelGetUp();
+
         if (!IsKnockedDown)
         {
             IsKnockedDown = true;
@@ -102,6 +110,33 @@ public class PlayerKnockdown : NetworkBehaviour
 
         if (playerController != null)
             playerController.SetKnockedDown(false);
+
+        if (getUpDuration <= 0f)
+            yield break;
+
+        IsGettingUp = true;
+        if (animator != null)
+            animator.SetTrigger("HasRagdolled");
+
+        getUpRoutine = StartCoroutine(FinishGetUp());
+    }
+
+    private IEnumerator FinishGetUp()
+    {
+        yield return new WaitForSeconds(getUpDuration);
+        getUpRoutine = null;
+        IsGettingUp = false;
+    }
+
+    private void CancelGetUp()
+    {
+        if (getUpRoutine != null)
+        {
+            StopCoroutine(getUpRoutine);
+            getUpRoutine = null;
+        }
+
+        IsGettingUp = false;
     }
 
     private void HandleDeath()
@@ -111,6 +146,8 @@ public class PlayerKnockdown : NetworkBehaviour
             StopCoroutine(recoverRoutine);
             recoverRoutine = null;
         }
+
+        CancelGetUp();
 
         IsKnockedDown = false;
     }
