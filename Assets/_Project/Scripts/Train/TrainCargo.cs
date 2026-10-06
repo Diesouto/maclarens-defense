@@ -14,6 +14,8 @@ public class TrainCargo : MonoBehaviour
     private readonly HashSet<LootItem> itemsInCargo = new();
     // Ragdolls have many colliders, so count them per body instead of toggling on first enter/exit.
     private readonly Dictionary<PlayerBody, int> bodyColliderCounts = new();
+    private Vector3 lastPosition;
+    private Quaternion lastRotation;
 
     public static bool IsBodyAboard(PlayerBody body)
     {
@@ -29,6 +31,38 @@ public class TrainCargo : MonoBehaviour
     private void OnEnable()
     {
         allCargo.Add(this);
+        lastPosition = transform.position;
+        lastRotation = transform.rotation;
+    }
+
+    // Ragdoll bones are free rigidbodies, so a corpse left on the train must be moved by the train's own delta.
+    private void LateUpdate()
+    {
+        Vector3 position = transform.position;
+        Quaternion rotation = transform.rotation;
+        Quaternion deltaRotation = rotation * Quaternion.Inverse(lastRotation);
+        Vector3 previousPosition = lastPosition;
+        lastPosition = position;
+        lastRotation = rotation;
+
+        if (bodyColliderCounts.Count == 0)
+            return;
+
+        foreach (PlayerBody body in bodyColliderCounts.Keys)
+        {
+            if (body == null || !body.IsDead || body.IsHidden || body.IsBeingCarried ||
+                !body.TryGetComponent(out CharacterRagdollController ragdoll) || !ragdoll.IsRagdollActive)
+                continue;
+
+            foreach (Rigidbody bone in ragdoll.RagdollRigidbodies)
+            {
+                if (bone == null)
+                    continue;
+
+                bone.position = position + deltaRotation * (bone.position - previousPosition);
+                bone.rotation = deltaRotation * bone.rotation;
+            }
+        }
     }
 
     private void OnDisable()
@@ -56,10 +90,6 @@ public class TrainCargo : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
-            !NetworkManager.Singleton.IsServer)
-            return;
-
         PlayerBody body = other.GetComponentInParent<PlayerBody>();
         if (body != null)
         {
@@ -67,6 +97,10 @@ public class TrainCargo : MonoBehaviour
             bodyColliderCounts[body] = count + 1;
             return;
         }
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return;
 
         LootItem lootItem = other.GetComponentInParent<LootItem>();
 
@@ -93,10 +127,6 @@ public class TrainCargo : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
-            !NetworkManager.Singleton.IsServer)
-            return;
-
         PlayerBody body = other.GetComponentInParent<PlayerBody>();
         if (body != null)
         {
@@ -110,6 +140,10 @@ public class TrainCargo : MonoBehaviour
 
             return;
         }
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
+            !NetworkManager.Singleton.IsServer)
+            return;
 
         LootItem lootItem = other.GetComponentInParent<LootItem>();
 

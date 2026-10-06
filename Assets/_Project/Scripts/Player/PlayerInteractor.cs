@@ -154,12 +154,13 @@ public class PlayerInteractor : MonoBehaviour
         if (interactUI == null)
             return;
 
-        if (currentInteractable == null)
+        string prompt = currentInteractable?.GetPrompt(this);
+        if (string.IsNullOrEmpty(prompt))
         {
             interactUI.HidePrompt();
             return;
         }
 
-        interactUI.ShowPrompt(currentInteractable.GetPrompt(this), canInteractWithCurrent);
+        interactUI.ShowPrompt(prompt, canInteractWithCurrent);
     }
 }

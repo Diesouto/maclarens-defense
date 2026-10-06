@@ -47,24 +47,53 @@ MonoBehaviour:
   enemyPrefabs:
   - {fileID: 1607508185818098810, guid: 8a9284a717d6d084baf749eb49eca2df, type: 3}
   - {fileID: 5650392615696247707, guid: dc38f8fbac238c5439b339da7e09be83, type: 3}
+  - {fileID: 1607508185818098810, guid: 8b236a14f0c7be549996bf094ed598d7, type: 3}
+  - {fileID: 5650392615696247707, guid: b06327a537078e8419892a82f7b1053e, type: 3}
+  - {fileID: 6107781685910170124, guid: c90fa53d75e31b74a802199e5d7d47ba, type: 3}
   spawnPoints:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   intensityLevels:
   - level: 0
-    maxAliveEnemies: 2
-    spawnInterval: 8
-  - level: 1
-    maxAliveEnemies: 4
+    maxAliveEnemies: 5
     spawnInterval: 6
-  - level: 2
-    maxAliveEnemies: 6
+  - level: 1
+    maxAliveEnemies: 10
     spawnInterval: 4
-  - level: 3
-    maxAliveEnemies: 9
-    spawnInterval: 3
-  - level: 4
-    maxAliveEnemies: 12
+  - level: 2
+    maxAliveEnemies: 20
     spawnInterval: 2
-  spawnOnStart: 1
+  - level: 3
+    maxAliveEnemies: 30
+    spawnInterval: 1
+  - level: 4
+    maxAliveEnemies: 40
+    spawnInterval: 1
+  spawnOnStart: 0
+  townResidentEnemies: 12
+  ghostPrefab: {fileID: 143032221112865109, guid: e0f7844593e51024482aaebd1dd77804, type: 3}
+  ghostMinimumLevel: 2
+  maxGhosts: 1
+  ghostSpawnDelay: 30
+  ghostSpawnHeight: 1

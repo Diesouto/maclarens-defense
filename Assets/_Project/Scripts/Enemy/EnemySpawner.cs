@@ -45,8 +45,10 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float ghostSpawnHeight = 1f;
 
     private float ghostTimer;
+    private bool warnedMissingGhost;
     private readonly List<EnemyController> aliveEnemies = new();
     private readonly HashSet<EnemyController> residentEnemies = new();
+    private readonly Dictionary<EnemyController, TownZone> guardZones = new();
     private RunManager runManager;
 
     private float spawnTimer;
@@ -81,6 +83,14 @@ public class EnemySpawner : MonoBehaviour
         if (spawnPoints == null || spawnPoints.Length == 0)
             return;
 
+        CleanupDeadEnemies();
+
+        if (TownZone.All.Count > 0)
+        {
+            SpawnZoneGuards();
+            return;
+        }
+
         var candidates = new List<EnemySpawnPoint>();
         foreach (EnemySpawnPoint point in spawnPoints)
         {
@@ -88,7 +98,6 @@ public class EnemySpawner : MonoBehaviour
                 candidates.Add(point);
         }
 
-        CleanupDeadEnemies();
         int toSpawn = Mathf.Min(townResidentEnemies - residentEnemies.Count, candidates.Count);
         for (int i = 0; i < toSpawn; i++)
         {
@@ -103,6 +112,76 @@ public class EnemySpawner : MonoBehaviour
                 residentEnemies.Add(resident);
             }
         }
+    }
+
+    // Tops each zone back up to its authored guard count; zones with no spawn points inside stay empty.
+    private void SpawnZoneGuards()
+    {
+        foreach (TownZone zone in new List<TownZone>(TownZone.All))
+        {
+            var zonePoints = new List<EnemySpawnPoint>();
+            foreach (EnemySpawnPoint point in spawnPoints)
+            {
+                if (point != null && point.gameObject.activeInHierarchy && TownZone.FindAt(point.Position) == zone)
+                    zonePoints.Add(point);
+            }
+
+            int alive = CountAliveGuards(zone);
+            int toSpawn = Mathf.Min(zone.GuardCount - alive, zonePoints.Count);
+            for (int i = 0; i < toSpawn; i++)
+            {
+                int index = UnityEngine.Random.Range(0, zonePoints.Count);
+                EnemySpawnPoint point = zonePoints[index];
+                zonePoints.RemoveAt(index);
+
+                GameObject prefab = PickGuardPrefab(zone);
+                EnemyController guard = SpawnAt(point, prefab);
+                if (guard == null)
+                    continue;
+
+                guard.MarkAsResident();
+                residentEnemies.Add(guard);
+                guardZones[guard] = zone;
+                guard.Died += HandleGuardDied;
+                alive++;
+            }
+
+            zone.SetGuardsAlive(alive);
+        }
+    }
+
+    private int CountAliveGuards(TownZone zone)
+    {
+        int alive = 0;
+        foreach (KeyValuePair<EnemyController, TownZone> entry in guardZones)
+        {
+            if (entry.Value == zone && entry.Key != null && !entry.Key.IsDead)
+                alive++;
+        }
+
+        return alive;
+    }
+
+    private GameObject PickGuardPrefab(TownZone zone)
+    {
+        GameObject[] pool = zone.GuardPrefabs != null && zone.GuardPrefabs.Length > 0 ? zone.GuardPrefabs : enemyPrefabs;
+        return pool == null || pool.Length == 0 ? null : pool[UnityEngine.Random.Range(0, pool.Length)];
+    }
+
+    private void HandleGuardDied(EnemyController guard)
+    {
+        guard.Died -= HandleGuardDied;
+        if (!guardZones.Remove(guard, out TownZone zone) || zone == null)
+            return;
+
+        zone.SetGuardsAlive(zone.GuardsAlive - 1);
+    }
+
+    // Threat spawns lean away from zones whose guards were cleared, but never stop entirely.
+    private static float GetZoneSpawnFactor(EnemySpawnPoint point)
+    {
+        TownZone zone = TownZone.FindAt(point.Position);
+        return zone != null ? zone.ReinforcementShare : 1f;
     }
 
     private void Update()
@@ -145,7 +224,18 @@ public class EnemySpawner : MonoBehaviour
 
     private void UpdateGhostSpawning()
     {
-        if (ghostPrefab == null || GhostController.ActiveCount >= maxGhosts)
+        if (ghostPrefab == null)
+        {
+            if (!warnedMissingGhost)
+            {
+                warnedMissingGhost = true;
+                Debug.LogWarning($"{name}: ghostPrefab is not assigned, ghosts will never spawn.", this);
+            }
+
+            return;
+        }
+
+        if (GhostController.ActiveCount >= maxGhosts)
             return;
 
         ThreatLevel level = ThreatManager.Instance != null ? ThreatManager.Instance.CurrentLevel : ThreatLevel.Calm;
@@ -165,6 +255,7 @@ public class EnemySpawner : MonoBehaviour
 
         ghostTimer = ghostSpawnDelay;
         GameObject ghost = Instantiate(ghostPrefab, point.Position + Vector3.up * ghostSpawnHeight, point.transform.rotation);
+        Debug.Log($"{name}: ghost spawned at threat level {level}.", ghost);
         point.MarkUsed();
 
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
@@ -215,14 +306,14 @@ public class EnemySpawner : MonoBehaviour
         SpawnAt(spawnPoint);
     }
 
-    private EnemyController SpawnAt(EnemySpawnPoint spawnPoint)
+    private EnemyController SpawnAt(EnemySpawnPoint spawnPoint, GameObject prefabOverride = null)
     {
-        if (enemyPrefabs == null || enemyPrefabs.Length == 0)
+        if (prefabOverride == null && (enemyPrefabs == null || enemyPrefabs.Length == 0))
             return null;
 
-        GameObject prefab = enemyPrefabs[
-            UnityEngine.Random.Range(0, enemyPrefabs.Length)
-        ];
+        GameObject prefab = prefabOverride != null
+            ? prefabOverride
+            : enemyPrefabs[UnityEngine.Random.Range(0, enemyPrefabs.Length)];
 
         Vector3 spawnPosition = spawnPoint.Position;
 
@@ -301,7 +392,7 @@ public class EnemySpawner : MonoBehaviour
 
             // TEMP playtest: random valid point instead of the one farthest from every player.
             // float score = point.GetScore();
-            float score = UnityEngine.Random.value;
+            float score = UnityEngine.Random.value * GetZoneSpawnFactor(point);
             if (score > bestScore)
             {
                 bestScore = score;
@@ -340,5 +431,9 @@ public class EnemySpawner : MonoBehaviour
 
         aliveEnemies.Clear();
         residentEnemies.Clear();
+        guardZones.Clear();
+
+        foreach (TownZone zone in TownZone.All)
+            zone.SetGuardsAlive(0);
     }
 }

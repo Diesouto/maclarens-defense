@@ -100,7 +100,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b5259a3ca1c93643a77f561f768a346, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 10
+  maxHealth: 30
 --- !u!114 &9171491796168035478
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -118,12 +118,13 @@ MonoBehaviour:
   attackVerticalReach: 1.2
   attackDamage: 10
   attackForce: 5
-  runSpeed: 5.5
+  runSpeed: 6.5
   attackCooldown: 2
   residentDetectionRange: 20
   retargetMargin: 2
   selfDestruct: {fileID: 0}
   selfDestructFuse: 0.3
+  keepDistance: 0
 --- !u!114 &5151449723538997426
 MonoBehaviour:
   m_ObjectHideFlags: 0

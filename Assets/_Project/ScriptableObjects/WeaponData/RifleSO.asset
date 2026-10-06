@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b23692e28095ab7429e6ff9c4bf2588f, type: 3}
   m_Name: RifleSO
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  damage: 5
+  damage: 10
   range: 10000
   headshotMultiplier: 3
   shotRadius: 0.03

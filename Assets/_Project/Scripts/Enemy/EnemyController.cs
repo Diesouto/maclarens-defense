@@ -23,6 +23,8 @@ public class EnemyController : MonoBehaviour
     [Tooltip("Kamikaze enemies (tumbleweed): detonate this instead of attacking once in reach.")]
     [SerializeField] private Explosive selfDestruct;
     [SerializeField, Min(0f)] private float selfDestructFuse = 0.3f;
+    [Tooltip("Ranged enemies stop this far from their target instead of closing to melee range. 0 = melee.")]
+    [SerializeField, Min(0f)] private float keepDistance;
 
     private NavMeshAgent agent;
     private Health health;
@@ -35,6 +37,9 @@ public class EnemyController : MonoBehaviour
 
     public bool IsDead => isDead;
     public bool IsResident { get; private set; }
+    public PlayerController TargetPlayer => targetPlayer;
+
+    public event System.Action<EnemyController> Died;
 
     public void MarkAsResident()
     {
@@ -49,7 +54,11 @@ public class EnemyController : MonoBehaviour
         networkState = GetComponent<NetworkEnemyState>();
 
         if (agent != null)
+        {
             agent.speed = runSpeed;
+            if (keepDistance > 0f)
+                agent.stoppingDistance = keepDistance;
+        }
 
         if (health != null)
         {
@@ -246,6 +255,7 @@ public class EnemyController : MonoBehaviour
         networkState?.SetDead(true);
         StopAllCoroutines();
         ThreatManager.Instance?.RegisterEnemyKill();
+        Died?.Invoke(this);
 
         if (!NetworkRole.IsClientOnly && health != null && health.KillerId.HasValue &&
             (GameStateManager.Instance == null || GameStateManager.Instance.IsRunActive))

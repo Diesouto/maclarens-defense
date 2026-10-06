@@ -47,6 +47,9 @@ public class NetworkPlayer : NetworkBehaviour
     private NetworkTransform networkTransform;
     private Transform[] characterModels;
     private WorldSpaceBillboard nameplateBillboard;
+    private Transform nameplateRoot;
+    private Vector3 nameplateLocalPosition;
+    private bool nameplateFollowingBody;
     private Coroutine outputCameraSearch;
     private PlayerBody playerBody;
     private bool hasInitialSpawnPose;
@@ -157,9 +160,31 @@ public class NetworkPlayer : NetworkBehaviour
         }
 
         if (playerNameLabel != null)
+        {
             nameplateBillboard = playerNameLabel.GetComponentInParent<WorldSpaceBillboard>();
+            nameplateRoot = nameplateBillboard != null ? nameplateBillboard.transform : playerNameLabel.transform;
+            nameplateLocalPosition = nameplateRoot.localPosition;
+        }
 
         characterModels = FindCharacterModels(transform);
+    }
+
+    // The root stays where the player died while the ragdoll gets carried, so the nameplate must follow the corpse.
+    private void LateUpdate()
+    {
+        if (nameplateRoot == null || playerBody == null)
+            return;
+
+        if (playerBody.IsDead && playerBody.IsRagdollActive)
+        {
+            nameplateRoot.position = playerBody.BodyPosition + transform.TransformVector(nameplateLocalPosition);
+            nameplateFollowingBody = true;
+        }
+        else if (nameplateFollowingBody)
+        {
+            nameplateRoot.localPosition = nameplateLocalPosition;
+            nameplateFollowingBody = false;
+        }
     }
 
     public override void OnNetworkSpawn()

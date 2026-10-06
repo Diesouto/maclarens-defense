@@ -12,9 +12,11 @@ public class QuotaTimerUI : MonoBehaviour
     [SerializeField] private string timerFormat = "{0:00}:{1:00}";
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color warningColor = new Color(0.95f, 0.3f, 0.3f);
+    [SerializeField] private Color pausedColor = new Color(0.55f, 0.55f, 0.55f);
     [SerializeField, Min(0f)] private float warningThresholdSeconds = 60f;
 
     private int lastShownSeconds = -1;
+    private bool lastRunning;
 
     private void Awake()
     {
@@ -41,12 +43,16 @@ public class QuotaTimerUI : MonoBehaviour
             return;
 
         int seconds = Mathf.CeilToInt(runManager.TimeRemaining);
-        if (seconds == lastShownSeconds)
+        bool running = runManager.IsTimerRunning;
+        if (seconds == lastShownSeconds && running == lastRunning)
             return;
 
         lastShownSeconds = seconds;
+        lastRunning = running;
         timerText.text = string.Format(timerFormat, seconds / 60, seconds % 60);
-        timerText.color = runManager.TimeRemaining <= warningThresholdSeconds ? warningColor : normalColor;
+        timerText.color = !running
+            ? pausedColor
+            : runManager.TimeRemaining <= warningThresholdSeconds ? warningColor : normalColor;
     }
 
     private TMP_Text CreateDefaultLabel()

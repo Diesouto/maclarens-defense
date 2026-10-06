@@ -82,10 +82,11 @@ public class NetworkBodyCarrier : NetworkBehaviour
         if (bodyObject == null)
             return;
 
-        if (Vector3.Distance(bodyObject.transform.position, transform.position) > carryDistance)
+        PlayerBody body = bodyObject.GetComponent<PlayerBody>();
+        if (body == null ||
+            Vector3.Distance(body.BodyPosition, transform.position) > carryDistance + 2f)
             return;
 
-        PlayerBody body = bodyObject.GetComponent<PlayerBody>();
         carrier.ApplyPickup(body);
     }
 

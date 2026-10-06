@@ -44,6 +44,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     public bool IsDead => health != null && health.IsDead;
     public bool IsHidden { get; private set; }
+    public bool IsRagdollActive => ragdollController != null && ragdollController.IsRagdollActive;
     public BodyCarrier Carrier { get; private set; }
     public bool IsBeingCarried => Carrier != null;
 
@@ -126,7 +127,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     public string GetPrompt(PlayerInteractor interactor)
     {
-        return "Cargar Cuerpo";
+        return IsDead && !IsHidden ? "Cargar Cuerpo" : string.Empty;
     }
 
     float IInteractable.HoldDuration => carryHoldDuration;

@@ -8,7 +8,7 @@ public class TownExtractionResolver : MonoBehaviour
     [SerializeField] private Transform temporaryEntitiesRoot;
 
     private bool extractionResolved;
-
+    private bool subscribedToRun;
     private void Awake()
     {
         if (trainSplineFollower == null)
@@ -23,8 +23,24 @@ public class TownExtractionResolver : MonoBehaviour
         if (trainSplineFollower != null)
             trainSplineFollower.OnTownExitReached += ResolveTownExit;
 
-        if (runManager != null)
-            runManager.OnPhaseChanged += HandlePhaseChanged;
+        SubscribeToRun();
+    }
+
+    private void Start()
+    {
+        SubscribeToRun();
+    }
+
+    private void SubscribeToRun()
+    {
+        if (runManager == null)
+            runManager = RunManager.Instance;
+
+        if (runManager == null || subscribedToRun)
+            return;
+
+        runManager.OnPhaseChanged += HandlePhaseChanged;
+        subscribedToRun = true;
     }
 
     private void OnDisable()
@@ -32,8 +48,10 @@ public class TownExtractionResolver : MonoBehaviour
         if (trainSplineFollower != null)
             trainSplineFollower.OnTownExitReached -= ResolveTownExit;
 
-        if (runManager != null)
+        if (runManager != null && subscribedToRun)
             runManager.OnPhaseChanged -= HandlePhaseChanged;
+
+        subscribedToRun = false;
     }
 
     // The crew may make several trips per quota, so every new trip needs its own extraction.

@@ -63,7 +63,7 @@ public class CharacterRagdollController : MonoBehaviour
             return;
 
         isRagdollActive = true;
-
+        SetSkinnedBoundsAlwaysUpdated(true);
         if (animator != null)
         {
             if (disableAnimatorDelay > 0f)
@@ -99,7 +99,7 @@ public class CharacterRagdollController : MonoBehaviour
             return;
 
         isRagdollActive = false;
-
+        SetSkinnedBoundsAlwaysUpdated(false);
         StopAllCoroutines();
 
         // Kinematic bodies reject velocity writes, so clear motion while they are still dynamic.
@@ -145,6 +145,13 @@ public class CharacterRagdollController : MonoBehaviour
         }
 
         return RootRigidbody.position;
+    }
+
+    // Bounds follow the root bone: once the ragdoll is dragged away they go stale and the mesh gets culled.
+    private void SetSkinnedBoundsAlwaysUpdated(bool enabled)
+    {
+        foreach (SkinnedMeshRenderer skinned in GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            skinned.updateWhenOffscreen = enabled;
     }
 
     private T GetChildComponent<T>() where T : Component

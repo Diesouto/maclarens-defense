@@ -48,7 +48,7 @@ public class PlayerInventory : MonoBehaviour
             return false;
 
         if (activeHeldItem != null)
-            return false;
+            return CanStoreInBackpack(loot) && !IsFull && HasFreeBackpackSlot();
 
         if (!CanStoreInBackpack(loot) || IsFull)
             return true;
@@ -65,6 +65,10 @@ public class PlayerInventory : MonoBehaviour
     {
         if (!CanAdd(loot))
             return false;
+
+        // A held two-hander can't share hands with a backpack item, so it drops at the player's feet.
+        if (activeHeldItem != null)
+            DropHeldItem();
 
         if (!CanStoreInBackpack(loot) || IsFull)
         {

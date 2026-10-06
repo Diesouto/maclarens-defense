@@ -16,7 +16,7 @@ public class BodyRecoveryManager : MonoBehaviour
     [SerializeField, Min(0f)] private float stationRespawnDelay = 5f;
 
     private RunManager runManager;
-
+    private bool subscribedToRun;
     private struct PendingRespawn
     {
         public PlayerBody Body;
@@ -39,17 +39,33 @@ public class BodyRecoveryManager : MonoBehaviour
 
     private void OnEnable()
     {
+        SubscribeToRun();
+    }
+
+    // RunManager may not have awoken yet during OnEnable, which silently skipped the arrival revive.
+    private void Start()
+    {
+        SubscribeToRun();
+    }
+
+    private void SubscribeToRun()
+    {
         if (runManager == null)
             runManager = RunManager.Instance;
 
-        if (runManager != null)
-            runManager.OnPhaseChanged += HandlePhaseChanged;
+        if (runManager == null || subscribedToRun)
+            return;
+
+        runManager.OnPhaseChanged += HandlePhaseChanged;
+        subscribedToRun = true;
     }
 
     private void OnDisable()
     {
-        if (runManager != null)
+        if (runManager != null && subscribedToRun)
             runManager.OnPhaseChanged -= HandlePhaseChanged;
+
+        subscribedToRun = false;
     }
 
     private void OnDestroy()
@@ -92,6 +108,16 @@ public class BodyRecoveryManager : MonoBehaviour
 
         if (body == null || !body.IsDead || body.IsPendingRespawn)
             return;
+
+        if (runManager == null)
+            runManager = RunManager.Instance;
+
+        // At the station nothing would ever flush the pending queue, so respawn right away.
+        if (runManager != null && runManager.CurrentPhase == RunPhase.MacLarens)
+        {
+            body.Revive(macLarensRespawnPoint, 1f, true);
+            return;
+        }
 
         body.Hide();
         QueueRespawn(body, withPenalty: true);

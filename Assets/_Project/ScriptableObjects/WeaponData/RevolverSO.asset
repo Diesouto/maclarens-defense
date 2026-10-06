@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b23692e28095ab7429e6ff9c4bf2588f, type: 3}
   m_Name: RevolverSO
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  damage: 1
+  damage: 5
   range: 10000
   headshotMultiplier: 2
   shotRadius: 0.04

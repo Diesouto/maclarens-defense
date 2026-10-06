@@ -2910,7 +2910,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   walkSpeed: 3
   sprintSpeed: 6
-  heavyCarrySpeedMultiplier: 0.65
+  heavyCarrySpeedMultiplier: 0.8
   jumpHeight: 2
   gravity: -25
   groundMask:

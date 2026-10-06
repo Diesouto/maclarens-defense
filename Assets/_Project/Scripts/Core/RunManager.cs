@@ -153,8 +153,16 @@ public class RunManager : MonoBehaviour
         if (IsNetworkClient())
             return;
 
-        if (CurrentPhase == RunPhase.LeavingTown)
-            SetPhase(RunPhase.ReturningToMacLarens);
+        if (CurrentPhase != RunPhase.LeavingTown)
+            return;
+
+        SetPhase(RunPhase.ReturningToMacLarens);
+
+        if (!pauseTimerAtMacLarens || !IsTimerRunning)
+            return;
+
+        IsTimerRunning = false;
+        OnRunStateChanged?.Invoke();
     }
 
     public bool CanPayQuota =>

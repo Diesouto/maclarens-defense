@@ -15,6 +15,7 @@ public class Weapon : MonoBehaviour
     [SerializeField] private GameObject gunshotParticleReference;
     [SerializeField] private float hitForceMultiplier = 12f;
 
+    private readonly RaycastHit[] shotHits = new RaycastHit[32];
     private PlayerInventory inventory;
     private float nextTimeToFire;
     private int currentAmmo;
@@ -188,13 +189,7 @@ public class Weapon : MonoBehaviour
         {
             Ray currentRay = new Ray(currentOrigin, ray.direction);
 
-            if (!Physics.SphereCast(
-                    currentRay,
-                    weaponData.shotRadius,
-                    out RaycastHit hit,
-                    weaponData.range,
-                    hitMask,
-                    QueryTriggerInteraction.Collide))
+            if (!TryGetShotHit(currentRay, out RaycastHit hit))
             {
                 break;
             }
@@ -284,6 +279,42 @@ public class Weapon : MonoBehaviour
         }
 
         SpawnMuzzleFlash();
+    }
+
+    // The camera sits inside the shooter's own colliders, so the nearest hit must skip them.
+    private bool TryGetShotHit(Ray ray, out RaycastHit nearest)
+    {
+        int count = Physics.SphereCastNonAlloc(
+            ray,
+            weaponData.shotRadius,
+            shotHits,
+            weaponData.range,
+            hitMask,
+            QueryTriggerInteraction.Collide);
+
+        nearest = default;
+        float nearestDistance = float.MaxValue;
+        bool found = false;
+
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit candidate = shotHits[i];
+            if (ownerController != null && candidate.collider.transform.IsChildOf(ownerController.transform))
+                continue;
+
+            // Zone triggers (e.g. town volume) must not swallow bullets.
+            if (candidate.collider.isTrigger && candidate.collider.GetComponentInParent<IDamageable>() == null)
+                continue;
+
+            if (candidate.distance >= nearestDistance)
+                continue;
+
+            nearest = candidate;
+            nearestDistance = candidate.distance;
+            found = true;
+        }
+
+        return found;
     }
 
     private void SpawnMuzzleFlash()

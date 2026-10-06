@@ -257,7 +257,7 @@ public class LootSpawner : MonoBehaviour
 
         foreach (LootSpawnPoint point in availablePoints)
         {
-            float score = CalculateSpawnPointScore(point);
+            float score = CalculateSpawnPointScore(point) * TownZone.GetLootWeight(point.transform.position);
 
             scores.Add(score);
             totalScore += score;
