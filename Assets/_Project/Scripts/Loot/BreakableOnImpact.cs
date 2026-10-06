@@ -19,6 +19,13 @@ public class BreakableOnImpact : MonoBehaviour
 
     private bool hasBroken;
     private bool breakPending;
+    private float ignoreImpactsUntil;
+
+    // Dropped items spawn overlapping each other and depenetrate fast enough to shatter on their own.
+    private void OnEnable()
+    {
+        ignoreImpactsUntil = Time.time + 0.4f;
+    }
 
     public void CopySettingsFrom(BreakableOnImpact source)
     {
@@ -37,7 +44,7 @@ public class BreakableOnImpact : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (NetworkRole.IsClientOnly || hasBroken || breakPending ||
+        if (NetworkRole.IsClientOnly || hasBroken || breakPending || Time.time < ignoreImpactsUntil ||
             collision.relativeVelocity.magnitude < breakVelocity)
             return;
 

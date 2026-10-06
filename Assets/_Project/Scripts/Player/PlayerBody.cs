@@ -99,6 +99,9 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
         BodyRecoveryManager.Instance?.NotifyDeath(this);
 
+        if (!NetworkRole.IsClientOnly && TryGetComponent(out PlayerInventory deadInventory))
+            deadInventory.DropAllItems(transform.position);
+
         if (IsRunActive && !NetworkRole.IsClientOnly)
             RunManager.Instance?.Stats.RecordDeath(StatsClientId, StatsPlayerName);
 

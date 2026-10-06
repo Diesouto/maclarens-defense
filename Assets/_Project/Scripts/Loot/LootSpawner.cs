@@ -334,8 +334,13 @@ public class LootSpawner : MonoBehaviour
             ? Mathf.CeilToInt(currentQuota / quotaToLootScale)
             : minActiveLoot;
 
-        int targetCount = Mathf.Clamp(quotaDrivenTarget, minActiveLoot, maxActiveLoot);
-        return Mathf.Max(targetCount, minActiveLoot);
+        // The quota already scales with team size, so the loot ceiling must follow or high quotas become unreachable.
+        float teamScale = RunManager.Instance != null ? Mathf.Max(RunManager.Instance.Scaling.quota, 1f) : 1f;
+        int scaledMin = Mathf.CeilToInt(minActiveLoot * teamScale);
+        int scaledMax = Mathf.CeilToInt(maxActiveLoot * teamScale);
+
+        int targetCount = Mathf.Clamp(quotaDrivenTarget, scaledMin, scaledMax);
+        return Mathf.Max(targetCount, scaledMin);
     }
 
     private List<LootSpawnPoint> GetAvailableSpawnPoints()

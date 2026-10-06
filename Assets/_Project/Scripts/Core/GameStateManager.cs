@@ -120,6 +120,8 @@ public class GameStateManager : MonoBehaviour
         if (networkManager != null && networkManager.IsListening)
             networkManager.Shutdown();
 
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         SceneManager.LoadScene(mainMenuSceneName);
     }
 }

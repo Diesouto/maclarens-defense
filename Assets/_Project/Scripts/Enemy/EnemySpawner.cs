@@ -23,17 +23,20 @@ public class EnemySpawner : MonoBehaviour
     [Header("Threat Intensity")]
     [SerializeField] private ThreatSpawnSettings[] intensityLevels =
     {
-        new ThreatSpawnSettings { level = ThreatLevel.Calm, maxAliveEnemies = 1, spawnInterval = 10f },
-        new ThreatSpawnSettings { level = ThreatLevel.Low, maxAliveEnemies = 3, spawnInterval = 8f },
-        new ThreatSpawnSettings { level = ThreatLevel.Medium, maxAliveEnemies = 5, spawnInterval = 6f },
-        new ThreatSpawnSettings { level = ThreatLevel.High, maxAliveEnemies = 7, spawnInterval = 4.5f },
-        new ThreatSpawnSettings { level = ThreatLevel.Critical, maxAliveEnemies = 10, spawnInterval = 3.5f },
+        new ThreatSpawnSettings { level = ThreatLevel.Calm, maxAliveEnemies = 1, spawnInterval = 14f },
+        new ThreatSpawnSettings { level = ThreatLevel.Low, maxAliveEnemies = 2, spawnInterval = 12f },
+        new ThreatSpawnSettings { level = ThreatLevel.Medium, maxAliveEnemies = 3, spawnInterval = 9f },
+        new ThreatSpawnSettings { level = ThreatLevel.High, maxAliveEnemies = 4, spawnInterval = 7f },
+        new ThreatSpawnSettings { level = ThreatLevel.Critical, maxAliveEnemies = 6, spawnInterval = 5f },
     };
+
+    [Tooltip("Most simultaneous threat enemies of one prefab type (0 = unlimited). Keeps a single type from filling the cap.")]
+    [SerializeField, Min(0)] private int maxAlivePerType = 2;
 
     [Header("Spawn Settings")]
     [SerializeField] private bool spawnOnStart = true;
     [Tooltip("Enemies placed across town when the train heads there (same moment loot restocks); they don't count toward the threat cap.")]
-    [SerializeField, Min(0)] private int townResidentEnemies = 6;
+    [SerializeField, Min(0)] private int townResidentEnemies = 4;
 
     [Header("Ghost")]
     [Tooltip("Immortal ghost (GhostController) that only appears once threat is high; only a thrown cross banishes it.")]
@@ -49,6 +52,7 @@ public class EnemySpawner : MonoBehaviour
     private readonly List<EnemyController> aliveEnemies = new();
     private readonly HashSet<EnemyController> residentEnemies = new();
     private readonly Dictionary<EnemyController, TownZone> guardZones = new();
+    private readonly Dictionary<EnemyController, GameObject> enemyPrefabByInstance = new();
     private RunManager runManager;
 
     private float spawnTimer;
@@ -311,9 +315,9 @@ public class EnemySpawner : MonoBehaviour
         if (prefabOverride == null && (enemyPrefabs == null || enemyPrefabs.Length == 0))
             return null;
 
-        GameObject prefab = prefabOverride != null
-            ? prefabOverride
-            : enemyPrefabs[UnityEngine.Random.Range(0, enemyPrefabs.Length)];
+        GameObject prefab = prefabOverride != null ? prefabOverride : PickThreatPrefab();
+        if (prefab == null)
+            return null;
 
         Vector3 spawnPosition = spawnPoint.Position;
 
@@ -352,6 +356,7 @@ public class EnemySpawner : MonoBehaviour
         }
 
         aliveEnemies.Add(enemy);
+        enemyPrefabByInstance[enemy] = prefab;
         spawnPoint.MarkUsed();
 
         NetworkObject networkObject = instance.GetComponent<NetworkObject>();
@@ -403,6 +408,31 @@ public class EnemySpawner : MonoBehaviour
         return best;
     }
 
+    private GameObject PickThreatPrefab()
+    {
+        var candidates = new List<GameObject>();
+        foreach (GameObject candidate in enemyPrefabs)
+        {
+            if (candidate != null && (maxAlivePerType == 0 || CountAlive(candidate) < maxAlivePerType))
+                candidates.Add(candidate);
+        }
+
+        return candidates.Count == 0 ? null : candidates[UnityEngine.Random.Range(0, candidates.Count)];
+    }
+
+    private int CountAlive(GameObject prefab)
+    {
+        int count = 0;
+        foreach (EnemyController enemy in aliveEnemies)
+        {
+            if (enemy != null && !residentEnemies.Contains(enemy) &&
+                enemyPrefabByInstance.TryGetValue(enemy, out GameObject source) && source == prefab)
+                count++;
+        }
+
+        return count;
+    }
+
     private void CleanupDeadEnemies()
     {
         // Dead enemies linger as ragdolls for a while; they must not keep occupying spawn slots.
@@ -410,6 +440,18 @@ public class EnemySpawner : MonoBehaviour
             enemy == null || enemy.IsDead || !enemy.gameObject.activeInHierarchy
         );
         residentEnemies.RemoveWhere(enemy => enemy == null || enemy.IsDead);
+        if (enemyPrefabByInstance.Count > aliveEnemies.Count)
+        {
+            var stale = new List<EnemyController>();
+            foreach (EnemyController tracked in enemyPrefabByInstance.Keys)
+            {
+                if (tracked == null || !aliveEnemies.Contains(tracked))
+                    stale.Add(tracked);
+            }
+
+            foreach (EnemyController tracked in stale)
+                enemyPrefabByInstance.Remove(tracked);
+        }
     }
 
     public int AliveEnemyCount => aliveEnemies.Count;

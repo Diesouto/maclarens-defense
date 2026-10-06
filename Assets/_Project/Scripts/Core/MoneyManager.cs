@@ -22,7 +22,13 @@ public class MoneyManager : MonoBehaviour
         }
 
         Instance = this;
-        TeamMoney = Mathf.Max(startingTeamMoney, 0);
+        TeamMoney = ResolveStartingMoney();
+    }
+
+    private int ResolveStartingMoney()
+    {
+        int configured = RunSettings.HasValue ? RunSettings.StartingMoney : 0;
+        return configured > 0 ? configured : Mathf.Max(startingTeamMoney, 0);
     }
 
     private void OnDestroy()
@@ -83,7 +89,7 @@ public class MoneyManager : MonoBehaviour
         if (IsNetworkClient())
             return;
 
-        TeamMoney = Mathf.Max(startingTeamMoney, 0);
+        TeamMoney = ResolveStartingMoney();
         TotalEarned = 0;
         OnMoneyChanged?.Invoke();
     }

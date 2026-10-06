@@ -14,6 +14,10 @@ public class PlayerMotor : MonoBehaviour
 
     [SerializeField] private LayerMask groundMask = ~0;
     [SerializeField] private float groundCheckDistance = 0.15f;
+    [SerializeField, Range(30f, 85f)] private float slopeLimit = 60f;
+    [SerializeField, Min(0f)] private float stepOffset = 0.4f;
+    [Tooltip("Seconds after leaving the ground in which a jump is still accepted.")]
+    [SerializeField, Min(0f)] private float coyoteTime = 0.12f;
 
     private CharacterController controller;
     private PlayerInventory inventory;
@@ -21,6 +25,8 @@ public class PlayerMotor : MonoBehaviour
 
     private Vector3 velocity;
     private bool grounded;
+    private Vector3 groundNormal = Vector3.up;
+    private float lastGroundedTime = float.NegativeInfinity;
 
     public bool IsGrounded => grounded;
 
@@ -33,11 +39,15 @@ public class PlayerMotor : MonoBehaviour
         // A ragdolled body keeps its CharacterController off; the revive re-enables it.
         controller.enabled = wasEnabled;
         velocity = Vector3.zero;
+        if (TryGetComponent(out TrainPassenger passenger))
+            passenger.ResetMotion();
     }
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        controller.slopeLimit = slopeLimit;
+        controller.stepOffset = stepOffset;
         inventory = GetComponent<PlayerInventory>();
         bodyCarrier = GetComponent<BodyCarrier>();
     }
@@ -52,7 +62,8 @@ public class PlayerMotor : MonoBehaviour
 
     public void Move(Vector3 direction, bool sprint)
     {
-        grounded = controller.isGrounded || CheckGround();
+        bool probedGround = CheckGround();
+        grounded = controller.isGrounded || probedGround;
 
         float speed = sprint ? sprintSpeed : walkSpeed;
 
@@ -64,6 +75,10 @@ public class PlayerMotor : MonoBehaviour
 
         Vector3 movement =
             direction * speed;
+
+        // Walking along the ground plane keeps the controller on pitched roofs instead of pushing into them.
+        if (grounded && groundNormal.y > 0.05f && groundNormal.y < 0.999f)
+            movement = Vector3.ProjectOnPlane(movement, groundNormal);
 
         controller.Move(movement * Time.deltaTime);
 
@@ -77,6 +92,8 @@ public class PlayerMotor : MonoBehaviour
         controller.Move(velocity * Time.deltaTime);
 
         grounded = controller.isGrounded || CheckGround();
+        if (grounded)
+            lastGroundedTime = Time.time;
     }
 
     private bool CheckGround()
@@ -84,14 +101,22 @@ public class PlayerMotor : MonoBehaviour
         Vector3 origin = transform.position + Vector3.up * 0.1f;
         float rayDistance = controller.skinWidth + groundCheckDistance;
 
-        return Physics.SphereCast(origin, controller.radius * 0.9f, Vector3.down, out _, rayDistance, groundMask, QueryTriggerInteraction.Ignore);
+        if (Physics.SphereCast(origin, controller.radius * 0.9f, Vector3.down, out RaycastHit hit, rayDistance, groundMask, QueryTriggerInteraction.Ignore))
+        {
+            groundNormal = hit.normal;
+            return true;
+        }
+
+        groundNormal = Vector3.up;
+        return false;
     }
 
     public void Jump()
     {
-        // if (!grounded)
-        //     return;
+        if (!grounded && Time.time - lastGroundedTime > coyoteTime)
+            return;
 
+        lastGroundedTime = float.NegativeInfinity;
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
     }
 }

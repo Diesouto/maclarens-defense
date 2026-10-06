@@ -184,6 +184,10 @@ public class LassoTool : NetworkBehaviour
             if (targetPlayer.gameObject == gameObject)
                 return;
 
+            // A corpse has no knockdown to apply; pulling it just launches the ragdoll off whatever it lies on.
+            if (targetPlayer.TryGetComponent(out PlayerBody deadBody) && deadBody.IsDead)
+                return;
+
             // Knockdown pushes away from its origin, so mirror the thrower behind the target to pull it in.
             Vector3 targetPosition = targetPlayer.transform.position;
             Vector3 mirroredOrigin = targetPosition + (targetPosition - transform.position);

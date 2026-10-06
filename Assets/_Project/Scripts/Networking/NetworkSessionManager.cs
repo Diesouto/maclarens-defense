@@ -56,6 +56,18 @@ public class NetworkSessionManager : NetworkBehaviour
         RunSettings.DefaultQuotasToWin,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> QuotaMinutes = new(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> StartingMoney = new(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> BaseQuota = new(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
     public NetworkList<LobbyPlayerEntry> Players = new();
 
     public event Action<ulong> OnPlayerJoined;
@@ -107,6 +119,9 @@ public class NetworkSessionManager : NetworkBehaviour
         Players.Clear();
         MaxPlayers.Value = maxPlayers;
         QuotasToWin.Value = RunSettings.SavedQuotasToWin;
+        QuotaMinutes.Value = RunSettings.SavedQuotaMinutes;
+        StartingMoney.Value = RunSettings.SavedStartingMoney;
+        BaseQuota.Value = RunSettings.SavedBaseQuota;
         SetSessionState(MultiplayerSessionState.Lobby);
         HostClientId.Value = NetworkManager.Singleton.LocalClientId;
         AddOrUpdatePlayer(HostClientId.Value, "Host", true, true);
@@ -147,6 +162,24 @@ public class NetworkSessionManager : NetworkBehaviour
             return;
 
         QuotasToWin.Value = RunSettings.Sanitize(value);
+    }
+
+    public void SetQuotaMinutes(int value)
+    {
+        if (IsServer && SessionState.Value == MultiplayerSessionState.Lobby)
+            QuotaMinutes.Value = RunSettings.SanitizeMinutes(value);
+    }
+
+    public void SetStartingMoney(int value)
+    {
+        if (IsServer && SessionState.Value == MultiplayerSessionState.Lobby)
+            StartingMoney.Value = RunSettings.SanitizeMoney(value);
+    }
+
+    public void SetBaseQuota(int value)
+    {
+        if (IsServer && SessionState.Value == MultiplayerSessionState.Lobby)
+            BaseQuota.Value = RunSettings.SanitizeBaseQuota(value);
     }
 
     public void AddOrUpdatePlayer(ulong clientId, string playerName, bool isHost, bool isReady, int characterIndex = 0)
@@ -257,7 +290,7 @@ public class NetworkSessionManager : NetworkBehaviour
             return;
 
         // Only the host simulates RunManager; clients receive the value through NetworkRunState.
-        RunSettings.SetQuotasToWin(QuotasToWin.Value);
+        RunSettings.SetMatchSetup(QuotasToWin.Value, QuotaMinutes.Value, StartingMoney.Value, BaseQuota.Value);
         SetSessionState(MultiplayerSessionState.Starting);
         SceneEventProgressStatus loadStatus = NetworkManager.Singleton.SceneManager.LoadScene("MainScene", LoadSceneMode.Single);
         if (loadStatus != SceneEventProgressStatus.Started)

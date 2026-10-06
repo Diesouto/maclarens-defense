@@ -54,13 +54,25 @@ public class TrainCargo : MonoBehaviour
                 !body.TryGetComponent(out CharacterRagdollController ragdoll) || !ragdoll.IsRagdollActive)
                 continue;
 
+            Rigidbody root = ragdoll.RootRigidbody;
+            float floorY = cargoTrigger.bounds.min.y + 0.1f;
+            // Bones sinking through the moving floor are lifted back instead of falling out of the train.
+            float lift = root != null && root.position.y < floorY ? floorY + 0.4f - root.position.y : 0f;
+
             foreach (Rigidbody bone in ragdoll.RagdollRigidbodies)
             {
                 if (bone == null)
                     continue;
 
-                bone.position = position + deltaRotation * (bone.position - previousPosition);
+                bone.position = position + deltaRotation * (bone.position - previousPosition) + Vector3.up * lift;
                 bone.rotation = deltaRotation * bone.rotation;
+                bone.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+
+                if (lift > 0f)
+                {
+                    bone.linearVelocity = Vector3.zero;
+                    bone.angularVelocity = Vector3.zero;
+                }
             }
         }
     }

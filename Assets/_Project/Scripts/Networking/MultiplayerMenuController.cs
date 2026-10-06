@@ -16,10 +16,32 @@ public class MultiplayerMenuController : MonoBehaviour
     [SerializeField] private GameObject characterScreen;
     [SerializeField] private GameObject joinScreen;
     [SerializeField] private GameObject lobbyScreen;
+    [SerializeField] private GameObject controlsScreen;
 
     [Header("Main Menu")]
     [SerializeField] private Button singlePlayerButton;
     [SerializeField] private Button openMultiplayerButton;
+    [SerializeField] private Button openControlsButton;
+    [SerializeField] private Button quitButton;
+
+    [Header("Controls Screen")]
+    [SerializeField] private Button controlsBackButton;
+    [SerializeField] private TMP_Text controlsText;
+    [SerializeField, TextArea(6, 16)] private string controlsContent =
+        "CONTROLES\n" +
+        "WASD - Moverse\n" +
+        "Rat\u00f3n - Mirar\n" +
+        "Espacio - Saltar\n" +
+        "Shift - Correr (no con objetos pesados)\n" +
+        "Ctrl - Agacharse\n" +
+        "E - Interactuar / recoger\n" +
+        "1-4 / rueda - Cambiar de objeto\n" +
+        "Q - Soltar (mant\u00e9n para lanzar)\n" +
+        "Clic izquierdo - Usar / disparar\n" +
+        "Clic derecho - Apuntar\n" +
+        "R - Recargar\n\n" +
+        "OBJETIVO\n" +
+        "Saquea el pueblo, vuelve al tren y entrega el bot\u00edn para pagar la cuota antes de que acabe el tiempo.";
 
     [Header("Multiplayer Profile")]
     [SerializeField] private TMP_InputField playerNameInput;
@@ -61,6 +83,12 @@ public class MultiplayerMenuController : MonoBehaviour
     [SerializeField] private TMP_InputField lobbyQuotasInput;
     [SerializeField] private TMP_Text lobbyQuotasHintText;
     [SerializeField] private string quotasHintFormat = "Cuotas para ganar (0 = infinito): {0}";
+    [Tooltip("Minutes per quota round. 0 = default from RunConfig.")]
+    [SerializeField] private TMP_InputField lobbyMinutesInput;
+    [Tooltip("Team money at the start of the run. 0 = default.")]
+    [SerializeField] private TMP_InputField lobbyStartingMoneyInput;
+    [Tooltip("First quota amount (later quotas keep their growth). 0 = default.")]
+    [SerializeField] private TMP_InputField lobbyBaseQuotaInput;
 
     private const string PlayerNameKey = "PlayerName";
     private const string CharacterIndexKey = "PlayerCharacterIndex";
@@ -76,6 +104,9 @@ public class MultiplayerMenuController : MonoBehaviour
 
     private void Awake()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         if (relayManager == null)
             relayManager = RelayJoinCodeManager.Instance;
 
@@ -83,18 +114,87 @@ public class MultiplayerMenuController : MonoBehaviour
         CreateCharacterPreview();
         ApplyCharacterIndex(PlayerPrefs.GetInt(CharacterIndexKey, 0));
         ConfigureQuotasInput(lobbyQuotasInput, HandleQuotasEdited);
+        ConfigureQuotasInput(lobbyMinutesInput, text => HandleSetupEdited(text, SetupField.Minutes), 2);
+        ConfigureQuotasInput(lobbyStartingMoneyInput, text => HandleSetupEdited(text, SetupField.Money), 6);
+        ConfigureQuotasInput(lobbyBaseQuotaInput, text => HandleSetupEdited(text, SetupField.BaseQuota), 6);
         ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, RunSettings.SavedQuotasToWin);
+        ShowSetup(RunSettings.SavedQuotaMinutes, RunSettings.SavedStartingMoney, RunSettings.SavedBaseQuota);
+        if (controlsText != null)
+            controlsText.text = controlsContent;
         ValidateReferences();
         BindButtons();
     }
 
-    private void ConfigureQuotasInput(TMP_InputField input, UnityEngine.Events.UnityAction<string> onEndEdit)
+    private enum SetupField { Minutes, Money, BaseQuota }
+
+    private void HandleSetupEdited(string text, SetupField field)
+    {
+        NetworkSessionManager session = NetworkSessionManager.Instance;
+        bool online = !isOfflineSetup && session != null && session.IsServer;
+
+        int current = field switch
+        {
+            SetupField.Minutes => online ? session.QuotaMinutes.Value : RunSettings.SavedQuotaMinutes,
+            SetupField.Money => online ? session.StartingMoney.Value : RunSettings.SavedStartingMoney,
+            _ => online ? session.BaseQuota.Value : RunSettings.SavedBaseQuota
+        };
+
+        int value = int.TryParse(text, out int parsed) && parsed >= 0 ? parsed : current;
+        switch (field)
+        {
+            case SetupField.Minutes:
+                value = RunSettings.SanitizeMinutes(value);
+                if (online) session.SetQuotaMinutes(value); else RunSettings.SetQuotaMinutes(value);
+                break;
+            case SetupField.Money:
+                value = RunSettings.SanitizeMoney(value);
+                if (online) session.SetStartingMoney(value); else RunSettings.SetStartingMoney(value);
+                break;
+            default:
+                value = RunSettings.SanitizeBaseQuota(value);
+                if (online) session.SetBaseQuota(value); else RunSettings.SetBaseQuota(value);
+                break;
+        }
+
+        ShowSetup(
+            online ? session.QuotaMinutes.Value : RunSettings.SavedQuotaMinutes,
+            online ? session.StartingMoney.Value : RunSettings.SavedStartingMoney,
+            online ? session.BaseQuota.Value : RunSettings.SavedBaseQuota);
+    }
+
+    private void ShowSetup(int minutes, int money, int baseQuota)
+    {
+        SetInputText(lobbyMinutesInput, minutes);
+        SetInputText(lobbyStartingMoneyInput, money);
+        SetInputText(lobbyBaseQuotaInput, baseQuota);
+    }
+
+    private static void CommitTypedSetup(TMP_InputField input, System.Action<int> save)
+    {
+        if (input != null && int.TryParse(input.text, out int value) && value >= 0)
+            save(value);
+    }
+
+    private static void SetInputText(TMP_InputField input, int value)
+    {
+        if (input != null && !input.isFocused)
+            input.SetTextWithoutNotify(value.ToString());
+    }
+
+    private void SetSetupInteractable(bool interactable)
+    {
+        if (lobbyMinutesInput != null) lobbyMinutesInput.interactable = interactable;
+        if (lobbyStartingMoneyInput != null) lobbyStartingMoneyInput.interactable = interactable;
+        if (lobbyBaseQuotaInput != null) lobbyBaseQuotaInput.interactable = interactable;
+    }
+
+    private void ConfigureQuotasInput(TMP_InputField input, UnityEngine.Events.UnityAction<string> onEndEdit, int characterLimit = 2)
     {
         if (input == null)
             return;
 
         input.contentType = TMP_InputField.ContentType.IntegerNumber;
-        input.characterLimit = 2;
+        input.characterLimit = characterLimit;
         // Replaces the built-in Integer validation, which would still accept a leading '-'.
         input.onValidateInput = (_, _, character) => character >= '0' && character <= '9' ? character : '\0';
         input.onEndEdit.AddListener(onEndEdit);
@@ -132,6 +232,9 @@ public class MultiplayerMenuController : MonoBehaviour
     {
         AddListener(singlePlayerButton, ShowSinglePlayerSetup);
         AddListener(openMultiplayerButton, ShowMultiplayerScreen);
+        AddListener(openControlsButton, ShowControlsScreen);
+        AddListener(controlsBackButton, ShowMainMenuScreen);
+        AddListener(quitButton, QuitGame);
         AddListener(previousCharacterButton, () => ChangeCharacter(-1));
         AddListener(nextCharacterButton, () => ChangeCharacter(1));
         AddListener(hostButton, () => _ = CreateHostAsync());
@@ -220,12 +323,32 @@ public class MultiplayerMenuController : MonoBehaviour
         else
             RunSettings.SetQuotasToWin(RunSettings.SavedQuotasToWin);
 
+        CommitTypedSetup(lobbyMinutesInput, RunSettings.SetQuotaMinutes);
+        CommitTypedSetup(lobbyStartingMoneyInput, RunSettings.SetStartingMoney);
+        CommitTypedSetup(lobbyBaseQuotaInput, RunSettings.SetBaseQuota);
+        RunSettings.SetQuotasToWin(RunSettings.SavedQuotasToWin);
+
         SceneManager.LoadScene("MainScene", LoadSceneMode.Single);
     }
 
     private void ShowMainMenuScreen()
     {
         SetScreen(mainMenuScreen);
+    }
+
+    private void ShowControlsScreen()
+    {
+        SetScreen(controlsScreen);
+    }
+
+    private void QuitGame()
+    {
+        NetworkBootstrapper.Instance?.Shutdown();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     private void ShowMultiplayerScreen()
@@ -256,6 +379,7 @@ public class MultiplayerMenuController : MonoBehaviour
         SetActive(characterScreen, selectedScreen == characterScreen);
         SetActive(joinScreen, selectedScreen == joinScreen);
         SetActive(lobbyScreen, selectedScreen == lobbyScreen);
+        SetActive(controlsScreen, selectedScreen == controlsScreen);
         if (previewRoot != null)
             previewRoot.SetActive(selectedScreen == characterScreen);
     }
@@ -297,6 +421,7 @@ public class MultiplayerMenuController : MonoBehaviour
         {
             SetLobbyStatus($"Host failed: {exception.Message}");
             Debug.LogException(exception, this);
+            ResetConnection();
         }
         finally
         {
@@ -332,6 +457,7 @@ public class MultiplayerMenuController : MonoBehaviour
         {
             SetLobbyStatus($"Join failed: {exception.Message}");
             Debug.LogException(exception, this);
+            ResetConnection();
             isConnecting = false;
         }
     }
@@ -500,11 +626,21 @@ public class MultiplayerMenuController : MonoBehaviour
             return;
         }
 
+        ResetConnection();
+        ShowMainMenuScreen();
+    }
+
+    // A half-open NetworkManager keeps IsRunning true and blocks every later host/join until restart.
+    private void ResetConnection()
+    {
         relayManager?.LeaveSession();
         UnbindSession();
         activeJoinCode = string.Empty;
         isConnecting = false;
-        ShowMainMenuScreen();
+        if (joinCodeInput != null)
+            joinCodeInput.text = string.Empty;
+        if (lobbyJoinCodeText != null)
+            lobbyJoinCodeText.text = string.Empty;
     }
 
     private void BindSession()
@@ -588,6 +724,8 @@ public class MultiplayerMenuController : MonoBehaviour
         if (lobbyQuotasInput != null)
             lobbyQuotasInput.interactable = localIsHost;
         ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, session.QuotasToWin.Value);
+        SetSetupInteractable(localIsHost);
+        ShowSetup(session.QuotaMinutes.Value, session.StartingMoney.Value, session.BaseQuota.Value);
     }
 
     private void SetOfflineSetupPresentation()
@@ -618,6 +756,8 @@ public class MultiplayerMenuController : MonoBehaviour
         if (lobbyQuotasInput != null)
             lobbyQuotasInput.interactable = true;
         ShowQuotas(lobbyQuotasInput, lobbyQuotasHintText, RunSettings.SavedQuotasToWin);
+        SetSetupInteractable(true);
+        ShowSetup(RunSettings.SavedQuotaMinutes, RunSettings.SavedStartingMoney, RunSettings.SavedBaseQuota);
     }
 
     private void SetOnlineSetupPresentation(bool connected)
@@ -637,6 +777,7 @@ public class MultiplayerMenuController : MonoBehaviour
 
             if (lobbyQuotasInput != null)
                 lobbyQuotasInput.interactable = false;
+            SetSetupInteractable(false);
         }
 
         if (leaveLobbyButton != null)
@@ -687,6 +828,7 @@ public class MultiplayerMenuController : MonoBehaviour
 
         isConnecting = false;
         SetLobbyStatus("Desconectado del anfitrión.");
+        relayManager?.LeaveSession();
     }
 
     private void SetLobbyStatus(string value)

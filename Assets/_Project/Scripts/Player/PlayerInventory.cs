@@ -298,6 +298,31 @@ public class PlayerInventory : MonoBehaviour
         weaponInstance.SetAmmo(currentAmmo, currentReserveAmmo);
     }
 
+    // Host/offline only; clients mirror the result through the replicated inventory state.
+    public void DropAllItems(Vector3 position)
+    {
+        if (NetworkRole.IsClientOnly)
+            return;
+
+        int dropped = 0;
+        void DropScattered(ItemInstance item)
+        {
+            if (item == null)
+                return;
+
+            // Fanned out so simultaneous drops don't spawn overlapped and knock each other apart.
+            float angle = dropped++ * 72f * Mathf.Deg2Rad;
+            Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 0.5f;
+            DropItem(item, position + Vector3.up * 0.5f + offset, Quaternion.identity, Vector3.zero);
+        }
+
+        DropScattered(activeHeldItem);
+        for (int i = 0; i < backpackSlots.Length; i++)
+            DropScattered(backpackSlots[i]);
+
+        Clear();
+    }
+
     public void Clear()
     {
         activeHeldItem = null;

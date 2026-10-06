@@ -85,7 +85,7 @@ public class GhostController : NetworkBehaviour
         if (GameStateManager.Instance != null && !GameStateManager.Instance.IsRunActive)
             return;
 
-        if (Time.time >= nextRetargetTime)
+        if (Time.time >= nextRetargetTime || targetPlayer == null)
         {
             nextRetargetTime = Time.time + retargetInterval;
             FindNearestPlayer();

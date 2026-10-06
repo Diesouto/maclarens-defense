@@ -10,6 +10,13 @@ public class TrainPassenger : MonoBehaviour
 
     public TrainPassengerArea CurrentCarriage { get; private set; }
 
+    // After a teleport nothing the player carried from the train still applies.
+    public void ResetMotion()
+    {
+        CurrentCarriage = null;
+        carriedVelocity = Vector3.zero;
+    }
+
     private Vector3 lastCarriagePosition;
     private Quaternion lastCarriageRotation;
     private Vector3 carriedVelocity;
@@ -39,6 +46,10 @@ public class TrainPassenger : MonoBehaviour
     public bool TryGetCarriageDelta(Vector3 worldPosition, bool grounded, out Vector3 deltaPosition, out float deltaYaw)
     {
         deltaYaw = 0f;
+
+        if (CurrentCarriage != null &&
+            (!CurrentCarriage.isActiveAndEnabled || !CurrentCarriage.IsNear(worldPosition, 1.5f)))
+            SetCarriage(null);
 
         if (CurrentCarriage != null)
         {

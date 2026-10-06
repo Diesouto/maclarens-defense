@@ -182,6 +182,19 @@ public class BodyCarrier : MonoBehaviour
 
         SetIgnoreBodyCollisions(carriedRagdoll, false);
 
+        // Carry velocity already includes the train's speed, and TrainCargo adds the train delta on top: drop it.
+        if (carriedRagdoll != null && TrainCargo.IsBodyAboard(body))
+        {
+            foreach (Rigidbody bone in carriedRagdoll.RagdollRigidbodies)
+            {
+                if (bone == null)
+                    continue;
+
+                bone.linearVelocity = Vector3.zero;
+                bone.angularVelocity = Vector3.zero;
+            }
+        }
+
         carriedRoot = null;
         carriedRagdoll = null;
         CarriedBody = null;

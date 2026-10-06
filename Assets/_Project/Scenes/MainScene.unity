@@ -56374,7 +56374,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TownZone
   tier: 2
-  radius: 15
+  radius: 17
   guardPrefabs:
   - {fileID: 8470990878565978593, guid: 22e0e605881afa24c9feffa3cdbdd65a, type: 3}
   - {fileID: 1607508185818098810, guid: 8b236a14f0c7be549996bf094ed598d7, type: 3}

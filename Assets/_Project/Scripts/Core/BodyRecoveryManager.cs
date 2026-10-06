@@ -172,7 +172,7 @@ public class BodyRecoveryManager : MonoBehaviour
             if (pending.Body == null)
                 continue;
 
-            pending.Body.Revive(macLarensRespawnPoint, 1f, pending.WithPenalty);
+            pending.Body.Revive(macLarensRespawnPoint, 1f, true);
 
             if (pending.WithPenalty)
                 MoneyManager.Instance?.ApplyPenalty(lostBodyMoneyPenalty);
@@ -190,7 +190,8 @@ public class BodyRecoveryManager : MonoBehaviour
             if (!recovered)
                 MoneyManager.Instance?.ApplyPenalty(lostBodyMoneyPenalty);
 
-            body.Revive(macLarensRespawnPoint, 1f, !recovered);
+            // Standing up where the ragdoll lies could be Town if it slid off the train, so always use the station point.
+            body.Revive(macLarensRespawnPoint, 1f, true);
         }
     }
 }

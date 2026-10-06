@@ -45,8 +45,6 @@ public class PlayerInputHandler : MonoBehaviour
     private void OnDisable()
     {
         input.Disable();
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
     }
 
     private void OnApplicationFocus(bool hasFocus)

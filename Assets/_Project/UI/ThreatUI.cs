@@ -6,7 +6,7 @@ public class ThreatUI : MonoBehaviour
     [SerializeField] private TMPro.TextMeshProUGUI threatText;
     [SerializeField] private UnityEngine.UI.Image threatFillBar;
 
-    [SerializeField] private string threatFormat = "Threat: {0:0}";
+    [SerializeField] private string threatFormat = "Peligro: {0:0}";
 
     private void OnEnable()
     {

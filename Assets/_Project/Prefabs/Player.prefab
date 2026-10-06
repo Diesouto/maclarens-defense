@@ -1939,6 +1939,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9daae8dacbe55784c8e957c684c50f19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBodyVisibility
+  ShowTopMostFoldoutHeaderGroup: 1
   playerCamera: {fileID: 3869243256191491695}
   hiddenFromOwnCameraRoots:
   - {fileID: 6067405258954865500}
@@ -3086,6 +3087,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BodyCarrier
   carryPoint: {fileID: 3217351372630524805}
   followSpeed: 12
+  snapDistance: 2.5
+  maxFollowSpeed: 25
 --- !u!114 &-5853992676254766718
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3098,7 +3101,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3818216207
+  GlobalObjectIdHash: 2290322971
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -3398,6 +3401,10 @@ MonoBehaviour:
       NameHash: -1686628431
       Synchronize: 1
       ParameterType: 9
+    - name: HasRagdolled
+      NameHash: 621094448
+      Synchronize: 1
+      ParameterType: 9
   AnimatorParametersExpanded: 0
 --- !u!114 &4815162342108151624
 MonoBehaviour:
@@ -3431,6 +3438,7 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  getUpDuration: 1.5
 --- !u!114 &4815162342108151628
 MonoBehaviour:
   m_ObjectHideFlags: 0

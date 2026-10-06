@@ -25,9 +25,9 @@ public class RunConfigSO : ScriptableObject
     [SerializeField] private PlayerScaling[] playerScaling =
     {
         new PlayerScaling { playerCount = 1, quota = 1f, enemyCap = 1f, spawnInterval = 1f, threat = 1f },
-        new PlayerScaling { playerCount = 2, quota = 1.7f, enemyCap = 1.5f, spawnInterval = 0.85f, threat = 1.15f },
-        new PlayerScaling { playerCount = 3, quota = 2.3f, enemyCap = 2f, spawnInterval = 0.75f, threat = 1.3f },
-        new PlayerScaling { playerCount = 4, quota = 2.9f, enemyCap = 2.5f, spawnInterval = 0.65f, threat = 1.45f },
+        new PlayerScaling { playerCount = 2, quota = 1.7f, enemyCap = 1.25f, spawnInterval = 0.85f, threat = 1.15f },
+        new PlayerScaling { playerCount = 3, quota = 2.3f, enemyCap = 1.5f, spawnInterval = 0.75f, threat = 1.3f },
+        new PlayerScaling { playerCount = 4, quota = 2.9f, enemyCap = 1.75f, spawnInterval = 0.65f, threat = 1.45f },
     };
 
     [System.Serializable]
@@ -77,11 +77,20 @@ public class RunConfigSO : ScriptableObject
             baseQuota = lastQuota * Mathf.Pow(infiniteGrowth, extraRounds);
         }
 
+        // Lobby override replaces the first quota and keeps the configured growth ratio.
+        int overrideQuota = RunSettings.HasValue ? RunSettings.BaseQuota : 0;
+        if (overrideQuota > 0 && quotaAmounts[0] > 0)
+            baseQuota *= (float)overrideQuota / quotaAmounts[0];
+
         return Mathf.RoundToInt(baseQuota * GetPlayerScaling(players).quota);
     }
 
     public float GetTimeLimit(int round)
     {
+        int overrideMinutes = RunSettings.HasValue ? RunSettings.QuotaMinutes : 0;
+        if (overrideMinutes > 0)
+            return overrideMinutes * 60f;
+
         if (quotaTimeLimits == null || quotaTimeLimits.Length == 0)
             return 600f;
 

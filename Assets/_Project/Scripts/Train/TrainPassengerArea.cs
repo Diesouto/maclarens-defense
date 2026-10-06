@@ -15,6 +15,13 @@ public class TrainPassengerArea : MonoBehaviour
 
     public static bool TryGet(int id, out TrainPassengerArea area) => areasById.TryGetValue(id, out area);
 
+    // OnTriggerExit is skipped when a rider is teleported or its collider disabled, so riders re-check this.
+    public bool IsNear(Vector3 worldPosition, float margin)
+    {
+        return detectionTrigger != null && detectionTrigger.enabled &&
+            (detectionTrigger.ClosestPoint(worldPosition) - worldPosition).sqrMagnitude <= margin * margin;
+    }
+
     private void Awake()
     {
         if (detectionTrigger == null)
