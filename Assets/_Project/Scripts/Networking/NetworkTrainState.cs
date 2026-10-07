@@ -150,6 +150,18 @@ public class NetworkTrainState : NetworkBehaviour
         DepartureCountdownRpc(duration, RpcTarget.Single(departureRequesterId, RpcTargetUse.Temp));
     }
 
+    public void BroadcastLeverUse()
+    {
+        if (IsServer && IsSpawned)
+            LeverUseRpc();
+    }
+
+    [Rpc(SendTo.Everyone)]
+    private void LeverUseRpc()
+    {
+        departure?.PlayLeverUseAnimation();
+    }
+
     public void ClearDepartureCountdown()
     {
         if (IsServer)

@@ -1,10 +1,14 @@
 using System.Collections;
+using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.AI;
 
+[RequireComponent(typeof(NetworkObject))]
+[RequireComponent(typeof(NetworkTransform))]
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody))]
-public class JasperDog : MonoBehaviour, IInteractable
+public class JasperDog : NetworkBehaviour, IInteractable
 {
     [Header("Wander")]
     [SerializeField] private float wanderRadius = 6f;
@@ -25,11 +29,17 @@ public class JasperDog : MonoBehaviour, IInteractable
 
     private static readonly int VertHash = Animator.StringToHash("Vert");
 
+    private readonly NetworkVariable<bool> replicatedFlipping = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
     private NavMeshAgent agent;
     private Rigidbody body;
     private Vector3 origin;
     private float idleUntil;
     private bool isFlipping;
+    private Vector3 previousPosition;
 
     private void Awake()
     {
@@ -37,6 +47,7 @@ public class JasperDog : MonoBehaviour, IInteractable
         body = GetComponent<Rigidbody>();
         body.isKinematic = true;
         origin = transform.position;
+        previousPosition = transform.position;
 
         if (animator == null)
         {
@@ -46,14 +57,34 @@ public class JasperDog : MonoBehaviour, IInteractable
 
     private void Start()
     {
+        if (IsSpawned && !IsServer)
+            agent.enabled = false;
+
         idleUntil = Time.time + Random.Range(idleTimeRange.x, idleTimeRange.y);
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        replicatedFlipping.OnValueChanged += HandleReplicatedFlippingChanged;
+        ApplyFlippingState(replicatedFlipping.Value);
+
+        if (!IsServer)
+        {
+            agent.enabled = false;
+            body.isKinematic = true;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        replicatedFlipping.OnValueChanged -= HandleReplicatedFlippingChanged;
     }
 
     private void Update()
     {
         UpdateAnimator();
 
-        if (isFlipping || !agent.enabled || !agent.isOnNavMesh)
+        if ((IsSpawned && !IsServer) || isFlipping || !agent.enabled || !agent.isOnNavMesh)
         {
             return;
         }
@@ -78,12 +109,18 @@ public class JasperDog : MonoBehaviour, IInteractable
             return;
         }
 
-        float vert = 0f;
-        if (!isFlipping && agent.enabled && agent.isOnNavMesh && agent.speed > 0f)
+        float speed = 0f;
+        if (IsSpawned && !IsServer)
         {
-            vert = Mathf.Clamp01(agent.velocity.magnitude / agent.speed);
+            speed = (transform.position - previousPosition).magnitude / Mathf.Max(Time.deltaTime, 0.001f);
+        }
+        else if (agent.enabled && agent.isOnNavMesh)
+        {
+            speed = agent.velocity.magnitude;
         }
 
+        previousPosition = transform.position;
+        float vert = !isFlipping && agent.speed > 0f ? Mathf.Clamp01(speed / agent.speed) : 0f;
         animator.SetFloat(VertHash, vert, vertDampTime, Time.deltaTime);
     }
 
@@ -110,25 +147,79 @@ public class JasperDog : MonoBehaviour, IInteractable
 
     public void Interact(PlayerInteractor interactor)
     {
-        if (isFlipping)
+        if (!CanInteract(interactor))
+            return;
+
+        if (IsSpawned && !IsServer)
         {
+            RequestBackflipServerRpc();
             return;
         }
+
+        BeginBackflip();
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestBackflipServerRpc(RpcParams rpcParams = default)
+    {
+        if (isFlipping || NetworkManager == null ||
+            !NetworkManager.ConnectedClients.TryGetValue(rpcParams.Receive.SenderClientId, out NetworkClient client) ||
+            client.PlayerObject == null ||
+            (client.PlayerObject.transform.position - transform.position).sqrMagnitude > 16f ||
+            (client.PlayerObject.TryGetComponent(out Health playerHealth) && playerHealth.IsDead))
+            return;
+
+        BeginBackflip();
+    }
+
+    private void BeginBackflip()
+    {
+        if (isFlipping || (IsSpawned && !IsServer))
+            return;
+
+        if (IsSpawned)
+        {
+            replicatedFlipping.Value = true;
+            ApplyFlippingState(true);
+        }
+        else
+            ApplyFlippingState(true);
 
         StartCoroutine(BackflipRoutine());
     }
 
+    private void HandleReplicatedFlippingChanged(bool previous, bool current)
+    {
+        ApplyFlippingState(current);
+    }
+
+    private void ApplyFlippingState(bool flipping)
+    {
+        isFlipping = flipping;
+        if (IsSpawned && !IsServer)
+            return;
+
+        if (flipping)
+        {
+            agent.ResetPath();
+            agent.enabled = false;
+            body.isKinematic = false;
+            body.linearVelocity = Vector3.up * jumpSpeed;
+            body.angularVelocity = -transform.right * flipSpinSpeed;
+            return;
+        }
+
+        body.linearVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+        body.isKinematic = true;
+        if (!agent.enabled)
+            agent.enabled = true;
+        if (agent.isOnNavMesh)
+            agent.Warp(transform.position);
+    }
+
     private IEnumerator BackflipRoutine()
     {
-        isFlipping = true;
-        agent.ResetPath();
-        agent.enabled = false;
-
-        body.isKinematic = false;
-        body.linearVelocity = Vector3.up * jumpSpeed;
-        // Negative right-axis spin tips the dog backwards.
-        body.angularVelocity = -transform.right * flipSpinSpeed;
-
         // Let it leave the ground before checking for landing.
         yield return new WaitForSeconds(0.2f);
 
@@ -141,10 +232,6 @@ public class JasperDog : MonoBehaviour, IInteractable
 
         // Let the dog settle briefly after touchdown.
         yield return new WaitForSeconds(0.2f);
-
-        body.linearVelocity = Vector3.zero;
-        body.angularVelocity = Vector3.zero;
-        body.isKinematic = true;
 
         Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
         if (forward.sqrMagnitude < 0.001f)
@@ -159,11 +246,14 @@ public class JasperDog : MonoBehaviour, IInteractable
         }
 
         transform.SetPositionAndRotation(position, Quaternion.LookRotation(forward.normalized, Vector3.up));
-        agent.enabled = true;
-        agent.Warp(position);
-
         idleUntil = Time.time + Random.Range(idleTimeRange.x, idleTimeRange.y);
-        isFlipping = false;
+        if (IsSpawned)
+        {
+            replicatedFlipping.Value = false;
+            ApplyFlippingState(false);
+        }
+        else
+            ApplyFlippingState(false);
     }
 
     private bool IsGrounded()

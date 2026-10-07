@@ -327,6 +327,9 @@ public class PlayerBody : MonoBehaviour, IInteractable
         }
 
         IsPendingRespawn = false;
+        if (playerController != null)
+            playerController.CaptureCameraRecoveryPose();
+
         if (ragdollController != null)
             ragdollController.DisableRagdoll();
 
@@ -397,6 +400,9 @@ public class PlayerBody : MonoBehaviour, IInteractable
         if (Carrier != null)
             Carrier.ApplyReplicatedCarry(null);
         IsPendingRespawn = false;
+        if (playerController != null)
+            playerController.CaptureCameraRecoveryPose();
+
         if (ragdollController != null)
             ragdollController.DisableRagdoll();
         if (playerController != null)

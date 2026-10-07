@@ -7,15 +7,16 @@ using UnityEngine;
 public class TrainCargo : MonoBehaviour
 {
     [SerializeField] private Collider cargoTrigger;
+    [SerializeField, Min(0f)] private float throwReleaseGraceDuration = 0.3f;
 
     public IReadOnlyCollection<LootItem> ItemsInCargo => itemsInCargo;
 
     private static readonly List<TrainCargo> allCargo = new();
 
     private readonly HashSet<LootItem> itemsInCargo = new();
-    // Ragdolls have many colliders, so count them per body instead of toggling on first enter/exit.
-    private readonly Dictionary<PlayerBody, int> bodyColliderCounts = new();
+    private readonly Dictionary<PlayerBody, HashSet<Collider>> bodyCollidersInCargo = new();
     private readonly Dictionary<PlayerBody, StoredBody> storedBodies = new();
+    private readonly Dictionary<PlayerBody, float> captureCooldowns = new();
     private readonly List<PlayerBody> bodiesToRelease = new();
 
     private sealed class StoredBody
@@ -88,6 +89,9 @@ public class TrainCargo : MonoBehaviour
 
     private bool AttachBody(PlayerBody body)
     {
+        if (body != null && captureCooldowns.TryGetValue(body, out float captureTime) && Time.time < captureTime)
+            return false;
+
         if (body == null || !body.IsDead || body.IsHidden || body.IsBeingCarried || body.IsBeingPulled ||
             !body.TryGetComponent(out CharacterRagdollController ragdoll) || !ragdoll.IsRagdollActive)
             return false;
@@ -135,8 +139,22 @@ public class TrainCargo : MonoBehaviour
 
     private void LateUpdate()
     {
-        foreach (PlayerBody body in bodyColliderCounts.Keys)
+        foreach (KeyValuePair<PlayerBody, HashSet<Collider>> entry in bodyCollidersInCargo)
+        {
+            PlayerBody body = entry.Key;
+            if (entry.Value.Count == 0 || body == null)
+                continue;
+
+            if (captureCooldowns.TryGetValue(body, out float captureTime))
+            {
+                if (Time.time < captureTime)
+                    continue;
+
+                captureCooldowns.Remove(body);
+            }
+
             AttachBody(body);
+        }
 
         bodiesToRelease.Clear();
         foreach (KeyValuePair<PlayerBody, StoredBody> entry in storedBodies)
@@ -179,8 +197,9 @@ public class TrainCargo : MonoBehaviour
         }
 
         storedBodies.Clear();
+        captureCooldowns.Clear();
         allCargo.Remove(this);
-        bodyColliderCounts.Clear();
+        bodyCollidersInCargo.Clear();
     }
 
     private void Awake()
@@ -202,13 +221,8 @@ public class TrainCargo : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        PlayerBody body = other.GetComponentInParent<PlayerBody>();
-        if (body != null)
-        {
-            bodyColliderCounts.TryGetValue(body, out int count);
-            bodyColliderCounts[body] = count + 1;
+        if (TrackBodyCollider(other))
             return;
-        }
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
             !NetworkManager.Singleton.IsServer)
@@ -237,17 +251,21 @@ public class TrainCargo : MonoBehaviour
         );
     }
 
+    private void OnTriggerStay(Collider other)
+    {
+        TrackBodyCollider(other);
+    }
+
     private void OnTriggerExit(Collider other)
     {
         PlayerBody body = other.GetComponentInParent<PlayerBody>();
         if (body != null)
         {
-            if (bodyColliderCounts.TryGetValue(body, out int count))
+            if (bodyCollidersInCargo.TryGetValue(body, out HashSet<Collider> colliders))
             {
-                if (count <= 1)
-                    bodyColliderCounts.Remove(body);
-                else
-                    bodyColliderCounts[body] = count - 1;
+                colliders.Remove(other);
+                if (colliders.Count == 0)
+                    bodyCollidersInCargo.Remove(body);
             }
 
             return;
@@ -278,6 +296,22 @@ public class TrainCargo : MonoBehaviour
             $"TrainCargo: Removed {lootItem.name} worth ${value}.",
             this
         );
+    }
+
+    private bool TrackBodyCollider(Collider other)
+    {
+        PlayerBody body = other.GetComponentInParent<PlayerBody>();
+        if (body == null)
+            return false;
+
+        if (!bodyCollidersInCargo.TryGetValue(body, out HashSet<Collider> colliders))
+        {
+            colliders = new HashSet<Collider>();
+            bodyCollidersInCargo.Add(body, colliders);
+        }
+
+        colliders.Add(other);
+        return true;
     }
 
     public bool RemoveItem(LootItem lootItem)

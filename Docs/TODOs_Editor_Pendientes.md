@@ -134,23 +134,48 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 - [ ] Ajustar `lockYAxisOnly` por elemento: activado (por defecto) mantiene el elemento vertical;
       desactivarlo si se quiere un billboard que tambien incline segun la altura de la camara.
 
-## P5.17 - Separar partes del cuerpo visibles por la camara propia
+## P5.17 - Ocultar el modelo en primera persona
 
-- Script listo: `Assets/_Project/Scripts/Player/PlayerBodyVisibility.cs`. Usa la layer
+- Script listo: `Assets/_Project/Scripts/Player/PlayerBodyVisibility.cs`, añadido a
+      `Player.prefab` con la camara local y la raiz del rig asignadas. Usa la layer
   `CameraHidden` que ya existe reservada en `ProjectSettings/TagManager.asset` (no hacia falta
   crearla) y excluye esa layer del `cullingMask` de la camara del propio jugador; las camaras de
   otros jugadores/espectador no se tocan, así que ellos siguen viendo el cuerpo completo.
-- [ ] **Importante**: esto depende de que el modelo del jugador tenga renderers separados por
-      parte del cuerpo (cabeza/torso/brazos/piernas vs manos/pies). Si el modelo es un unico
-      `SkinnedMeshRenderer` fusionado (un solo mesh para todo el cuerpo), este enfoque por layer no
-      puede ocultar solo una region del mismo renderer: haria falta separar el mesh en el rig
-      (tipico en packs modulares tipo Synty POLYGON) o usar un viewmodel de manos/pies dedicado.
-      Revisar el rig de `Player.prefab` primero para confirmar que aplica.
-- [ ] Si el modelo si esta separado por partes: añadir `PlayerBodyVisibility` a `Player.prefab`,
-      asignar `playerCamera` y rellenar `hiddenFromOwnCameraRoots` con los renderers de
-      cabeza/torso/brazos/piernas (dejando fuera manos y pies).
-- [ ] Playtest: la camara del jugador solo debe mostrar sus propias manos y pies; mirando a otro
-      jugador (o en una futura camara de espectador) el cuerpo debe verse completo.
+- [ ] Confirmar en Play Mode que la camara propia oculta el modelo sin ocultar objetos sostenidos;
+      al morir el modelo completo debe volver a ser visible y los clientes deben verlo. El modelo
+      actual es un solo rig visual; mostrar manos/pies propios requiere un viewmodel aparte.
+- [ ] Playtest: la camara local oculta el rig propio, pero mantiene visibles los objetos sostenidos;
+      otros jugadores y la camara de muerte ven el modelo completo.
+
+## P5.19 - Regresiones multiplayer reportadas (2026-10-07)
+
+- [x] Codigo: impactos de breakables en cliente solicitan al servidor la rotura; Potion y Liquor
+      ya incluyen `NetworkBreakable`. Confirmar tambien los variantes adicionales de botellas.
+- [x] Codigo: TrainCargo recupera deteccion con `OnTriggerStay`, evita conteos duplicados por
+      collider y da al cuerpo lanzado una ventana para salir antes de volver a fijarlo.
+- [x] Codigo: la recuperacion de camara captura la pose ragdoll antes de desactivarlo y usa un
+      blend configurable al revivir.
+- [x] Codigo: Jasper es host-authoritative y usa `NetworkObject` + `NetworkTransform` en MainScene;
+      el RPC de caricia valida jugador vivo y distancia en el host.
+- [x] Codigo: la palanca (`SM_Veh_Train_01_Stick_01`) anima 30 grados y vuelve, disparada por RPC
+      a todos al iniciar la salida.
+- [x] Wiring: `PlayerBodyVisibility` asignado a `Player.prefab` para ocultar localmente el modelo.
+- [ ] Validar en Unity que la instancia in-scene de Jasper se registra correctamente con NGO y que
+      su `NetworkTransform` (server authority) replica wander y backflip sin pelear con NavMeshAgent.
+- [ ] Host + cliente: morir en cliente, confirmar cuerpo visible en host y cliente; repetir muerte,
+      espectador, carga, lanzamiento y revive. Confirmar que la layer FPS vuelve solo al revivir.
+- [ ] Host + cliente: lanzar el cuerpo dentro de cada vagón; confirmar que sale con impulso, entra,
+      queda anclado tras la gracia y conserva pose mientras acelera/gira el tren.
+- [ ] Host + cliente: knockdown por explosión y revive con pocion; confirmar blend progresivo sin
+      flicker/teleport y que el jugador recupera control correctamente.
+- [ ] Host + cliente: Jasper pasea igual para ambos, cliente lo acaricia, el host valida el radio,
+      el backflip se replica y vuelve a navegación sin divergencia.
+- [ ] Host + cliente: tirar de la palanca una vez; todos ven 30 grados ida/vuelta, solo una salida
+      comienza, y un segundo intento durante countdown no vuelve a disparar la animacion.
+- [ ] Host + cliente: impactos fuertes de Potion/Liquor desde cada peer rompen una vez, aplican cura
+      una vez y replican debris/audio; comprobar tambien nitro y barril sin regresiones.
+- Validacion pendiente: Unity compile/RPC codegen y Play Mode host-cliente. Ningun síntoma se marca
+  como resuelto hasta completar estos checks.
 
 ## P5.18 - Consumibles y recarga de municion
 

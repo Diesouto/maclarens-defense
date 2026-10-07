@@ -36,6 +36,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float drunkPitchWobble = 3f;
     [Tooltip("How many drinks can stack; each stack multiplies the wobble intensity.")]
     [SerializeField, Min(1)] private int maximumDrunkStacks = 3;
+    [SerializeField, Min(0f)] private float reviveCameraRecoveryDuration = 0.8f;
 
     private PlayerInputHandler input;
     private PlayerMotor motor;
@@ -673,7 +674,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         IsKnockedDown = false;
-        RestoreCamera();
+        RestoreCamera(reviveCameraRecoveryDuration);
 
         DeathCameraController.Instance?.Deactivate();
 

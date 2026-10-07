@@ -127,10 +127,12 @@ public class BodyCarrier : MonoBehaviour
 
         Rigidbody root = carriedRoot;
         PlayerBody body = CarriedBody;
-        ReleaseCarry();
+        ReleaseCarry(false);
 
         if (root != null && !root.isKinematic)
             root.AddForce(force, ForceMode.Impulse);
+
+        TrainCargo.ReleaseBodyForThrow(body);
 
         if (networkAuthority != null && networkAuthority.IsServer)
             networkAuthority.BroadcastRelease(body, force);
@@ -146,7 +148,7 @@ public class BodyCarrier : MonoBehaviour
             ApplyPickup(body);
     }
 
-    private void ReleaseCarry()
+    private void ReleaseCarry(bool allowCargoCapture = true)
     {
         if (!IsCarryingBody)
             return;
@@ -161,7 +163,8 @@ public class BodyCarrier : MonoBehaviour
         carriedRagdoll = null;
         CarriedBody = null;
         body.Detach();
-        TrainCargo.TryStoreBody(body);
+        if (allowCargoCapture)
+            TrainCargo.TryStoreBody(body);
     }
 
     private void SetIgnoreBodyCollisions(CharacterRagdollController ragdoll, bool ignore)

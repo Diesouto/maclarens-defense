@@ -19,6 +19,7 @@ public class BreakableOnImpact : MonoBehaviour
 
     private bool hasBroken;
     private bool breakPending;
+    private bool breakRequestSent;
     private float ignoreImpactsUntil;
 
     // Dropped items spawn overlapping each other and depenetrate fast enough to shatter on their own.
@@ -44,9 +45,20 @@ public class BreakableOnImpact : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (NetworkRole.IsClientOnly || hasBroken || breakPending || Time.time < ignoreImpactsUntil ||
+        if (hasBroken || breakPending || breakRequestSent || Time.time < ignoreImpactsUntil ||
             collision.relativeVelocity.magnitude < breakVelocity)
             return;
+
+        if (NetworkRole.IsClientOnly)
+        {
+            if (TryGetComponent(out NetworkBreakable networkBreakable) && networkBreakable.IsSpawned)
+            {
+                breakRequestSent = true;
+                networkBreakable.RequestBreakServerRpc();
+            }
+
+            return;
+        }
 
         // Breaking destroys components, which Unity forbids from inside a physics callback.
         breakPending = true;

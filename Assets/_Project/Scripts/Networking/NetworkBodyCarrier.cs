@@ -120,6 +120,7 @@ public class NetworkBodyCarrier : NetworkBehaviour
         }
 
         body.ApplyBodyPose(position, rotation);
+        TrainCargo.ReleaseBodyForThrow(body);
         if (!TrainCargo.TryStoreBody(body) && body.TryGetComponent(out CharacterRagdollController ragdoll) &&
             ragdoll.RootRigidbody != null && !ragdoll.RootRigidbody.isKinematic)
             ragdoll.RootRigidbody.AddForce(force, ForceMode.Impulse);

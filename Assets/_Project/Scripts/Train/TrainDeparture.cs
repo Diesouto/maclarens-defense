@@ -12,11 +12,16 @@ public class TrainDeparture : MonoBehaviour, IInteractable
     [SerializeField] private RunManager runManager;
     [SerializeField] private TrainSplineFollower trainSplineFollower;
     [SerializeField] private NetworkTrainState networkTrainState;
+    [SerializeField] private Transform leverTransform;
+    [SerializeField, Min(0f)] private float leverRotationDegrees = 30f;
+    [SerializeField, Min(0.01f)] private float leverAnimationDuration = 0.6f;
 
     public bool IsDeparting { get; private set; }
     public bool HasDeparted { get; private set; }
 
     private Coroutine countdownRoutine;
+    private Coroutine leverAnimationRoutine;
+    private Quaternion leverRestLocalRotation;
     private bool isCountdownVisible;
 
     // Hook for the future rail/animation system: the train can start accelerating away.
@@ -35,6 +40,10 @@ public class TrainDeparture : MonoBehaviour, IInteractable
 
         if (networkTrainState == null)
             networkTrainState = FindFirstObjectByType<NetworkTrainState>();
+
+        if (leverTransform == null)
+            leverTransform = transform;
+        leverRestLocalRotation = leverTransform.localRotation;
     }
 
     private void OnEnable()
@@ -127,7 +136,47 @@ public class TrainDeparture : MonoBehaviour, IInteractable
         if (IsDeparting || HasDeparted)
             return;
 
+        if (networkTrainState != null && networkTrainState.IsSpawned)
+            networkTrainState.BroadcastLeverUse();
+        else
+            PlayLeverUseAnimation();
+
         StartCoroutine(DepartureRoutine());
+    }
+
+    public void PlayLeverUseAnimation()
+    {
+        if (leverTransform == null)
+            return;
+
+        if (leverAnimationRoutine != null)
+            StopCoroutine(leverAnimationRoutine);
+
+        leverAnimationRoutine = StartCoroutine(LeverUseAnimationRoutine());
+    }
+
+    private IEnumerator LeverUseAnimationRoutine()
+    {
+        Quaternion pulledRotation = leverRestLocalRotation * Quaternion.Euler(leverRotationDegrees, 0f, 0f);
+        float halfDuration = leverAnimationDuration * 0.5f;
+
+        for (float elapsed = 0f; elapsed < halfDuration; elapsed += Time.deltaTime)
+        {
+            float progress = Mathf.SmoothStep(0f, 1f, elapsed / halfDuration);
+            leverTransform.localRotation = Quaternion.Slerp(leverRestLocalRotation, pulledRotation, progress);
+            yield return null;
+        }
+
+        leverTransform.localRotation = pulledRotation;
+        for (float elapsed = 0f; elapsed < halfDuration; elapsed += Time.deltaTime)
+        {
+            float progress = Mathf.SmoothStep(0f, 1f, elapsed / halfDuration);
+            leverTransform.localRotation = Quaternion.Slerp(pulledRotation, leverRestLocalRotation, progress);
+            yield return null;
+        }
+
+        leverTransform.localRotation = leverRestLocalRotation;
+        leverAnimationRoutine = null;
     }
 
     private IEnumerator DepartureRoutine()
