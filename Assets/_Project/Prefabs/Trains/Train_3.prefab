@@ -118,8 +118,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CargoValueUI
   quotaManager: {fileID: 0}
+  runManager: {fileID: 0}
   quotaText: {fileID: 4394677294218583149}
   quotaFormat: 'Total: {0}$'
+  visibilityRoot: {fileID: 0}
 --- !u!114 &5750122071618272952
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -312,7 +314,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 411943404
+  GlobalObjectIdHash: 3216342307
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -407,6 +409,11 @@ MonoBehaviour:
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
   CurrentDistance:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  IsCountdownActive:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
@@ -1154,6 +1161,34 @@ PrefabInstance:
       propertyPath: m_RootOrder
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4541715015512624, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.63018614
+      objectReference: {fileID: 0}
+    - target: {fileID: 4541715015512624, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.9424146
+      objectReference: {fileID: 0}
+    - target: {fileID: 4541715015512624, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -3.7251163
+      objectReference: {fileID: 0}
+    - target: {fileID: 4541715015512624, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071072
+      objectReference: {fileID: 0}
+    - target: {fileID: 4541715015512624, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4541715015512624, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071064
+      objectReference: {fileID: 0}
+    - target: {fileID: 4541715015512624, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
     - target: {fileID: 4569851027924914, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
       propertyPath: m_RootOrder
       value: 1
@@ -1435,6 +1470,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainCargo
   cargoTrigger: {fileID: 3391553498438224200}
+  throwReleaseGraceDuration: 0.3
 --- !u!114 &2643653017379298045
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1553,10 +1589,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainDeparture
   departurePrepDuration: 1
+  departureHoldDuration: 2
   interactUI: {fileID: 0}
   runManager: {fileID: 0}
   trainSplineFollower: {fileID: 8409356447852147718}
   networkTrainState: {fileID: 0}
+  leverTransform: {fileID: 0}
+  leverRotationDegrees: 30
+  leverAnimationDuration: 0.6
 --- !u!1 &2775570807466992423 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1172621986598204, guid: 461adae6d8ea6d74fac73e4bd90066cb, type: 3}
@@ -2000,6 +2040,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainCargo
   cargoTrigger: {fileID: 650130217074243818}
+  throwReleaseGraceDuration: 0.3
 --- !u!114 &8894054248444186343
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2403,6 +2444,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainCargo
   cargoTrigger: {fileID: 7373892706832012779}
+  throwReleaseGraceDuration: 0.3
 --- !u!114 &3533844167005388074
 MonoBehaviour:
   m_ObjectHideFlags: 0

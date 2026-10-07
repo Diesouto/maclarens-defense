@@ -36241,6 +36241,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
   GlobalObjectIdHash: 238788228
   InScenePlacedSourceGlobalObjectIdHash: 0
@@ -108200,6 +108201,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2629182449500102118, guid: 15ca4494f24bf9741a48b37ec2c4c632, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2014276453}
+    - targetCorrespondingSourceObject: {fileID: 2629182449500102118, guid: 15ca4494f24bf9741a48b37ec2c4c632, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2014276455}
   m_SourcePrefab: {fileID: 100100000, guid: 15ca4494f24bf9741a48b37ec2c4c632, type: 3}
 --- !u!4 &2014276443 stripped
 Transform:
@@ -108245,6 +108249,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05688aa52c2f1f54ebc252487ae10288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JasperDog
+  ShowTopMostFoldoutHeaderGroup: 1
   wanderRadius: 6
   idleTimeRange: {x: 1.5, y: 4}
   arriveThreshold: 0.4
@@ -108297,7 +108302,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4093761257
+  GlobalObjectIdHash: 998127838
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -108322,6 +108327,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Components::Unity.Netcode.Components.NetworkTransform
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
@@ -108362,6 +108368,23 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 9003410764456430701, guid: 15ca4494f24bf9741a48b37ec2c4c632, type: 3}
   m_PrefabInstance: {fileID: 2014276442}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2014276455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2014276444}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkRigidbody
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkRigidbodyBaseExpanded: 0
+  UseRigidBodyForMotion: 0
+  AutoUpdateKinematicState: 1
+  AutoSetKinematicOnDespawn: 1
 --- !u!1001 &2015548726
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -116257,6 +116280,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: Train
       objectReference: {fileID: 0}
+    - target: {fileID: 2778938835103357995, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 2778938835103357995, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2778938835103357995, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 2778938835103357995, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2778938835103357995, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 270
+      objectReference: {fileID: 0}
     - target: {fileID: 3337793908729577351, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
       propertyPath: m_InScenePlaced
       value: 1
@@ -116321,6 +116364,10 @@ PrefabInstance:
       propertyPath: runManager
       value: 
       objectReference: {fileID: 720582679}
+    - target: {fileID: 4718697250797635662, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
+      propertyPath: leverRotationDegrees
+      value: 30
+      objectReference: {fileID: 0}
     - target: {fileID: 4733950352903871364, guid: e9da066c108e7dc4c8fa5cff31886512, type: 3}
       propertyPath: m_IsActive
       value: 0
