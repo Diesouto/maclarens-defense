@@ -21,7 +21,8 @@ public class PlayerBodyVisibility : NetworkBehaviour
 
     private void Awake()
     {
-        health = GetComponent<Health>();
+        // Lives on a character model child in Player.prefab, not next to Health on the root.
+        health = GetComponentInParent<Health>(true);
         if (playerCamera == null)
             playerCamera = GetComponentInChildren<Camera>();
     }

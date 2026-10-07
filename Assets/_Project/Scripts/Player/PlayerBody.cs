@@ -227,7 +227,8 @@ public class PlayerBody : MonoBehaviour, IInteractable
         }
 
         IsBeingPulled = false;
-        if (!IsBeingCarried && !TrainCargo.TryStoreBody(this))
+        // TrainCargo picks the body up on the host if it ended inside a carriage.
+        if (!IsBeingCarried)
             ragdollController.SetPhysicsSuspended(false);
         pullRoutine = null;
     }

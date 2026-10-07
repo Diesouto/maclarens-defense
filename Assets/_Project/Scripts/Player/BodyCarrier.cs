@@ -164,7 +164,7 @@ public class BodyCarrier : MonoBehaviour
         CarriedBody = null;
         body.Detach();
         if (allowCargoCapture)
-            TrainCargo.TryStoreBody(body);
+            TrainCargo.TryStowBody(body, transform.position);
     }
 
     private void SetIgnoreBodyCollisions(CharacterRagdollController ragdoll, bool ignore)

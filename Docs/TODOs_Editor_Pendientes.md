@@ -177,6 +177,32 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 - Validacion pendiente: Unity compile/RPC codegen y Play Mode host-cliente. Ningun síntoma se marca
   como resuelto hasta completar estos checks.
 
+## P5.20 - Jasper, cadaveres en el tren y reconexion (2026-10-07)
+
+- [x] Codigo: Jasper se desancla de `Environment` en `Awake` (con `AutoObjectParentSync` apagado)
+      para que NGO no lo coloque mal en los clientes. Alternativa limpia en el editor: sacarlo a la
+      raiz de `MainScene`; entonces el codigo no hace nada.
+- [x] Codigo: `PlayerBodyVisibility` esta en `SM_Chr_Cowboy_01`, no en la raiz; ahora busca `Health`
+      en los padres y la camara de muerte lo encuentra en los hijos. Antes el cadaver propio seguia
+      en la layer `CameraHidden`, que la camara de escena (mask 247) no renderiza.
+- [ ] Opcional: mover `PlayerBodyVisibility` a la raiz de `Player.prefab`. Si el personaje elegido
+      no es el Cowboy, su GameObject queda inactivo y la ocultacion en primera persona no se aplica.
+- [x] Codigo: cadaveres en el tren. Soltar el cuerpo a menos de `bodyDropMargin` (1.5 m) del volumen
+      de un vagon (cuerpo o portador) lo guarda tumbado dentro, separado `bodyWallPadding` de las
+      paredes y apoyado en el suelo. Cuerpos sueltos (lanzados, arrastrados con lazo o muertos dentro)
+      a menos de `bodyCaptureMargin` se guardan solos. Decide el host; los clientes lo aplican desde
+      `NetworkBodyCarrier.stowState`.
+- [x] Codigo: el menu usa siempre el `RelayJoinCodeManager` persistente y `NetworkSessionManager`
+      sustituye la copia vieja tras terminar una partida.
+- [ ] Revisar que el `cargoTrigger` de cada `TrainCargo` cubre el interior del vagon (idealmente
+      `BoxCollider`) y ajustar los margenes nuevos.
+- [ ] Host + cliente: soltar y lanzar cadaveres en cada vagon, arrancar y tomar curvas; el cuerpo no
+      cae y ambos lo ven en el mismo sitio. Recogerlo otra vez y sacarlo del vagon.
+- [ ] Host + cliente: Jasper visible y en la misma posicion para ambos.
+- [ ] Morir como Cowboy y como otro personaje: el cadaver propio se ve desde la camara de muerte,
+      tambien mientras otro lo carga.
+- [ ] Terminar partida, volver al menu y crear/unirse a otra sala sin reiniciar el juego (host y cliente).
+
 ## P5.18 - Consumibles y recarga de municion
 
 - [x] `Liquor(S/M/L)SO` como `Consumable` (cura 10/15/20% + camara borracha 8/12/20 s).

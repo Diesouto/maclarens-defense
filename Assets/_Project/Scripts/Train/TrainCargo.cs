@@ -9,12 +9,19 @@ public class TrainCargo : MonoBehaviour
     [SerializeField] private Collider cargoTrigger;
     [SerializeField, Min(0f)] private float throwReleaseGraceDuration = 0.3f;
 
+    [Header("Corpses")]
+    [Tooltip("Dropping a body this close to the cargo volume (body or carrier) stows it inside.")]
+    [SerializeField, Min(0f)] private float bodyDropMargin = 1.5f;
+    [Tooltip("Loose (thrown, pulled or freshly killed) bodies this close to the cargo volume are stowed automatically.")]
+    [SerializeField, Min(0f)] private float bodyCaptureMargin = 0.3f;
+    [SerializeField, Min(0f)] private float bodyWallPadding = 0.35f;
+    [SerializeField, Min(0f)] private float bodyFloorClearance = 0.25f;
+
     public IReadOnlyCollection<LootItem> ItemsInCargo => itemsInCargo;
 
     private static readonly List<TrainCargo> allCargo = new();
 
     private readonly HashSet<LootItem> itemsInCargo = new();
-    private readonly Dictionary<PlayerBody, HashSet<Collider>> bodyCollidersInCargo = new();
     private readonly Dictionary<PlayerBody, StoredBody> storedBodies = new();
     private readonly Dictionary<PlayerBody, float> captureCooldowns = new();
     private readonly List<PlayerBody> bodiesToRelease = new();
@@ -67,16 +74,39 @@ public class TrainCargo : MonoBehaviour
         }
     }
 
-    public static bool TryStoreBody(PlayerBody body)
+    // Server/offline only: clients receive the result through NetworkBodyCarrier's stow state.
+    public static bool TryStowBody(PlayerBody body, Vector3 dropperPosition)
+    {
+        if (body == null || NetworkRole.IsClientOnly)
+            return false;
+
+        TrainCargo best = null;
+        float bestDistance = float.MaxValue;
+        foreach (TrainCargo cargo in allCargo)
+        {
+            if (cargo == null)
+                continue;
+
+            float distance = Mathf.Min(cargo.DistanceTo(body.BodyPosition), cargo.DistanceTo(dropperPosition));
+            if (distance <= cargo.bodyDropMargin && distance < bestDistance)
+            {
+                best = cargo;
+                bestDistance = distance;
+            }
+        }
+
+        return best != null && best.Stow(body);
+    }
+
+    public static TrainCargo GetStowedCargo(PlayerBody body)
     {
         foreach (TrainCargo cargo in allCargo)
         {
-            if (cargo != null && body != null &&
-                (cargo.storedBodies.ContainsKey(body) || cargo.ContainsBody(body)) && cargo.AttachBody(body))
-                return true;
+            if (cargo != null && body != null && cargo.storedBodies.ContainsKey(body))
+                return cargo;
         }
 
-        return false;
+        return null;
     }
 
     public static TrainCargo GetBodyCargo(PlayerBody body)
@@ -102,25 +132,90 @@ public class TrainCargo : MonoBehaviour
             (cargoTrigger.ClosestPoint(body.BodyPosition) - body.BodyPosition).sqrMagnitude < 0.0001f;
     }
 
-    private bool AttachBody(PlayerBody body)
+    private float DistanceTo(Vector3 point)
     {
-        if (body != null && captureCooldowns.TryGetValue(body, out float captureTime) && Time.time < captureTime)
+        if (cargoTrigger == null || !cargoTrigger.enabled)
+            return float.MaxValue;
+
+        return Vector3.Distance(cargoTrigger.ClosestPoint(point), point);
+    }
+
+    private static bool CanHoldBody(PlayerBody body, out CharacterRagdollController ragdoll)
+    {
+        ragdoll = null;
+        return body != null && body.IsDead && !body.IsHidden && !body.IsBeingCarried && !body.IsBeingPulled &&
+            body.TryGetComponent(out ragdoll) && ragdoll.IsRagdollActive && ragdoll.RootRigidbody != null;
+    }
+
+    private bool Stow(PlayerBody body)
+    {
+        if (!CanHoldBody(body, out CharacterRagdollController ragdoll))
             return false;
 
-        if (body == null || !body.IsDead || body.IsHidden || body.IsBeingCarried || body.IsBeingPulled ||
-            !body.TryGetComponent(out CharacterRagdollController ragdoll) || !ragdoll.IsRagdollActive)
+        return StowAt(body, GetRestingPoint(body), ragdoll.RootRigidbody.rotation);
+    }
+
+    // Latches the corpse at a fixed pose inside this carriage: no physics, so it can't slide or fall off.
+    public bool StowAt(PlayerBody body, Vector3 rootPosition, Quaternion rootRotation)
+    {
+        if (!CanHoldBody(body, out CharacterRagdollController ragdoll))
             return false;
 
         if (storedBodies.ContainsKey(body))
             return true;
 
-        foreach (TrainCargo cargo in allCargo)
+        ReleaseBody(body);
+        captureCooldowns.Remove(body);
+        ragdoll.SetPhysicsSuspended(true);
+        ragdoll.SetBodyPose(rootPosition, rootRotation);
+        AttachBody(body, ragdoll);
+        return true;
+    }
+
+    // Keeps the hips inside the cargo volume, away from the walls, resting on the carriage floor.
+    private Vector3 GetRestingPoint(PlayerBody body)
+    {
+        Vector3 point;
+        if (cargoTrigger is BoxCollider box)
         {
-            if (cargo != null && cargo != this && cargo.storedBodies.ContainsKey(body))
-                return false;
+            Transform boxTransform = box.transform;
+            Vector3 scale = boxTransform.lossyScale;
+            Vector3 half = box.size * 0.5f;
+            Vector3 local = boxTransform.InverseTransformPoint(body.BodyPosition) - box.center;
+            float limitX = Mathf.Max(0f, half.x - bodyWallPadding / Mathf.Max(Mathf.Abs(scale.x), 0.0001f));
+            float limitZ = Mathf.Max(0f, half.z - bodyWallPadding / Mathf.Max(Mathf.Abs(scale.z), 0.0001f));
+            local.x = Mathf.Clamp(local.x, -limitX, limitX);
+            local.y = Mathf.Clamp(local.y, -half.y, half.y);
+            local.z = Mathf.Clamp(local.z, -limitZ, limitZ);
+            point = boxTransform.TransformPoint(box.center + local);
+        }
+        else
+        {
+            point = cargoTrigger.ClosestPoint(body.BodyPosition);
+            Vector3 toCenter = Vector3.ProjectOnPlane(cargoTrigger.bounds.center - point, Vector3.up);
+            point += Vector3.ClampMagnitude(toCenter, bodyWallPadding);
         }
 
-        ragdoll.SetPhysicsSuspended(true);
+        Bounds bounds = cargoTrigger.bounds;
+        Vector3 rayStart = new Vector3(point.x, bounds.max.y, point.z);
+        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, bounds.size.y + 1f, ~0, QueryTriggerInteraction.Ignore);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        point.y = bounds.min.y + bodyFloorClearance;
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider.transform.IsChildOf(body.transform) ||
+                hit.collider.GetComponentInParent<PlayerController>() != null)
+                continue;
+
+            point.y = hit.point.y + bodyFloorClearance;
+            break;
+        }
+
+        return point;
+    }
+
+    private void AttachBody(PlayerBody body, CharacterRagdollController ragdoll)
+    {
         var stored = new StoredBody
         {
             Ragdoll = ragdoll,
@@ -139,7 +234,6 @@ public class TrainCargo : MonoBehaviour
         }
 
         storedBodies.Add(body, stored);
-        return true;
     }
 
     private void DetachBody(PlayerBody body)
@@ -154,22 +248,8 @@ public class TrainCargo : MonoBehaviour
 
     private void LateUpdate()
     {
-        foreach (KeyValuePair<PlayerBody, HashSet<Collider>> entry in bodyCollidersInCargo)
-        {
-            PlayerBody body = entry.Key;
-            if (entry.Value.Count == 0 || body == null)
-                continue;
-
-            if (captureCooldowns.TryGetValue(body, out float captureTime))
-            {
-                if (Time.time < captureTime)
-                    continue;
-
-                captureCooldowns.Remove(body);
-            }
-
-            AttachBody(body);
-        }
+        if (!NetworkRole.IsClientOnly)
+            CaptureLooseBodies();
 
         bodiesToRelease.Clear();
         foreach (KeyValuePair<PlayerBody, StoredBody> entry in storedBodies)
@@ -189,8 +269,12 @@ public class TrainCargo : MonoBehaviour
                 if (bone == null)
                     continue;
 
-                bone.position = transform.TransformPoint(stored.Positions[index]);
-                bone.rotation = transform.rotation * stored.Rotations[index];
+                Vector3 bonePosition = transform.TransformPoint(stored.Positions[index]);
+                Quaternion boneRotation = transform.rotation * stored.Rotations[index];
+                // Transform write keeps the corpse visually in lockstep with the carriage this frame.
+                bone.transform.SetPositionAndRotation(bonePosition, boneRotation);
+                bone.position = bonePosition;
+                bone.rotation = boneRotation;
             }
         }
 
@@ -200,6 +284,28 @@ public class TrainCargo : MonoBehaviour
                 storedBodies.Remove(body);
             else
                 DetachBody(body);
+        }
+    }
+
+    // Geometric, not trigger-driven: suspended (kinematic) ragdoll bones don't reliably raise trigger events.
+    private void CaptureLooseBodies()
+    {
+        foreach (PlayerBody body in PlayerBody.AllBodies)
+        {
+            if (body == null || storedBodies.ContainsKey(body) || !CanHoldBody(body, out _) ||
+                GetStowedCargo(body) != null)
+                continue;
+
+            if (captureCooldowns.TryGetValue(body, out float captureTime))
+            {
+                if (Time.time < captureTime)
+                    continue;
+
+                captureCooldowns.Remove(body);
+            }
+
+            if (DistanceTo(body.BodyPosition) <= bodyCaptureMargin)
+                Stow(body);
         }
     }
 
@@ -214,7 +320,6 @@ public class TrainCargo : MonoBehaviour
         storedBodies.Clear();
         captureCooldowns.Clear();
         allCargo.Remove(this);
-        bodyCollidersInCargo.Clear();
     }
 
     private void Awake()
@@ -236,7 +341,7 @@ public class TrainCargo : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (TrackBodyCollider(other))
+        if (other.GetComponentInParent<PlayerBody>() != null)
             return;
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
@@ -266,25 +371,10 @@ public class TrainCargo : MonoBehaviour
         );
     }
 
-    private void OnTriggerStay(Collider other)
-    {
-        TrackBodyCollider(other);
-    }
-
     private void OnTriggerExit(Collider other)
     {
-        PlayerBody body = other.GetComponentInParent<PlayerBody>();
-        if (body != null)
-        {
-            if (bodyCollidersInCargo.TryGetValue(body, out HashSet<Collider> colliders))
-            {
-                colliders.Remove(other);
-                if (colliders.Count == 0)
-                    bodyCollidersInCargo.Remove(body);
-            }
-
+        if (other.GetComponentInParent<PlayerBody>() != null)
             return;
-        }
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening &&
             !NetworkManager.Singleton.IsServer)
@@ -311,22 +401,6 @@ public class TrainCargo : MonoBehaviour
             $"TrainCargo: Removed {lootItem.name} worth ${value}.",
             this
         );
-    }
-
-    private bool TrackBodyCollider(Collider other)
-    {
-        PlayerBody body = other.GetComponentInParent<PlayerBody>();
-        if (body == null)
-            return false;
-
-        if (!bodyCollidersInCargo.TryGetValue(body, out HashSet<Collider> colliders))
-        {
-            colliders = new HashSet<Collider>();
-            bodyCollidersInCargo.Add(body, colliders);
-        }
-
-        colliders.Add(other);
-        return true;
     }
 
     public bool RemoveItem(LootItem lootItem)

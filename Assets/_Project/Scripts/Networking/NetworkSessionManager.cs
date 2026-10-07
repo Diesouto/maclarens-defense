@@ -83,8 +83,16 @@ public class NetworkSessionManager : NetworkBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
-            return;
+            // A session left over from a finished match must not shadow the fresh MenuScene copy.
+            bool previousSessionEnded = !Instance.IsSpawned &&
+                (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening);
+            if (!previousSessionEnded)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Destroy(Instance.gameObject);
         }
 
         Instance = this;

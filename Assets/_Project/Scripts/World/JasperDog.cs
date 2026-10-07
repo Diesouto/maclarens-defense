@@ -43,6 +43,13 @@ public class JasperDog : NetworkBehaviour, IInteractable
 
     private void Awake()
     {
+        // In-scene NetworkObjects nested under a plain GameObject (Environment) get misplaced on clients.
+        if (transform.parent != null && TryGetComponent(out NetworkObject networkObject))
+        {
+            networkObject.AutoObjectParentSync = false;
+            transform.SetParent(null, true);
+        }
+
         agent = GetComponent<NavMeshAgent>();
         body = GetComponent<Rigidbody>();
         body.isKinematic = true;

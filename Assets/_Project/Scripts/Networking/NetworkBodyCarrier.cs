@@ -1,5 +1,24 @@
+using System;
 using Unity.Netcode;
 using UnityEngine;
+
+// Where this player's own corpse is latched inside a train carriage, relative to that carriage.
+public struct BodyStowState : INetworkSerializeByMemcpy, IEquatable<BodyStowState>
+{
+    public ulong TrainObjectId;
+    public int CargoIndex;
+    public Vector3 LocalPosition;
+    public Quaternion LocalRotation;
+
+    public static BodyStowState Loose => new() { CargoIndex = -1, LocalRotation = Quaternion.identity };
+    public bool IsStowed => CargoIndex >= 0;
+
+    public bool Equals(BodyStowState other)
+    {
+        return TrainObjectId == other.TrainObjectId && CargoIndex == other.CargoIndex &&
+            LocalPosition == other.LocalPosition && LocalRotation == other.LocalRotation;
+    }
+}
 
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(BodyCarrier))]
@@ -13,11 +32,22 @@ public class NetworkBodyCarrier : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
+    private readonly NetworkVariable<BodyStowState> stowState = new(
+        BodyStowState.Loose,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
     private BodyCarrier carrier;
+    private PlayerBody ownBody;
+    private CharacterRagdollController ownRagdoll;
+    private TrainCargo serverStowCargo;
+    private BodyStowState appliedStow = BodyStowState.Loose;
 
     private void Awake()
     {
         carrier = GetComponent<BodyCarrier>();
+        ownBody = GetComponent<PlayerBody>();
+        ownRagdoll = GetComponent<CharacterRagdollController>();
     }
 
     public override void OnNetworkSpawn()
@@ -43,6 +73,7 @@ public class NetworkBodyCarrier : NetworkBehaviour
         if (!IsServer)
         {
             ApplyReplicatedCarry(carriedBody.Value);
+            ApplyReplicatedStow();
             return;
         }
 
@@ -50,6 +81,80 @@ public class NetworkBodyCarrier : NetworkBehaviour
         carriedBody.Value.TryGet(out NetworkObject replicated);
         if (current != replicated)
             carriedBody.Value = current != null ? new NetworkObjectReference(current) : default;
+
+        PublishStowState();
+    }
+
+    private void PublishStowState()
+    {
+        TrainCargo cargo = TrainCargo.GetStowedCargo(ownBody);
+        if (cargo == serverStowCargo)
+            return;
+
+        serverStowCargo = cargo;
+        if (cargo == null || ownRagdoll == null || ownRagdoll.RootRigidbody == null ||
+            !TryGetCargoAddress(cargo, out NetworkObject train, out int cargoIndex))
+        {
+            stowState.Value = BodyStowState.Loose;
+            return;
+        }
+
+        Rigidbody root = ownRagdoll.RootRigidbody;
+        stowState.Value = new BodyStowState
+        {
+            TrainObjectId = train.NetworkObjectId,
+            CargoIndex = cargoIndex,
+            LocalPosition = cargo.transform.InverseTransformPoint(root.position),
+            LocalRotation = Quaternion.Inverse(cargo.transform.rotation) * root.rotation
+        };
+    }
+
+    // Polled every frame: carry and health replicate separately, so the stow may need several tries.
+    private void ApplyReplicatedStow()
+    {
+        if (ownBody == null)
+            return;
+
+        BodyStowState state = stowState.Value;
+        TrainCargo localCargo = TrainCargo.GetStowedCargo(ownBody);
+        if (!state.IsStowed)
+        {
+            appliedStow = state;
+            if (localCargo != null)
+                TrainCargo.ReleaseBody(ownBody);
+            return;
+        }
+
+        TrainCargo cargo = ResolveCargo(state);
+        if (cargo == null || (localCargo == cargo && appliedStow.Equals(state)))
+            return;
+
+        if (localCargo != null)
+            TrainCargo.ReleaseBody(ownBody);
+
+        if (cargo.StowAt(ownBody, cargo.transform.TransformPoint(state.LocalPosition),
+                cargo.transform.rotation * state.LocalRotation))
+            appliedStow = state;
+    }
+
+    private static bool TryGetCargoAddress(TrainCargo cargo, out NetworkObject train, out int cargoIndex)
+    {
+        train = cargo.GetComponentInParent<NetworkObject>();
+        cargoIndex = train != null && train.IsSpawned
+            ? Array.IndexOf(train.GetComponentsInChildren<TrainCargo>(true), cargo)
+            : -1;
+        return cargoIndex >= 0;
+    }
+
+    private TrainCargo ResolveCargo(BodyStowState state)
+    {
+        if (NetworkManager == null ||
+            !NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(state.TrainObjectId, out NetworkObject train) ||
+            train == null)
+            return null;
+
+        TrainCargo[] cargo = train.GetComponentsInChildren<TrainCargo>(true);
+        return state.CargoIndex < cargo.Length ? cargo[state.CargoIndex] : null;
     }
 
     private void HandleCarriedBodyChanged(NetworkObjectReference previous, NetworkObjectReference current)
@@ -81,11 +186,9 @@ public class NetworkBodyCarrier : NetworkBehaviour
         NetworkObjectReference trainReference = default;
         int cargoIndex = -1;
         TrainCargo cargo = TrainCargo.GetBodyCargo(body);
-        NetworkObject trainObject = cargo != null ? cargo.GetComponentInParent<NetworkObject>() : null;
-        if (trainObject != null && trainObject.IsSpawned)
+        if (cargo != null && TryGetCargoAddress(cargo, out NetworkObject trainObject, out cargoIndex))
         {
             trainReference = trainObject;
-            cargoIndex = System.Array.IndexOf(trainObject.GetComponentsInChildren<TrainCargo>(true), cargo);
             position = cargo.transform.InverseTransformPoint(position);
             rotation = Quaternion.Inverse(cargo.transform.rotation) * rotation;
         }
@@ -122,7 +225,8 @@ public class NetworkBodyCarrier : NetworkBehaviour
         body.ApplyBodyPose(position, rotation);
         if (force.sqrMagnitude > 0f)
             TrainCargo.ReleaseBodyForThrow(body);
-        if (!TrainCargo.TryStoreBody(body) && body.TryGetComponent(out CharacterRagdollController ragdoll) &&
+        // A stowed body is re-latched by its owner's stow state on the next LateUpdate.
+        if (body.TryGetComponent(out CharacterRagdollController ragdoll) &&
             ragdoll.RootRigidbody != null && !ragdoll.RootRigidbody.isKinematic)
             ragdoll.RootRigidbody.AddForce(force, ForceMode.Impulse);
     }

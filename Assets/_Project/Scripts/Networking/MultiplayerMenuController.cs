@@ -102,13 +102,21 @@ public class MultiplayerMenuController : MonoBehaviour
     private GameObject previewInstance;
     private Transform[] previewModels = System.Array.Empty<Transform>();
 
+    // On returning to the menu the scene's relay copy is destroyed in favour of the DontDestroyOnLoad one.
+    private RelayJoinCodeManager Relay
+    {
+        get
+        {
+            if (RelayJoinCodeManager.Instance != null && relayManager != RelayJoinCodeManager.Instance)
+                relayManager = RelayJoinCodeManager.Instance;
+            return relayManager;
+        }
+    }
+
     private void Awake()
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-
-        if (relayManager == null)
-            relayManager = RelayJoinCodeManager.Instance;
 
         playerNameInput?.SetTextWithoutNotify(PlayerPrefs.GetString(PlayerNameKey, "Player"));
         CreateCharacterPreview();
@@ -281,7 +289,7 @@ public class MultiplayerMenuController : MonoBehaviour
         Require(joinBackButton, nameof(joinBackButton));
         Require(startGameButton, nameof(startGameButton));
         Require(leaveLobbyButton, nameof(leaveLobbyButton));
-        if (relayManager == null)
+        if (Relay == null)
             Debug.LogError($"{nameof(MultiplayerMenuController)}: assign {nameof(relayManager)}.", this);
     }
 
@@ -395,7 +403,8 @@ public class MultiplayerMenuController : MonoBehaviour
         if (isConnecting)
             return;
 
-        if (relayManager == null)
+        RelayJoinCodeManager relay = Relay;
+        if (relay == null)
         {
             SetLobbyStatus("RelayManager is not assigned to the menu.");
             ShowLobbyScreen();
@@ -411,7 +420,7 @@ public class MultiplayerMenuController : MonoBehaviour
 
         try
         {
-            activeJoinCode = await relayManager.StartHostAsync(4);
+            activeJoinCode = await relay.StartHostAsync(4);
             lobbyJoinCodeText.text = $"Join code: {activeJoinCode}";
             SetLobbyStatus("Room created. Waiting for players.");
             BindSession();
@@ -434,7 +443,8 @@ public class MultiplayerMenuController : MonoBehaviour
         if (isConnecting)
             return;
 
-        if (relayManager == null)
+        RelayJoinCodeManager relay = Relay;
+        if (relay == null)
         {
             SetLobbyStatus("RelayManager is not assigned to the menu.");
             ShowLobbyScreen();
@@ -450,7 +460,7 @@ public class MultiplayerMenuController : MonoBehaviour
 
         try
         {
-            await relayManager.JoinHostAsync(activeJoinCode);
+            await relay.JoinHostAsync(activeJoinCode);
             SetLobbyStatus("Connecting to host...");
         }
         catch (Exception exception)
@@ -633,7 +643,9 @@ public class MultiplayerMenuController : MonoBehaviour
     // A half-open NetworkManager keeps IsRunning true and blocks every later host/join until restart.
     private void ResetConnection()
     {
-        relayManager?.LeaveSession();
+        RelayJoinCodeManager relay = Relay;
+        if (relay != null)
+            relay.LeaveSession();
         UnbindSession();
         activeJoinCode = string.Empty;
         isConnecting = false;
@@ -828,7 +840,9 @@ public class MultiplayerMenuController : MonoBehaviour
 
         isConnecting = false;
         SetLobbyStatus("Desconectado del anfitrión.");
-        relayManager?.LeaveSession();
+        RelayJoinCodeManager relay = Relay;
+        if (relay != null)
+            relay.LeaveSession();
     }
 
     private void SetLobbyStatus(string value)

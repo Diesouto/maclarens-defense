@@ -54,8 +54,11 @@ public class DeathCameraController : MonoBehaviour
         yield return new WaitForSeconds(activationDelay);
 
         RefreshTargets(deadPlayer != null ? deadPlayer.transform : null);
-        if (deadPlayer != null && deadPlayer.TryGetComponent(out PlayerBodyVisibility bodyVisibility))
-            bodyVisibility.ShowBodyToAllCameras();
+        if (deadPlayer != null)
+        {
+            foreach (PlayerBodyVisibility bodyVisibility in deadPlayer.GetComponentsInChildren<PlayerBodyVisibility>(true))
+                bodyVisibility.ShowBodyToAllCameras();
+        }
 
         SuppressPlayerCameras(deadPlayer);
         SetActiveCamera(true);
