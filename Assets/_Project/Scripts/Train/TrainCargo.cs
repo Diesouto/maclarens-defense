@@ -52,6 +52,21 @@ public class TrainCargo : MonoBehaviour
         }
     }
 
+    public static void ReleaseBodyForThrow(PlayerBody body)
+    {
+        if (body == null)
+            return;
+
+        foreach (TrainCargo cargo in allCargo)
+        {
+            if (cargo == null)
+                continue;
+
+            cargo.captureCooldowns[body] = Time.time + cargo.throwReleaseGraceDuration;
+            cargo.DetachBody(body);
+        }
+    }
+
     public static bool TryStoreBody(PlayerBody body)
     {
         foreach (TrainCargo cargo in allCargo)
