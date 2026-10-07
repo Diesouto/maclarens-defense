@@ -35,3 +35,6 @@ REVISAR
 El cadaver de los jugadores no es visible para los clientes, 
 El cadáver de los jugadores no se puede meter en el tren, el cuerpo se queda fuera y no consigo poder lanzar el cuerpo dentro de un vagón
 La cámara de los jugadores no se levanta de forma progresiva, está en el suelo haciendo ragdoll y de repente se teletransporta a la posición natural. También hay como un flicker de la posición original -> cae al suelo a la nueva posición -> aparece la posición original -> el jugador instantáneamente aparece en la posición correspondiente
+Jasper Dog position and behaviour not replicating across players
+Cuando se interactúe con la palanca del tren para ir al siguiente destino, debe girar 45 grados y volver a su posición (una animación simple de uso)
+Object breaking has stopped working, no matter how many times I try potions and bottles won't break. Exploding objects do work properly.
