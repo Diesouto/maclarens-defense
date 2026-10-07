@@ -179,8 +179,12 @@ public class CharacterRagdollController : MonoBehaviour
             if (bone == null)
                 continue;
 
-            bone.position = position + deltaRotation * (bodyPositions[index] - previousPosition);
-            bone.rotation = deltaRotation * bodyRotations[index];
+            Vector3 bonePosition = position + deltaRotation * (bodyPositions[index] - previousPosition);
+            Quaternion boneRotation = deltaRotation * bodyRotations[index];
+            // Rigidbody writes alone only show up after the next physics step, so the pose stutters at framerate.
+            bone.transform.SetPositionAndRotation(bonePosition, boneRotation);
+            bone.position = bonePosition;
+            bone.rotation = boneRotation;
         }
     }
 

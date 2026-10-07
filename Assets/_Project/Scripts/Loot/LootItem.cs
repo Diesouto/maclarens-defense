@@ -96,6 +96,13 @@ public class LootItem : MonoBehaviour, IInteractable
             return;
         }
 
+        // A client collecting locally desyncs from the host's inventory (item vanishes, hits rejected).
+        if (NetworkRole.IsClientOnly)
+        {
+            Debug.LogWarning($"LootItem: '{name}' has no spawned NetworkLootItem; clients can't pick it up.", this);
+            return;
+        }
+
         TryCollect(interactor != null ? interactor.GetComponent<PlayerInventory>() : null);
     }
 
@@ -175,10 +182,15 @@ public class LootItem : MonoBehaviour, IInteractable
             breakableComponent.CopySettingsFrom(sourceBreakable);
         }
 
+        bool isThrown = throwForce.HasValue && throwForce.Value.sqrMagnitude > 0f;
         if (breakableComponent != null)
+        {
             breakableComponent.enabled = true;
+            if (isThrown)
+                breakableComponent.UseThrownImpactGrace();
+        }
 
-        if (throwForce.HasValue && throwForce.Value.sqrMagnitude > 0f)
+        if (isThrown)
             rigidbody.AddForce(throwForce.Value, ForceMode.Impulse);
 
         Weapon weapon = instance.GetComponentInChildren<Weapon>(true);

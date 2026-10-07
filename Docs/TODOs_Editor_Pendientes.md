@@ -4,6 +4,18 @@ Lista de tareas que requieren Unity Editor (prefabs, escena, referencias seriali
 se pueden completar solo con cambios de codigo. Añadir aqui cualquier tarea nueva mientras no haya
 acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en Play Mode.
 
+## Fixes multiplayer armas/pocion/cadaver (2026-10-07)
+
+- [ ] Abrir `Revolver`, `Rifle`, `SBShotgun` y `Shotgun` (Prefabs/Weapons): se les añadio
+      `NetworkLootItem` a mano en YAML (faltaba, por eso el cliente recogia el arma solo en local:
+      balas rechazadas por el host y el arma "desaparecia" al recoger otro item). Verificar que el
+      componente aparece y guardar el prefab.
+- [ ] `Potion.prefab`: `breakVelocity` bajado de 6 a 4. Los objetos lanzados ahora solo ignoran
+      impactos 0.1s (antes 0.4s, que se tragaba lanzamientos cortos sobre un cadaver).
+- [ ] Playtest (host + cliente): cliente recoge arma del host muerto, dispara (daño aplicado),
+      recoge otro item (el arma cae al suelo visible para ambos); lanzar pocion corta sobre el
+      cadaver -> rompe y revive; cargar cadaver subiendo al tren en marcha -> sin tirones.
+
 ## P5.0 - Loop de cuotas cronometradas (2026-10-01)
 
 - [ ] Crear el asset `RunConfig` (Create > MacLarens > Run Config), ajustar `quotaAmounts`,

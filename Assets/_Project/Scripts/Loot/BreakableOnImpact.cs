@@ -28,6 +28,12 @@ public class BreakableOnImpact : MonoBehaviour
         ignoreImpactsUntil = Time.time + 0.4f;
     }
 
+    // A throw aimed at your feet (e.g. a potion on a corpse) lands well inside the drop grace.
+    public void UseThrownImpactGrace()
+    {
+        ignoreImpactsUntil = Time.time + 0.1f;
+    }
+
     public void CopySettingsFrom(BreakableOnImpact source)
     {
         if (source == null)

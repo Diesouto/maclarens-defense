@@ -17,6 +17,8 @@ public class BodyCarrier : MonoBehaviour
     private CharacterRagdollController carriedRagdoll;
     private Collider[] carrierColliders;
     private NetworkBodyCarrier networkAuthority;
+    private Vector3 lastCarryPosition;
+    private Quaternion lastCarrierYaw = Quaternion.identity;
 
     private void Awake()
     {
@@ -45,11 +47,19 @@ public class BodyCarrier : MonoBehaviour
         }
 
         Vector3 carryPosition = carryPoint.position;
-        Vector3 toTarget = carryPosition - carriedRoot.position;
+        Quaternion carrierYaw = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+        // Ride along with the carrier (walking or train) rigidly; only the leftover offset is eased in.
+        Quaternion yawDelta = carrierYaw * Quaternion.Inverse(lastCarrierYaw);
+        Vector3 position = carryPosition + yawDelta * (carriedRoot.position - lastCarryPosition);
+        Quaternion rotation = yawDelta * carriedRoot.rotation;
+        lastCarryPosition = carryPosition;
+        lastCarrierYaw = carrierYaw;
+
+        Vector3 toTarget = carryPosition - position;
         Vector3 movement = toTarget.magnitude > snapDistance
             ? toTarget
             : Vector3.ClampMagnitude(toTarget * Mathf.Min(1f, followSpeed * Time.deltaTime), maxFollowSpeed * Time.deltaTime);
-        carriedRagdoll.SetBodyPose(carriedRoot.position + movement, carriedRoot.rotation);
+        carriedRagdoll.SetBodyPose(position + movement, rotation);
     }
 
     public bool TryPickUp(PlayerBody body)
@@ -89,6 +99,8 @@ public class BodyCarrier : MonoBehaviour
         carriedRagdoll = ragdoll;
         carriedRoot = root;
         body.AttachTo(this);
+        lastCarryPosition = carryPoint.position;
+        lastCarrierYaw = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
         SetIgnoreBodyCollisions(ragdoll, true);
 
