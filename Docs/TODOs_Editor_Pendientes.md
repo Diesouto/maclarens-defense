@@ -182,6 +182,9 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 - [x] Codigo: Jasper se desancla de `Environment` en `Awake` (con `AutoObjectParentSync` apagado)
       para que NGO no lo coloque mal en los clientes. Alternativa limpia en el editor: sacarlo a la
       raiz de `MainScene`; entonces el codigo no hace nada.
+- [x] Codigo: Jasper desactiva `NetworkRigidbody.AutoUpdateKinematicState`; el host lo dejaba no
+      cinematico con gravedad peleando con el NavMeshAgent (parpadeo hasta el primer backflip).
+      Opcional en el editor: marcar `Is Kinematic` en su `Rigidbody`.
 - [x] Codigo: `PlayerBodyVisibility` esta en `SM_Chr_Cowboy_01`, no en la raiz; ahora busca `Health`
       en los padres y la camara de muerte lo encuentra en los hijos. Antes el cadaver propio seguia
       en la layer `CameraHidden`, que la camara de escena (mask 247) no renderiza.
@@ -191,9 +194,11 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       de un vagon (cuerpo o portador) lo guarda tumbado dentro, separado `bodyWallPadding` de las
       paredes y apoyado en el suelo. Cuerpos sueltos (lanzados, arrastrados con lazo o muertos dentro)
       a menos de `bodyCaptureMargin` se guardan solos. Decide el host; los clientes lo aplican desde
-      `NetworkBodyCarrier.stowState`.
-- [x] Codigo: el menu usa siempre el `RelayJoinCodeManager` persistente y `NetworkSessionManager`
-      sustituye la copia vieja tras terminar una partida.
+      `NetworkBodyCarrier.restState`. Fuera del tren, el host congela el cadaver al asentarse
+      (`settleSpeed`/`settleDuration`/`maximumLooseDuration`) y replica la pose, salvo a menos de
+      `trainFreezeExclusion` de un vagon. Cada guardado escribe `TrainCargo: Stowed body` en consola.
+- [x] Codigo: el menu usa siempre el `RelayJoinCodeManager` persistente. `NetworkSessionManager`
+      comparte GameObject con NetworkManager/Bootstrapper/Relay, asi que la copia persistente gana.
 - [ ] Revisar que el `cargoTrigger` de cada `TrainCargo` cubre el interior del vagon (idealmente
       `BoxCollider`) y ajustar los margenes nuevos.
 - [ ] Host + cliente: soltar y lanzar cadaveres en cada vagon, arrancar y tomar curvas; el cuerpo no

@@ -81,18 +81,11 @@ public class NetworkSessionManager : NetworkBehaviour
 
     private void Awake()
     {
+        // Shares its GameObject with NetworkManager/NetworkBootstrapper/Relay: the persistent copy always wins.
         if (Instance != null && Instance != this)
         {
-            // A session left over from a finished match must not shadow the fresh MenuScene copy.
-            bool previousSessionEnded = !Instance.IsSpawned &&
-                (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening);
-            if (!previousSessionEnded)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            Destroy(Instance.gameObject);
+            Destroy(gameObject);
+            return;
         }
 
         Instance = this;

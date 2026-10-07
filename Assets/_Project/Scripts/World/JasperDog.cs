@@ -53,6 +53,10 @@ public class JasperDog : NetworkBehaviour, IInteractable
         agent = GetComponent<NavMeshAgent>();
         body = GetComponent<Rigidbody>();
         body.isKinematic = true;
+        // NetworkRigidbody would restore the serialized non-kinematic state on the host, so gravity fights the
+        // NavMeshAgent every frame (the jitter that only stopped after a backflip re-applied kinematic).
+        if (TryGetComponent(out NetworkRigidbody networkRigidbody))
+            networkRigidbody.AutoUpdateKinematicState = false;
         origin = transform.position;
         previousPosition = transform.position;
 
@@ -80,6 +84,12 @@ public class JasperDog : NetworkBehaviour, IInteractable
             agent.enabled = false;
             body.isKinematic = true;
         }
+    }
+
+    protected override void OnNetworkPostSpawn()
+    {
+        if (!isFlipping)
+            body.isKinematic = true;
     }
 
     public override void OnNetworkDespawn()

@@ -98,6 +98,18 @@ public class TrainCargo : MonoBehaviour
         return best != null && best.Stow(body);
     }
 
+    public static float DistanceToNearestCargo(Vector3 point)
+    {
+        float nearest = float.MaxValue;
+        foreach (TrainCargo cargo in allCargo)
+        {
+            if (cargo != null)
+                nearest = Mathf.Min(nearest, cargo.DistanceTo(point));
+        }
+
+        return nearest;
+    }
+
     public static TrainCargo GetStowedCargo(PlayerBody body)
     {
         foreach (TrainCargo cargo in allCargo)
@@ -169,6 +181,7 @@ public class TrainCargo : MonoBehaviour
         ragdoll.SetPhysicsSuspended(true);
         ragdoll.SetBodyPose(rootPosition, rootRotation);
         AttachBody(body, ragdoll);
+        Debug.Log($"TrainCargo: Stowed body of {body.name}.", this);
         return true;
     }
 
@@ -196,9 +209,10 @@ public class TrainCargo : MonoBehaviour
             point += Vector3.ClampMagnitude(toCenter, bodyWallPadding);
         }
 
+        // Cast from just above the hips, not the volume top, so a carriage roof isn't taken as the floor.
         Bounds bounds = cargoTrigger.bounds;
-        Vector3 rayStart = new Vector3(point.x, bounds.max.y, point.z);
-        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, bounds.size.y + 1f, ~0, QueryTriggerInteraction.Ignore);
+        Vector3 rayStart = new Vector3(point.x, Mathf.Clamp(point.y + 1f, bounds.min.y, bounds.max.y), point.z);
+        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, rayStart.y - bounds.min.y + 1f, ~0, QueryTriggerInteraction.Ignore);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         point.y = bounds.min.y + bodyFloorClearance;
         foreach (RaycastHit hit in hits)

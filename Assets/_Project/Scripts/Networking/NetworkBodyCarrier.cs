@@ -2,21 +2,26 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-// Where this player's own corpse is latched inside a train carriage, relative to that carriage.
-public struct BodyStowState : INetworkSerializeByMemcpy, IEquatable<BodyStowState>
+public enum BodyRestMode : byte
 {
+    Loose,
+    Resting,
+    Stowed
+}
+
+// Host-decided pose of this player's own corpse: world pose when Resting, carriage-local when Stowed.
+public struct BodyRestState : INetworkSerializeByMemcpy, IEquatable<BodyRestState>
+{
+    public BodyRestMode Mode;
     public ulong TrainObjectId;
     public int CargoIndex;
-    public Vector3 LocalPosition;
-    public Quaternion LocalRotation;
+    public Vector3 Position;
+    public Quaternion Rotation;
 
-    public static BodyStowState Loose => new() { CargoIndex = -1, LocalRotation = Quaternion.identity };
-    public bool IsStowed => CargoIndex >= 0;
-
-    public bool Equals(BodyStowState other)
+    public bool Equals(BodyRestState other)
     {
-        return TrainObjectId == other.TrainObjectId && CargoIndex == other.CargoIndex &&
-            LocalPosition == other.LocalPosition && LocalRotation == other.LocalRotation;
+        return Mode == other.Mode && TrainObjectId == other.TrainObjectId && CargoIndex == other.CargoIndex &&
+            Position == other.Position && Rotation == other.Rotation;
     }
 }
 
@@ -27,13 +32,21 @@ public class NetworkBodyCarrier : NetworkBehaviour
 {
     [SerializeField, Min(0.5f)] private float carryDistance = 3f;
 
+    [Header("Corpse Sync")]
+    [Tooltip("A loose corpse slower than this for settleDuration is frozen on the host and sent to clients.")]
+    [SerializeField, Min(0.01f)] private float settleSpeed = 0.25f;
+    [SerializeField, Min(0f)] private float settleDuration = 0.5f;
+    [SerializeField, Min(0.5f)] private float maximumLooseDuration = 6f;
+    [Tooltip("Never freeze in world space this close to a carriage: the train could leave it behind.")]
+    [SerializeField, Min(0f)] private float trainFreezeExclusion = 5f;
+
     private readonly NetworkVariable<NetworkObjectReference> carriedBody = new(
         default,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
-    private readonly NetworkVariable<BodyStowState> stowState = new(
-        BodyStowState.Loose,
+    private readonly NetworkVariable<BodyRestState> restState = new(
+        default,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
@@ -41,7 +54,10 @@ public class NetworkBodyCarrier : NetworkBehaviour
     private PlayerBody ownBody;
     private CharacterRagdollController ownRagdoll;
     private TrainCargo serverStowCargo;
-    private BodyStowState appliedStow = BodyStowState.Loose;
+    private bool serverResting;
+    private float settledTime;
+    private float looseTime;
+    private BodyRestState appliedRest;
 
     private void Awake()
     {
@@ -73,7 +89,7 @@ public class NetworkBodyCarrier : NetworkBehaviour
         if (!IsServer)
         {
             ApplyReplicatedCarry(carriedBody.Value);
-            ApplyReplicatedStow();
+            ApplyReplicatedRest();
             return;
         }
 
@@ -82,59 +98,142 @@ public class NetworkBodyCarrier : NetworkBehaviour
         if (current != replicated)
             carriedBody.Value = current != null ? new NetworkObjectReference(current) : default;
 
-        PublishStowState();
+        if (ownBody != null && ownRagdoll != null && ownRagdoll.RootRigidbody != null)
+        {
+            UpdateServerSettle();
+            PublishRestState();
+        }
     }
 
-    private void PublishStowState()
+    private bool IsLooseCorpse()
     {
-        TrainCargo cargo = TrainCargo.GetStowedCargo(ownBody);
-        if (cargo == serverStowCargo)
-            return;
+        return ownBody.IsDead && !ownBody.IsHidden && !ownBody.IsBeingCarried && !ownBody.IsBeingPulled &&
+            ownRagdoll.IsRagdollActive && TrainCargo.GetStowedCargo(ownBody) == null;
+    }
 
-        serverStowCargo = cargo;
-        if (cargo == null || ownRagdoll == null || ownRagdoll.RootRigidbody == null ||
-            !TryGetCargoAddress(cargo, out NetworkObject train, out int cargoIndex))
+    // Each peer simulates its own ragdoll, so a settled corpse is frozen on the host and its pose replicated.
+    private void UpdateServerSettle()
+    {
+        if (!IsLooseCorpse())
         {
-            stowState.Value = BodyStowState.Loose;
+            serverResting = false;
+            settledTime = 0f;
+            looseTime = 0f;
+            return;
+        }
+
+        if (serverResting)
+        {
+            // Someone else (e.g. a lasso pull or a drop) handed the body back to physics.
+            if (!ownRagdoll.IsPhysicsSuspended)
+                serverResting = false;
             return;
         }
 
         Rigidbody root = ownRagdoll.RootRigidbody;
-        stowState.Value = new BodyStowState
-        {
-            TrainObjectId = train.NetworkObjectId,
-            CargoIndex = cargoIndex,
-            LocalPosition = cargo.transform.InverseTransformPoint(root.position),
-            LocalRotation = Quaternion.Inverse(cargo.transform.rotation) * root.rotation
-        };
-    }
-
-    // Polled every frame: carry and health replicate separately, so the stow may need several tries.
-    private void ApplyReplicatedStow()
-    {
-        if (ownBody == null)
+        bool slow = root.isKinematic || root.linearVelocity.sqrMagnitude <= settleSpeed * settleSpeed;
+        settledTime = slow ? settledTime + Time.deltaTime : 0f;
+        looseTime += Time.deltaTime;
+        if (settledTime < settleDuration && looseTime < maximumLooseDuration)
             return;
 
-        BodyStowState state = stowState.Value;
-        TrainCargo localCargo = TrainCargo.GetStowedCargo(ownBody);
-        if (!state.IsStowed)
+        if (TrainCargo.TryStowBody(ownBody, ownBody.BodyPosition) ||
+            TrainCargo.DistanceToNearestCargo(ownBody.BodyPosition) <= trainFreezeExclusion)
+            return;
+
+        ownRagdoll.SetPhysicsSuspended(true);
+        serverResting = true;
+    }
+
+    private void PublishRestState()
+    {
+        TrainCargo cargo = TrainCargo.GetStowedCargo(ownBody);
+        BodyRestState current = restState.Value;
+        Rigidbody root = ownRagdoll.RootRigidbody;
+
+        if (cargo != null && TryGetCargoAddress(cargo, out NetworkObject train, out int cargoIndex))
         {
-            appliedStow = state;
-            if (localCargo != null)
-                TrainCargo.ReleaseBody(ownBody);
+            if (current.Mode == BodyRestMode.Stowed && cargo == serverStowCargo)
+                return;
+
+            serverStowCargo = cargo;
+            restState.Value = new BodyRestState
+            {
+                Mode = BodyRestMode.Stowed,
+                TrainObjectId = train.NetworkObjectId,
+                CargoIndex = cargoIndex,
+                Position = cargo.transform.InverseTransformPoint(root.position),
+                Rotation = Quaternion.Inverse(cargo.transform.rotation) * root.rotation
+            };
             return;
         }
 
-        TrainCargo cargo = ResolveCargo(state);
-        if (cargo == null || (localCargo == cargo && appliedStow.Equals(state)))
+        serverStowCargo = null;
+        if (serverResting && IsLooseCorpse())
+        {
+            if (current.Mode == BodyRestMode.Resting)
+                return;
+
+            restState.Value = new BodyRestState
+            {
+                Mode = BodyRestMode.Resting,
+                Position = root.position,
+                Rotation = root.rotation
+            };
+            return;
+        }
+
+        if (current.Mode != BodyRestMode.Loose)
+            restState.Value = default;
+    }
+
+    // Polled every frame: carry and health replicate separately, so applying may need several tries.
+    private void ApplyReplicatedRest()
+    {
+        if (ownBody == null || ownRagdoll == null)
             return;
 
-        if (localCargo != null)
-            TrainCargo.ReleaseBody(ownBody);
+        BodyRestState state = restState.Value;
+        TrainCargo localCargo = TrainCargo.GetStowedCargo(ownBody);
+        bool free = ownBody.IsDead && !ownBody.IsHidden && !ownBody.IsBeingCarried && !ownBody.IsBeingPulled &&
+            ownRagdoll.IsRagdollActive;
 
-        if (cargo.StowAt(ownBody, cargo.transform.TransformPoint(state.LocalPosition),
-                cargo.transform.rotation * state.LocalRotation))
-            appliedStow = state;
+        switch (state.Mode)
+        {
+            case BodyRestMode.Stowed:
+            {
+                TrainCargo cargo = ResolveCargo(state);
+                if (cargo == null || (localCargo == cargo && appliedRest.Equals(state)))
+                    return;
+
+                if (localCargo != null)
+                    TrainCargo.ReleaseBody(ownBody);
+
+                if (cargo.StowAt(ownBody, cargo.transform.TransformPoint(state.Position),
+                        cargo.transform.rotation * state.Rotation))
+                    appliedRest = state;
+                return;
+            }
+            case BodyRestMode.Resting:
+                if (localCargo != null)
+                    TrainCargo.ReleaseBody(ownBody);
+
+                if (!free || (appliedRest.Equals(state) && ownRagdoll.IsPhysicsSuspended))
+                    return;
+
+                ownRagdoll.SetPhysicsSuspended(true);
+                ownRagdoll.SetBodyPose(state.Position, state.Rotation);
+                appliedRest = state;
+                return;
+            default:
+                if (appliedRest.Mode == BodyRestMode.Stowed && localCargo != null)
+                    TrainCargo.ReleaseBody(ownBody);
+                else if (appliedRest.Mode == BodyRestMode.Resting && free)
+                    ownRagdoll.SetPhysicsSuspended(false);
+
+                appliedRest = state;
+                return;
+        }
     }
 
     private static bool TryGetCargoAddress(TrainCargo cargo, out NetworkObject train, out int cargoIndex)
@@ -146,7 +245,7 @@ public class NetworkBodyCarrier : NetworkBehaviour
         return cargoIndex >= 0;
     }
 
-    private TrainCargo ResolveCargo(BodyStowState state)
+    private TrainCargo ResolveCargo(BodyRestState state)
     {
         if (NetworkManager == null ||
             !NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(state.TrainObjectId, out NetworkObject train) ||
