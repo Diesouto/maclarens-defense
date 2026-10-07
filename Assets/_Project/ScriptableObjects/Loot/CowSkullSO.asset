@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
   itemId: CowSkull
   displayName: Calavera
-  icon: {fileID: 21300000, guid: 6f2d723d15c85784aabe64d29ed176bb, type: 3}
+  icon: {fileID: 21300000, guid: 6d4ec99c68dea834eb3c0fa42b5714ec, type: 3}
   value: 100
   price: 0
   spawnWeight: 60
@@ -23,8 +23,15 @@ MonoBehaviour:
   isTwoHanded: 1
   animationProfile: 0
   weaponData: {fileID: 0}
+  drinkHealPercent: 0
+  drunkDuration: 0
+  useDuration: 3
+  breakHealPercent: 0
+  breakHealRadius: 3
   worldPrefab: {fileID: 423015025602674969, guid: 10027bfb99fb7c04f8d9daa765981da1, type: 3}
   heldPrefab: {fileID: 0}
   rigidbodyMass: 1
   heldPositionOffset: {x: 0, y: 0, z: 0}
   heldRotationOffset: {x: 0, y: 0, z: 0}
+  thirdPersonPositionOffset: {x: 0, y: 0, z: 0}
+  thirdPersonRotationOffset: {x: 0, y: 0, z: 0}

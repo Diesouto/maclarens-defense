@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
   itemId: Shotgun
   displayName: Escopeta
-  icon: {fileID: 21300000, guid: f1ed20bd1d4f649488356228271d0d1a, type: 3}
+  icon: {fileID: 21300000, guid: 121904f74bd5f6c46a301f20dbacdc12, type: 3}
   value: 150
   price: 200
   spawnWeight: 40
@@ -23,8 +23,15 @@ MonoBehaviour:
   isTwoHanded: 0
   animationProfile: 2
   weaponData: {fileID: 11400000, guid: 895d6b006834a914f906e5ff8f3383da, type: 2}
+  drinkHealPercent: 0
+  drunkDuration: 0
+  useDuration: 3
+  breakHealPercent: 0
+  breakHealRadius: 3
   worldPrefab: {fileID: 7277496928164753031, guid: 80a624e0696cc5d459cdb26eded172d5, type: 3}
   heldPrefab: {fileID: 7277496928164753031, guid: 80a624e0696cc5d459cdb26eded172d5, type: 3}
   rigidbodyMass: 1
   heldPositionOffset: {x: 0, y: 0, z: 0}
   heldRotationOffset: {x: 0, y: 0, z: 0}
+  thirdPersonPositionOffset: {x: 0, y: 0, z: 0}
+  thirdPersonRotationOffset: {x: 0, y: 0, z: 0}

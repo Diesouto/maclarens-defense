@@ -136,10 +136,7 @@ public class TrainCargo : MonoBehaviour
     private void LateUpdate()
     {
         foreach (PlayerBody body in bodyColliderCounts.Keys)
-        {
-            if (ContainsBody(body))
-                AttachBody(body);
-        }
+            AttachBody(body);
 
         bodiesToRelease.Clear();
         foreach (KeyValuePair<PlayerBody, StoredBody> entry in storedBodies)

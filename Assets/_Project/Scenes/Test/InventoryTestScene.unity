@@ -695,6 +695,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 180516938}
   m_CullTransparentMesh: 1
+--- !u!1001 &204119467
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 11.224406
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.096175194
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 5.9218
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314841556159298011, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 8449505165127123910, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1029946152
+      objectReference: {fileID: 0}
+    - target: {fileID: 8832045668336854980, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
+      propertyPath: m_Name
+      value: Lasso
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2656408871b585d46b9602f29eefb19e, type: 3}
 --- !u!4 &224900439 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1046747728075007874, guid: 9a979ac33143ae34bbee82b4a31a3afb, type: 3}
@@ -1154,6 +1215,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoundUI
   roundNumberText: {fileID: 845843922}
+  runManager: {fileID: 0}
 --- !u!1 &451812635
 GameObject:
   m_ObjectHideFlags: 0
@@ -2853,7 +2915,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.01
-  far clip plane: 5000
+  far clip plane: 1000
   field of view: 60.000004
   orthographic: 0
   orthographic size: 10
@@ -2957,7 +3019,7 @@ Transform:
   m_GameObject: {fileID: 1294776462}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.23577, y: 1.8362799, z: 4.38068}
+  m_LocalPosition: {x: 3.23577, y: 1.78528, z: 4.00068}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3293,8 +3355,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractUI
   interactText: {fileID: 1491708577}
+  keyHintText: {fileID: 0}
+  interactKeyLabel: E
   interactProgressBar: {fileID: 74665821}
   interactProgressBarBackground: {fileID: 104701689}
+  availableColor: {r: 1, g: 1, b: 1, a: 1}
+  blockedColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
 --- !u!1 &1475763537
 GameObject:
   m_ObjectHideFlags: 0
@@ -3976,6 +4042,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoneyUI
   moneyText: {fileID: 1658027066}
+  moneyManager: {fileID: 0}
+  countDuration: 0.5
+  neutralColor: {r: 1, g: 1, b: 1, a: 1}
+  gainColor: {r: 0.35, g: 0.9, b: 0.4, a: 1}
+  lossColor: {r: 0.95, g: 0.35, b: 0.35, a: 1}
 --- !u!4 &1710527326 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1230472947457456053, guid: 86ed9b290e04e2848a6eca9acd325abf, type: 3}
@@ -5284,3 +5355,4 @@ SceneRoots:
   - {fileID: 373530620}
   - {fileID: 874986814}
   - {fileID: 890723998}
+  - {fileID: 204119467}

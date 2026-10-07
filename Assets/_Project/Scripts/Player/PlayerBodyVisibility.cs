@@ -123,6 +123,11 @@ public class PlayerBodyVisibility : NetworkBehaviour
             playerCamera.cullingMask = originalCullingMask & ~(1 << hiddenLayer);
     }
 
+    public void ShowBodyToAllCameras()
+    {
+        RestoreVisibility();
+    }
+
     private void RestoreVisibility()
     {
         foreach (KeyValuePair<Transform, int> entry in originalLayers)

@@ -56,6 +56,14 @@ public class PlayerController : MonoBehaviour
     private Transform cameraDefaultParent;
     private Vector3 cameraDefaultLocalPosition;
     private Quaternion cameraDefaultLocalRotation;
+    private Vector3 cameraRecoveryWorldPosition;
+    private Quaternion cameraRecoveryWorldRotation;
+    private Vector3 cameraRecoveryStartLocalPosition;
+    private Quaternion cameraRecoveryStartLocalRotation;
+    private float cameraRecoveryDuration;
+    private float cameraRecoveryElapsed;
+    private bool hasCameraRecoveryPose;
+    private bool isCameraRecovering;
     private float throwChargeStartedAt;
     private bool isChargingThrow;
     private bool isChargingBodyThrow;
@@ -183,13 +191,19 @@ public class PlayerController : MonoBehaviour
             return;
 
         ApplyTrainMotion();
+        if (isCameraRecovering)
+        {
+            UpdateCameraRecovery();
+            return;
+        }
+
         ApplyLookRotation();
     }
 
     public bool IsKnockedDown { get; private set; }
 
     // Used by PlayerKnockdown on the owning client: the ragdoll drives the body, the camera rides the head.
-    public void SetKnockedDown(bool knockedDown)
+    public void SetKnockedDown(bool knockedDown, float cameraRecoveryDuration = 0f)
     {
         if (!IsLocalPlayer || IsKnockedDown == knockedDown)
             return;
@@ -203,7 +217,17 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        RestoreCamera();
+        RestoreCamera(cameraRecoveryDuration);
+    }
+
+    public void CaptureCameraRecoveryPose()
+    {
+        if (cameraTransform == null)
+            return;
+
+        cameraRecoveryWorldPosition = cameraTransform.position;
+        cameraRecoveryWorldRotation = cameraTransform.rotation;
+        hasCameraRecoveryPose = true;
     }
 
     private void AttachCameraToRagdoll()
@@ -212,19 +236,60 @@ public class PlayerController : MonoBehaviour
             cameraTransform.SetParent(ragdollCameraAnchor, true);
     }
 
-    private void RestoreCamera()
+    private void RestoreCamera(float recoveryDuration = 0f)
     {
         if (cameraTransform != null && cameraDefaultParent != null)
         {
-            cameraTransform.SetParent(cameraDefaultParent, false);
-            cameraTransform.localPosition = cameraDefaultLocalPosition;
-            cameraTransform.localRotation = cameraDefaultLocalRotation;
+            bool shouldBlend = recoveryDuration > 0f && hasCameraRecoveryPose;
+            cameraTransform.SetParent(cameraDefaultParent, !shouldBlend);
+
+            if (shouldBlend)
+            {
+                cameraTransform.SetPositionAndRotation(cameraRecoveryWorldPosition, cameraRecoveryWorldRotation);
+                cameraRecoveryStartLocalPosition = cameraTransform.localPosition;
+                cameraRecoveryStartLocalRotation = cameraTransform.localRotation;
+                cameraRecoveryDuration = recoveryDuration;
+                cameraRecoveryElapsed = 0f;
+                isCameraRecovering = true;
+            }
+            else
+            {
+                cameraTransform.localPosition = cameraDefaultLocalPosition;
+                cameraTransform.localRotation = cameraDefaultLocalRotation;
+                isCameraRecovering = false;
+            }
         }
+
+        hasCameraRecoveryPose = false;
 
         yaw = transform.eulerAngles.y;
         pitch = 0f;
         smoothedYaw = yaw;
         smoothedPitch = pitch;
+    }
+
+    private void UpdateCameraRecovery()
+    {
+        if (cameraTransform == null)
+        {
+            isCameraRecovering = false;
+            return;
+        }
+
+        cameraRecoveryElapsed += Time.deltaTime;
+        float progress = Mathf.Clamp01(cameraRecoveryElapsed / cameraRecoveryDuration);
+        float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
+        cameraTransform.localPosition = Vector3.Lerp(cameraRecoveryStartLocalPosition,
+            cameraDefaultLocalPosition, easedProgress);
+        cameraTransform.localRotation = Quaternion.Slerp(cameraRecoveryStartLocalRotation,
+            cameraDefaultLocalRotation, easedProgress);
+
+        if (progress >= 1f)
+        {
+            cameraTransform.localPosition = cameraDefaultLocalPosition;
+            cameraTransform.localRotation = cameraDefaultLocalRotation;
+            isCameraRecovering = false;
+        }
     }
 
     private void HandleLook()

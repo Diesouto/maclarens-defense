@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
   itemId: Cross
   displayName: Cruz
-  icon: {fileID: 21300000, guid: 6f2d723d15c85784aabe64d29ed176bb, type: 3}
+  icon: {fileID: 21300000, guid: b70eaf5d17e96a048b22036792335c41, type: 3}
   value: 150
   price: 0
   spawnWeight: 80
@@ -23,8 +23,15 @@ MonoBehaviour:
   isTwoHanded: 0
   animationProfile: 0
   weaponData: {fileID: 0}
+  drinkHealPercent: 0
+  drunkDuration: 0
+  useDuration: 3
+  breakHealPercent: 0
+  breakHealRadius: 3
   worldPrefab: {fileID: 7043559663623882982, guid: c0b43b0aa8af62b4e8f5ac17d2112df1, type: 3}
   heldPrefab: {fileID: 0}
   rigidbodyMass: 1
   heldPositionOffset: {x: 0, y: 0, z: 0}
   heldRotationOffset: {x: 0, y: 0, z: 0}
+  thirdPersonPositionOffset: {x: 0, y: 0, z: 0}
+  thirdPersonRotationOffset: {x: 0, y: 0, z: 0}

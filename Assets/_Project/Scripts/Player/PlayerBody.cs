@@ -351,15 +351,15 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     private void ResolveRespawnPose(Transform fallbackSpawnPoint, out Vector3 position, out Quaternion rotation)
     {
-        if (fallbackSpawnPoint != null)
-        {
-            position = fallbackSpawnPoint.position;
-            rotation = fallbackSpawnPoint.rotation;
-        }
-        else if (networkPlayer != null && networkPlayer.HasInitialSpawnPose)
+        if (networkPlayer != null && networkPlayer.HasInitialSpawnPose)
         {
             position = networkPlayer.InitialSpawnPosition;
             rotation = networkPlayer.InitialSpawnRotation;
+        }
+        else if (fallbackSpawnPoint != null)
+        {
+            position = fallbackSpawnPoint.position;
+            rotation = fallbackSpawnPoint.rotation;
         }
         else
         {

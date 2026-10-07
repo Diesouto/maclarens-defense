@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
   itemId: Cup
   displayName: Vaso
-  icon: {fileID: 21300000, guid: cd2feb23b92c34243bb3626c74b3061a, type: 3}
+  icon: {fileID: 21300000, guid: 1b73a726a04f4f747a28571329a4d762, type: 3}
   value: 50
   price: 0
   spawnWeight: 100
@@ -23,8 +23,15 @@ MonoBehaviour:
   isTwoHanded: 0
   animationProfile: 0
   weaponData: {fileID: 0}
+  drinkHealPercent: 0
+  drunkDuration: 0
+  useDuration: 3
+  breakHealPercent: 0
+  breakHealRadius: 3
   worldPrefab: {fileID: 3586423731680772527, guid: 86ed9b290e04e2848a6eca9acd325abf, type: 3}
   heldPrefab: {fileID: 0}
   rigidbodyMass: 1
   heldPositionOffset: {x: 0, y: 0, z: 0}
   heldRotationOffset: {x: 0, y: 0, z: 0}
+  thirdPersonPositionOffset: {x: 0, y: 0, z: 0}
+  thirdPersonRotationOffset: {x: 0, y: 0, z: 0}

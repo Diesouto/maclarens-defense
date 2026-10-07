@@ -32,5 +32,6 @@ NOTAS MACLARENS
 el lazo debería poder tirar de un jugador muerto
 
 REVISAR
-Los jugadores no están muriendo cuando se quedan en el pueblo, no sé si dejarlo así o cambiarlo. Podemos arreglarlo y añadir un SerializeField con dieWhenLeftBehind o algo similar?
-Si el ragdoll de los jugadores da muchos problemas podemos desactivarlo y dejar solo el modelo al cargar el cuerpo o dejarlo en el suelo después de 1 segundo o similar. Qué opinas?
+El cadaver de los jugadores no es visible para los clientes, 
+El cadáver de los jugadores no se puede meter en el tren, el cuerpo se queda fuera y no consigo poder lanzar el cuerpo dentro de un vagón
+La cámara de los jugadores no se levanta de forma progresiva, está en el suelo haciendo ragdoll y de repente se teletransporta a la posición natural. También hay como un flicker de la posición original -> cae al suelo a la nueva posición -> aparece la posición original -> el jugador instantáneamente aparece en la posición correspondiente

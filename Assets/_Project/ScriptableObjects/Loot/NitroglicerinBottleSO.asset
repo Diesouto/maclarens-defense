@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74711b29da55cb7428b3ce78dbd34b28, type: 3}
-  m_Name: NitroglicerinBottle
+  m_Name: NitroglicerinBottleSO
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
   itemId: NitroBottle
   displayName: Nitroglicerina
-  icon: {fileID: 21300000, guid: 487d7d35be6ba0147ba639472b4313df, type: 3}
+  icon: {fileID: 21300000, guid: ef70acf597475744b8f5297e3cb588f1, type: 3}
   value: 100
   price: 0
   spawnWeight: 60
@@ -25,6 +25,7 @@ MonoBehaviour:
   weaponData: {fileID: 0}
   drinkHealPercent: 0
   drunkDuration: 0
+  useDuration: 3
   breakHealPercent: 0
   breakHealRadius: 3
   worldPrefab: {fileID: 3733031869768048468, guid: a542725437e6c9546800fe01da4fa001, type: 3}
@@ -32,3 +33,5 @@ MonoBehaviour:
   rigidbodyMass: 1
   heldPositionOffset: {x: 0, y: 0, z: 0}
   heldRotationOffset: {x: 0, y: 0, z: 0}
+  thirdPersonPositionOffset: {x: 0, y: 0, z: 0}
+  thirdPersonRotationOffset: {x: 0, y: 0, z: 0}

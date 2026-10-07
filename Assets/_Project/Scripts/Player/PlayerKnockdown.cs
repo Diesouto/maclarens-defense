@@ -100,6 +100,9 @@ public class PlayerKnockdown : NetworkBehaviour
         Vector3 standPosition = ragdoll.GetStandPosition(groundMask);
         Quaternion standRotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
+        if (playerController != null)
+            playerController.CaptureCameraRecoveryPose();
+
         ragdoll.DisableRagdoll();
         IsKnockedDown = false;
 
@@ -109,7 +112,7 @@ public class PlayerKnockdown : NetworkBehaviour
             motor.Teleport(standPosition, standRotation);
 
         if (playerController != null)
-            playerController.SetKnockedDown(false);
+            playerController.SetKnockedDown(false, getUpDuration);
 
         if (getUpDuration <= 0f)
             yield break;

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
   itemId: LiquorL
   displayName: Alcohol
-  icon: {fileID: 21300000, guid: 487d7d35be6ba0147ba639472b4313df, type: 3}
+  icon: {fileID: 21300000, guid: 23e94418bdafff140b0f9d0b401477b4, type: 3}
   value: 40
   price: 0
   spawnWeight: 100
@@ -25,6 +25,7 @@ MonoBehaviour:
   weaponData: {fileID: 0}
   drinkHealPercent: 0.2
   drunkDuration: 20
+  useDuration: 3
   breakHealPercent: 0
   breakHealRadius: 0
   worldPrefab: {fileID: 223096608495352036, guid: a620731d9e7b951488de1e028f9f7c2a, type: 3}
@@ -32,3 +33,5 @@ MonoBehaviour:
   rigidbodyMass: 1
   heldPositionOffset: {x: 0, y: 0, z: 0}
   heldRotationOffset: {x: 0, y: 0, z: 0}
+  thirdPersonPositionOffset: {x: 0, y: 0, z: 0}
+  thirdPersonRotationOffset: {x: 0, y: 0, z: 0}

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootDataSO
   itemId: Potion
   displayName: "Poci\xF3n"
-  icon: {fileID: 21300000, guid: 487d7d35be6ba0147ba639472b4313df, type: 3}
+  icon: {fileID: 21300000, guid: 1a726bfaac88fc44da6d87e225a15584, type: 3}
   value: 50
   price: 50
   spawnWeight: 60
@@ -25,6 +25,7 @@ MonoBehaviour:
   weaponData: {fileID: 0}
   drinkHealPercent: 1
   drunkDuration: 0
+  useDuration: 3
   breakHealPercent: 0.5
   breakHealRadius: 3
   worldPrefab: {fileID: 2195950226579266101, guid: 8f6155f335d55354f97d125ebf912609, type: 3}
@@ -32,3 +33,5 @@ MonoBehaviour:
   rigidbodyMass: 1
   heldPositionOffset: {x: 0, y: 0, z: 0}
   heldRotationOffset: {x: 0, y: 0, z: 0}
+  thirdPersonPositionOffset: {x: 0, y: 0, z: 0}
+  thirdPersonRotationOffset: {x: 0, y: 0, z: 0}

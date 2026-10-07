@@ -54,6 +54,9 @@ public class DeathCameraController : MonoBehaviour
         yield return new WaitForSeconds(activationDelay);
 
         RefreshTargets(deadPlayer != null ? deadPlayer.transform : null);
+        if (deadPlayer != null && deadPlayer.TryGetComponent(out PlayerBodyVisibility bodyVisibility))
+            bodyVisibility.ShowBodyToAllCameras();
+
         SuppressPlayerCameras(deadPlayer);
         SetActiveCamera(true);
         Debug.Log($"DeathCameraController: spectating '{(spectateTargets.Count > 0 ? spectateTargets[0].name : "nothing")}'.", this);
