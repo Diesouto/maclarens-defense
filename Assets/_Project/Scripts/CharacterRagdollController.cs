@@ -16,8 +16,12 @@ public class CharacterRagdollController : MonoBehaviour
     private List<Vector3> bindLocalPositions = new List<Vector3>();
     private List<Quaternion> bindLocalRotations = new List<Quaternion>();
     private bool isRagdollActive;
+    private bool isPhysicsSuspended;
+    private Vector3[] bodyPositions;
+    private Quaternion[] bodyRotations;
 
     public bool IsRagdollActive => isRagdollActive;
+    public bool IsPhysicsSuspended => isPhysicsSuspended;
     public Rigidbody RootRigidbody { get; private set; }
     public IReadOnlyList<Collider> RagdollColliders => ragdollColliders;
     public IReadOnlyList<Rigidbody> RagdollRigidbodies => ragdollRigidbodies;
@@ -99,6 +103,7 @@ public class CharacterRagdollController : MonoBehaviour
             return;
 
         isRagdollActive = false;
+        isPhysicsSuspended = false;
         SetSkinnedBoundsAlwaysUpdated(false);
         StopAllCoroutines();
 
@@ -126,6 +131,57 @@ public class CharacterRagdollController : MonoBehaviour
 
         if (animator != null)
             animator.enabled = true;
+    }
+
+    public void SetPhysicsSuspended(bool suspended)
+    {
+        if (!isRagdollActive || isPhysicsSuspended == suspended)
+            return;
+
+        isPhysicsSuspended = suspended;
+        if (suspended && animator != null)
+            animator.enabled = false;
+        foreach (Rigidbody bone in ragdollRigidbodies)
+        {
+            if (bone == null)
+                continue;
+
+            if (!bone.isKinematic)
+            {
+                bone.linearVelocity = Vector3.zero;
+                bone.angularVelocity = Vector3.zero;
+            }
+
+            bone.isKinematic = suspended;
+        }
+    }
+
+    public void SetBodyPose(Vector3 position, Quaternion rotation)
+    {
+        if (!isRagdollActive || RootRigidbody == null)
+            return;
+
+        Vector3 previousPosition = RootRigidbody.position;
+        Quaternion deltaRotation = rotation * Quaternion.Inverse(RootRigidbody.rotation);
+        for (int index = 0; index < ragdollRigidbodies.Count; index++)
+        {
+            Rigidbody bone = ragdollRigidbodies[index];
+            if (bone == null)
+                continue;
+
+            bodyPositions[index] = bone.position;
+            bodyRotations[index] = bone.rotation;
+        }
+
+        for (int index = 0; index < ragdollRigidbodies.Count; index++)
+        {
+            Rigidbody bone = ragdollRigidbodies[index];
+            if (bone == null)
+                continue;
+
+            bone.position = position + deltaRotation * (bodyPositions[index] - previousPosition);
+            bone.rotation = deltaRotation * bodyRotations[index];
+        }
     }
 
     // The root stays where the body fell; the ragdoll may have been carried or blown elsewhere.
@@ -250,6 +306,9 @@ public class CharacterRagdollController : MonoBehaviour
 
         if (RootRigidbody == null && ragdollRigidbodies.Count > 0)
             RootRigidbody = ragdollRigidbodies[0];
+
+        bodyPositions = new Vector3[ragdollRigidbodies.Count];
+        bodyRotations = new Quaternion[ragdollRigidbodies.Count];
     }
 
     private void SetRagdollState(bool enabled)

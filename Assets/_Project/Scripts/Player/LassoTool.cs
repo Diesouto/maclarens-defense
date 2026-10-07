@@ -184,9 +184,16 @@ public class LassoTool : NetworkBehaviour
             if (targetPlayer.gameObject == gameObject)
                 return;
 
-            // A corpse has no knockdown to apply; pulling it just launches the ragdoll off whatever it lies on.
             if (targetPlayer.TryGetComponent(out PlayerBody deadBody) && deadBody.IsDead)
+            {
+                if (deadBody.IsHidden || deadBody.IsBeingCarried)
+                    return;
+
+                deadBody.PullTowards(transform, objectFlightTime, chargedPullForce);
+                if (IsSpawned && IsServer)
+                    PullBodyRpc(targetPlayer.NetworkObject, chargedPullForce);
                 return;
+            }
 
             // Knockdown pushes away from its origin, so mirror the thrower behind the target to pull it in.
             Vector3 targetPosition = targetPlayer.transform.position;
@@ -199,6 +206,14 @@ public class LassoTool : NetworkBehaviour
         Vector3 catchPoint = transform.position + transform.forward * 1.2f + Vector3.up * 1.2f;
         Vector3 delta = catchPoint - targetBody.position;
         targetBody.linearVelocity = delta / objectFlightTime - 0.5f * objectFlightTime * Physics.gravity;
+    }
+
+    [Rpc(SendTo.NotServer)]
+    private void PullBodyRpc(NetworkObjectReference bodyReference, float maximumSpeed)
+    {
+        if (bodyReference.TryGet(out NetworkObject bodyObject) &&
+            bodyObject != null && bodyObject.TryGetComponent(out PlayerBody body))
+            body.PullTowards(transform, objectFlightTime, maximumSpeed);
     }
 
     [Rpc(SendTo.NotMe, InvokePermission = RpcInvokePermission.Owner)]

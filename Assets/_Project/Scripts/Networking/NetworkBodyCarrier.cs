@@ -1,10 +1,9 @@
 using Unity.Netcode;
 using UnityEngine;
 
-// Host decides who carries which body; every other peer mirrors it by dragging its own local ragdoll
-// (ragdolls are per-peer presentation, so only "who carries what" and throws need to be replicated).
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(BodyCarrier))]
+[DefaultExecutionOrder(-70)]
 public class NetworkBodyCarrier : NetworkBehaviour
 {
     [SerializeField, Min(0.5f)] private float carryDistance = 3f;
@@ -33,12 +32,19 @@ public class NetworkBodyCarrier : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         carriedBody.OnValueChanged -= HandleCarriedBodyChanged;
+        carrier.ApplyReplicatedCarry(null);
     }
 
     private void LateUpdate()
     {
-        if (!IsServer || !IsSpawned)
+        if (!IsSpawned)
             return;
+
+        if (!IsServer)
+        {
+            ApplyReplicatedCarry(carriedBody.Value);
+            return;
+        }
 
         NetworkObject current = carrier.CarriedBody != null ? carrier.CarriedBody.GetComponent<NetworkObject>() : null;
         carriedBody.Value.TryGet(out NetworkObject replicated);
@@ -56,19 +62,67 @@ public class NetworkBodyCarrier : NetworkBehaviour
         PlayerBody body = reference.TryGet(out NetworkObject bodyObject) && bodyObject != null
             ? bodyObject.GetComponent<PlayerBody>()
             : null;
+        if (body == null && !reference.Equals(default(NetworkObjectReference)))
+            return;
+        if (body != null && (!body.IsDead || body.IsHidden))
+            return;
+
         carrier.ApplyReplicatedCarry(body);
     }
 
-    [Rpc(SendTo.NotServer)]
-    private void BodyThrownRpc(Vector3 force)
+    public void BroadcastRelease(PlayerBody body, Vector3 force)
     {
-        carrier.ApplyThrow(force);
+        if (!IsServer || !IsSpawned || body == null ||
+            !body.TryGetComponent(out CharacterRagdollController ragdoll) || ragdoll.RootRigidbody == null)
+            return;
+
+        Vector3 position = ragdoll.RootRigidbody.position;
+        Quaternion rotation = ragdoll.RootRigidbody.rotation;
+        NetworkObjectReference trainReference = default;
+        int cargoIndex = -1;
+        TrainCargo cargo = TrainCargo.GetBodyCargo(body);
+        NetworkObject trainObject = cargo != null ? cargo.GetComponentInParent<NetworkObject>() : null;
+        if (trainObject != null && trainObject.IsSpawned)
+        {
+            trainReference = trainObject;
+            cargoIndex = System.Array.IndexOf(trainObject.GetComponentsInChildren<TrainCargo>(true), cargo);
+            position = cargo.transform.InverseTransformPoint(position);
+            rotation = Quaternion.Inverse(cargo.transform.rotation) * rotation;
+        }
+
+        BodyReleasedRpc(body.GetComponent<NetworkObject>(), trainReference, cargoIndex, position, rotation, force);
     }
 
-    public void BroadcastThrow(Vector3 force)
+    [Rpc(SendTo.NotServer)]
+    private void BodyReleasedRpc(NetworkObjectReference bodyReference, NetworkObjectReference trainReference,
+        int cargoIndex, Vector3 position, Quaternion rotation, Vector3 force)
     {
-        if (IsServer && IsSpawned)
-            BodyThrownRpc(force);
+        if (!bodyReference.TryGet(out NetworkObject bodyObject) || bodyObject == null ||
+            !bodyObject.TryGetComponent(out PlayerBody body) || !body.IsDead)
+            return;
+
+        if (carrier.CarriedBody == body)
+            carrier.ApplyReplicatedCarry(null);
+        if (body.IsBeingCarried || body.IsHidden)
+            return;
+
+        if (cargoIndex >= 0)
+        {
+            if (!trainReference.TryGet(out NetworkObject trainObject) || trainObject == null)
+                return;
+
+            TrainCargo[] cargo = trainObject.GetComponentsInChildren<TrainCargo>(true);
+            if (cargoIndex >= cargo.Length)
+                return;
+
+            position = cargo[cargoIndex].transform.TransformPoint(position);
+            rotation = cargo[cargoIndex].transform.rotation * rotation;
+        }
+
+        body.ApplyBodyPose(position, rotation);
+        if (!TrainCargo.TryStoreBody(body) && body.TryGetComponent(out CharacterRagdollController ragdoll) &&
+            ragdoll.RootRigidbody != null && !ragdoll.RootRigidbody.isKinematic)
+            ragdoll.RootRigidbody.AddForce(force, ForceMode.Impulse);
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]

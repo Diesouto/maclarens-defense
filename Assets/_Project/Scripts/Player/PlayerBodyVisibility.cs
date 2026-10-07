@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -14,11 +15,37 @@ public class PlayerBodyVisibility : NetworkBehaviour
     [SerializeField] private Transform[] hiddenFromOwnCameraRoots;
 
     private bool applied;
+    private Health health;
+    private readonly Dictionary<Transform, int> originalLayers = new();
+    private int originalCullingMask;
 
     private void Awake()
     {
+        health = GetComponent<Health>();
         if (playerCamera == null)
             playerCamera = GetComponentInChildren<Camera>();
+    }
+
+    private void OnEnable()
+    {
+        if (health != null)
+        {
+            health.OnDeath += RefreshVisibility;
+            health.OnRevived += RefreshVisibility;
+        }
+
+        RefreshVisibility();
+    }
+
+    private void OnDisable()
+    {
+        if (health != null)
+        {
+            health.OnDeath -= RefreshVisibility;
+            health.OnRevived -= RefreshVisibility;
+        }
+
+        RestoreVisibility();
     }
 
     private void Start()
@@ -31,14 +58,23 @@ public class PlayerBodyVisibility : NetworkBehaviour
     {
         if (IsOwner)
             Apply();
+        else
+        {
+            RestoreVisibility();
+            applied = false;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        RestoreVisibility();
+        applied = false;
     }
 
     private void Apply()
     {
         if (applied)
             return;
-        applied = true;
-
         int hiddenLayer = LayerMask.NameToLayer(HiddenLayerName);
         if (hiddenLayer < 0)
         {
@@ -46,18 +82,63 @@ public class PlayerBodyVisibility : NetworkBehaviour
             return;
         }
 
-        foreach (Transform root in hiddenFromOwnCameraRoots)
+        applied = true;
+        if (playerCamera != null)
+            originalCullingMask = playerCamera.cullingMask;
+
+        if (hiddenFromOwnCameraRoots != null)
         {
-            if (root != null)
-                SetLayerRecursively(root, hiddenLayer);
+            foreach (Transform root in hiddenFromOwnCameraRoots)
+            {
+                if (root != null)
+                    SetLayerRecursively(root, hiddenLayer);
+            }
+        }
+
+        RefreshVisibility();
+    }
+
+    private void RefreshVisibility()
+    {
+        if (!applied)
+            return;
+
+        if (health != null && health.IsDead)
+        {
+            RestoreVisibility();
+            return;
+        }
+
+        int hiddenLayer = LayerMask.NameToLayer(HiddenLayerName);
+        if (hiddenLayer < 0)
+            return;
+
+        foreach (Transform part in originalLayers.Keys)
+        {
+            if (part != null)
+                part.gameObject.layer = hiddenLayer;
         }
 
         if (playerCamera != null)
-            playerCamera.cullingMask &= ~(1 << hiddenLayer);
+            playerCamera.cullingMask = originalCullingMask & ~(1 << hiddenLayer);
     }
 
-    private static void SetLayerRecursively(Transform root, int layer)
+    private void RestoreVisibility()
     {
+        foreach (KeyValuePair<Transform, int> entry in originalLayers)
+        {
+            if (entry.Key != null)
+                entry.Key.gameObject.layer = entry.Value;
+        }
+
+        if (applied && playerCamera != null)
+            playerCamera.cullingMask = originalCullingMask;
+    }
+
+    private void SetLayerRecursively(Transform root, int layer)
+    {
+        if (!originalLayers.ContainsKey(root))
+            originalLayers.Add(root, root.gameObject.layer);
         root.gameObject.layer = layer;
 
         for (int i = 0; i < root.childCount; i++)

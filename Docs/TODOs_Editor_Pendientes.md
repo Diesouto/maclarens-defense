@@ -70,8 +70,8 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
 - [x] Añadir `PlayerBody` y `BodyCarrier` al prefab `Assets/_Project/Prefabs/Player.prefab`.
 - [x] Asignar `BodyCarrier.carryPoint` a un socket de manos/pecho del rig (con offset razonable
       para que el cuerpo cargado no atraviese al jugador ni la camara).
-- [ ] Ajustar `BodyCarrier.followSpeed` en Play Mode (el prefab conserva el valor por defecto 12; si el cuerpo cargado
-      vibra o se queda muy atras al girar rapido, tunear aqui).
+- [ ] Ajustar `BodyCarrier.followSpeed`, `maxFollowSpeed` y `snapDistance` en Play Mode: el cuerpo
+      cargado conserva una pose cinematica, sin simular las articulaciones del ragdoll.
 - [x] Crear un `BodyRecoveryManager` en la jerarquia de managers de `MainScene` y asignar
       `macLarensRespawnPoint` (la instancia de escena apunta a `RespawnPoint`).
 - [ ] Confirmar en el Editor que `RespawnPoint` esta dentro de la zona segura de MacLarens.
@@ -82,21 +82,46 @@ acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en
       jugador: `CharacterRagdollController.RootRigidbody` asume que el rigidbody raiz (cadera/pelvis)
       es el unico sin `Joint` propio: confirmar que el rig cumple ese patron o ajustar el codigo.
 - [ ] Playtest end-to-end:
-  - Morir en Town -> aparece el prompt "Carry Body" para otro jugador.
-  - Cargar el cuerpo hasta el tren y llegar a MacLarens -> revive sin penalizacion, en su posicion
-    actual (no en el punto de respawn).
+      - Morir en Town -> aparece el prompt "Cargar Cuerpo" para otro jugador.
+      - Cargar el cuerpo hasta el tren y llegar a MacLarens -> revive sin penalizacion, en el punto
+            de respawn de MacLarens.
   - Morir y no ser cargado (se abandona en Town) -> al llegar a MacLarens revive en
-    `macLarensRespawnPoint` y aparece el modificador de cuota "jugador abandonado".
+            `macLarensRespawnPoint` y se aplica `lostBodyMoneyPenalty` al dinero.
   - Provocar un wipe completo (todos los jugadores muertos) -> `GameState.Fail` inmediato, sin
     esperar al cierre del dia.
   - Cargar un cuerpo y usar el input de soltar (drop) manteniendo pulsado -> cargar el lanzamiento
     y soltarlo para lanzar el cadaver (igual que lanzar un item pesado).
   - Dejar caer un cuerpo (vivo o ya muerto) por un `DeathFloor` -> se marca perdido y revive con
     penalizacion aunque el tren no haya salido de Town todavia.
-- [ ] Pendiente de diseño (no implementado, anotar si se quiere para mas adelante): un cuerpo
-      soltado (no cargado en brazos) dentro del vagon del tren no se re-parenta como el loot
-      (`TrainCargo`), por lo que no viaja solo; de momento el unico camino soportado es cargarlo
-      en brazos hasta el arribo a MacLarens.
+- [x] Implementado en codigo: `TrainCargo` congela la fisica del cadaver soltado y conserva la
+      pose de sus huesos relativa al vagon. No se reparenta el `NetworkObject` del jugador.
+
+## Cadaveres, lazo y abandonados (2026-10-07)
+
+- Owner: el host valida la recogida, el lazo y la muerte de abandonados. Los cuerpos son
+  presentacion local; la recogida se replica y la pose de soltado se envia relativa al vagon.
+- Estado: muerto libre -> cargado o arrastrado -> fijado en carga. Recoger, ocultar o reanimar
+  cancela el arrastre; reanimar libera el anclaje y devuelve el rig al Animator.
+- Eventos: `Health.OnDeath` y `OnRevived` restauran/ocultan las capas del modelo local.
+  `OnTownExitReached` ejecuta la muerte y la recuperacion en el host.
+- [ ] Revisar `InTownTrigger.dieWhenLeftBehind` en escena: activado por defecto; conserva el
+      valor del antiguo `killPlayersOnDeparture`. Desactivarlo solo omite la muerte, no cambia
+      la limpieza del pueblo ni transporta a los supervivientes de vuelta.
+- [ ] Confirmar que el volumen del pueblo incluye tejados y zonas jugables; la comprobacion
+      usa la posicion real, no la salida de uno de los colliders del jugador.
+- [ ] Host + cliente: soltar cadaveres en cada vagon, arrancar, acelerar y tomar curvas;
+      deben conservar la pose relativa, sin atravesar paredes ni perderse bajo el suelo.
+- [ ] Recoger otra vez el cuerpo fijado, soltarlo fuera y reanimarlo con pocion durante la
+      recogida o el arrastre. No deben quedar anclajes ni movimientos pendientes.
+- [ ] Lazo: arrastrar un cadaver desde fuera y dentro del tren, incluyendo un obstaculo;
+      el cuerpo se mueve entero con velocidad limitada. No permite robar un cuerpo cargado.
+- [ ] Abandonados: dejar un jugador vivo en Town y otro en el tren; al cruzar la salida,
+      solo muere el abandonado, suelta inventario y revive con penalizacion al regresar.
+      Repetir con el superviviente sobre el techo del tren y con el ajuste desactivado.
+- [ ] Cliente muerto: al cargar su cuerpo debe verlo completo desde la camara de muerte;
+      al revivir vuelve a la ocultacion de primera persona. Repetir tras varias muertes.
+- Validacion pendiente: compilacion de Unity, generacion de RPC por NGO y Play Mode con
+  host/cliente. La revision de errores de VS Code no sustituye estas pruebas.
 
 ## P5.16 - UI del mundo apuntando al jugador
 

@@ -3,6 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
+[DefaultExecutionOrder(-60)]
 public class TrainCargo : MonoBehaviour
 {
     [SerializeField] private Collider cargoTrigger;
@@ -14,14 +15,22 @@ public class TrainCargo : MonoBehaviour
     private readonly HashSet<LootItem> itemsInCargo = new();
     // Ragdolls have many colliders, so count them per body instead of toggling on first enter/exit.
     private readonly Dictionary<PlayerBody, int> bodyColliderCounts = new();
-    private Vector3 lastPosition;
-    private Quaternion lastRotation;
+    private readonly Dictionary<PlayerBody, StoredBody> storedBodies = new();
+    private readonly List<PlayerBody> bodiesToRelease = new();
+
+    private sealed class StoredBody
+    {
+        public CharacterRagdollController Ragdoll;
+        public Vector3[] Positions;
+        public Quaternion[] Rotations;
+    }
 
     public static bool IsBodyAboard(PlayerBody body)
     {
         foreach (TrainCargo cargo in allCargo)
         {
-            if (cargo != null && cargo.bodyColliderCounts.ContainsKey(body))
+            if (cargo != null && body != null &&
+                (cargo.storedBodies.ContainsKey(body) || cargo.ContainsBody(body)))
                 return true;
         }
 
@@ -31,54 +40,148 @@ public class TrainCargo : MonoBehaviour
     private void OnEnable()
     {
         allCargo.Add(this);
-        lastPosition = transform.position;
-        lastRotation = transform.rotation;
     }
 
-    // Ragdoll bones are free rigidbodies, so a corpse left on the train must be moved by the train's own delta.
-    private void LateUpdate()
+    public static void ReleaseBody(PlayerBody body)
     {
-        Vector3 position = transform.position;
-        Quaternion rotation = transform.rotation;
-        Quaternion deltaRotation = rotation * Quaternion.Inverse(lastRotation);
-        Vector3 previousPosition = lastPosition;
-        lastPosition = position;
-        lastRotation = rotation;
-
-        if (bodyColliderCounts.Count == 0)
-            return;
-
-        foreach (PlayerBody body in bodyColliderCounts.Keys)
+        foreach (TrainCargo cargo in allCargo)
         {
-            if (body == null || !body.IsDead || body.IsHidden || body.IsBeingCarried ||
-                !body.TryGetComponent(out CharacterRagdollController ragdoll) || !ragdoll.IsRagdollActive)
+            if (cargo != null)
+                cargo.DetachBody(body);
+        }
+    }
+
+    public static bool TryStoreBody(PlayerBody body)
+    {
+        foreach (TrainCargo cargo in allCargo)
+        {
+            if (cargo != null && body != null &&
+                (cargo.storedBodies.ContainsKey(body) || cargo.ContainsBody(body)) && cargo.AttachBody(body))
+                return true;
+        }
+
+        return false;
+    }
+
+    public static TrainCargo GetBodyCargo(PlayerBody body)
+    {
+        foreach (TrainCargo cargo in allCargo)
+        {
+            if (cargo != null && body != null && cargo.storedBodies.ContainsKey(body))
+                return cargo;
+        }
+
+        foreach (TrainCargo cargo in allCargo)
+        {
+            if (cargo != null && cargo.ContainsBody(body))
+                return cargo;
+        }
+
+        return null;
+    }
+
+    private bool ContainsBody(PlayerBody body)
+    {
+        return body != null && cargoTrigger != null && cargoTrigger.enabled &&
+            (cargoTrigger.ClosestPoint(body.BodyPosition) - body.BodyPosition).sqrMagnitude < 0.0001f;
+    }
+
+    private bool AttachBody(PlayerBody body)
+    {
+        if (body == null || !body.IsDead || body.IsHidden || body.IsBeingCarried || body.IsBeingPulled ||
+            !body.TryGetComponent(out CharacterRagdollController ragdoll) || !ragdoll.IsRagdollActive)
+            return false;
+
+        if (storedBodies.ContainsKey(body))
+            return true;
+
+        foreach (TrainCargo cargo in allCargo)
+        {
+            if (cargo != null && cargo != this && cargo.storedBodies.ContainsKey(body))
+                return false;
+        }
+
+        ragdoll.SetPhysicsSuspended(true);
+        var stored = new StoredBody
+        {
+            Ragdoll = ragdoll,
+            Positions = new Vector3[ragdoll.RagdollRigidbodies.Count],
+            Rotations = new Quaternion[ragdoll.RagdollRigidbodies.Count]
+        };
+
+        for (int index = 0; index < ragdoll.RagdollRigidbodies.Count; index++)
+        {
+            Rigidbody bone = ragdoll.RagdollRigidbodies[index];
+            if (bone == null)
                 continue;
 
-            Rigidbody root = ragdoll.RootRigidbody;
-            float floorY = cargoTrigger.bounds.min.y + 0.1f;
-            // Bones sinking through the moving floor are lifted back instead of falling out of the train.
-            float lift = root != null && root.position.y < floorY ? floorY + 0.4f - root.position.y : 0f;
+            stored.Positions[index] = transform.InverseTransformPoint(bone.position);
+            stored.Rotations[index] = Quaternion.Inverse(transform.rotation) * bone.rotation;
+        }
 
-            foreach (Rigidbody bone in ragdoll.RagdollRigidbodies)
+        storedBodies.Add(body, stored);
+        return true;
+    }
+
+    private void DetachBody(PlayerBody body)
+    {
+        if (body == null || !storedBodies.TryGetValue(body, out StoredBody stored))
+            return;
+
+        storedBodies.Remove(body);
+        if (stored.Ragdoll != null)
+            stored.Ragdoll.SetPhysicsSuspended(false);
+    }
+
+    private void LateUpdate()
+    {
+        foreach (PlayerBody body in bodyColliderCounts.Keys)
+        {
+            if (ContainsBody(body))
+                AttachBody(body);
+        }
+
+        bodiesToRelease.Clear();
+        foreach (KeyValuePair<PlayerBody, StoredBody> entry in storedBodies)
+        {
+            PlayerBody body = entry.Key;
+            StoredBody stored = entry.Value;
+            if (body == null || !body.IsDead || body.IsHidden || body.IsBeingCarried ||
+                stored.Ragdoll == null || !stored.Ragdoll.IsRagdollActive)
             {
+                bodiesToRelease.Add(body);
+                continue;
+            }
+
+            for (int index = 0; index < stored.Positions.Length; index++)
+            {
+                Rigidbody bone = stored.Ragdoll.RagdollRigidbodies[index];
                 if (bone == null)
                     continue;
 
-                bone.position = position + deltaRotation * (bone.position - previousPosition) + Vector3.up * lift;
-                bone.rotation = deltaRotation * bone.rotation;
-                bone.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-
-                if (lift > 0f)
-                {
-                    bone.linearVelocity = Vector3.zero;
-                    bone.angularVelocity = Vector3.zero;
-                }
+                bone.position = transform.TransformPoint(stored.Positions[index]);
+                bone.rotation = transform.rotation * stored.Rotations[index];
             }
+        }
+
+        foreach (PlayerBody body in bodiesToRelease)
+        {
+            if (body == null)
+                storedBodies.Remove(body);
+            else
+                DetachBody(body);
         }
     }
 
     private void OnDisable()
     {
+        foreach (StoredBody stored in storedBodies.Values)
+        {
+            if (stored.Ragdoll != null)
+                stored.Ragdoll.SetPhysicsSuspended(false);
+        }
+
+        storedBodies.Clear();
         allCargo.Remove(this);
         bodyColliderCounts.Clear();
     }

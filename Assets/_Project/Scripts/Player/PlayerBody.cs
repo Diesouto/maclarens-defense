@@ -39,6 +39,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
     private PlayerController playerController;
     private CharacterRagdollController ragdollController;
     private NetworkPlayer networkPlayer;
+    private Coroutine pullRoutine;
     private readonly List<Renderer> hiddenRenderers = new();
     private readonly List<Collider> hiddenColliders = new();
 
@@ -47,6 +48,7 @@ public class PlayerBody : MonoBehaviour, IInteractable
     public bool IsRagdollActive => ragdollController != null && ragdollController.IsRagdollActive;
     public BodyCarrier Carrier { get; private set; }
     public bool IsBeingCarried => Carrier != null;
+    public bool IsBeingPulled { get; private set; }
 
     // Where the corpse actually is: the ragdoll's hips, not the root it died on.
     public Vector3 BodyPosition => ragdollController != null && ragdollController.IsRagdollActive &&
@@ -79,6 +81,10 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     private void OnDisable()
     {
+        StopPull();
+        TrainCargo.ReleaseBody(this);
+        if (!IsBeingCarried && ragdollController != null)
+            ragdollController.SetPhysicsSuspended(false);
         if (health != null)
         {
             health.OnDeath -= HandleDeath;
@@ -146,12 +152,84 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     public void AttachTo(BodyCarrier carrier)
     {
+        StopPull();
         Carrier = carrier;
     }
 
     public void Detach()
     {
         Carrier = null;
+    }
+
+    public void PullTowards(Transform puller, float duration, float maximumSpeed)
+    {
+        if (!IsDead || IsHidden || IsBeingCarried || puller == null ||
+            ragdollController == null || !ragdollController.IsRagdollActive)
+            return;
+
+        if (pullRoutine != null)
+            StopCoroutine(pullRoutine);
+
+        pullRoutine = StartCoroutine(PullBody(puller, duration, maximumSpeed));
+    }
+
+    private void StopPull()
+    {
+        if (pullRoutine != null)
+            StopCoroutine(pullRoutine);
+
+        pullRoutine = null;
+        IsBeingPulled = false;
+    }
+
+    public void ApplyBodyPose(Vector3 position, Quaternion rotation)
+    {
+        if (!IsDead || ragdollController == null || ragdollController.RootRigidbody == null)
+            return;
+
+        TrainCargo.ReleaseBody(this);
+        ragdollController.SetBodyPose(position, rotation);
+    }
+
+    private System.Collections.IEnumerator PullBody(Transform puller, float duration, float maximumSpeed)
+    {
+        TrainCargo.ReleaseBody(this);
+        IsBeingPulled = true;
+        ragdollController.SetPhysicsSuspended(true);
+
+        for (float elapsed = 0f; elapsed < duration; elapsed += Time.deltaTime)
+        {
+            if (puller == null || !IsDead || IsHidden || IsBeingCarried)
+                break;
+
+            Vector3 target = puller.position + puller.forward * 1.2f + Vector3.up * 0.8f;
+            Vector3 movement = Vector3.ClampMagnitude(target - BodyPosition, maximumSpeed * Time.deltaTime);
+            float distance = movement.magnitude;
+            if (distance > 0.001f)
+            {
+                RaycastHit[] hits = Physics.SphereCastAll(BodyPosition, 0.2f, movement / distance,
+                    distance, ~0, QueryTriggerInteraction.Ignore);
+                foreach (RaycastHit hit in hits)
+                {
+                    if (hit.collider.transform.IsChildOf(transform) || hit.collider.transform.IsChildOf(puller))
+                        continue;
+
+                    distance = Mathf.Min(distance, Mathf.Max(0f, hit.distance - 0.02f));
+                }
+
+                movement = movement.normalized * distance;
+                Rigidbody root = ragdollController.RootRigidbody;
+                if (root != null)
+                    ragdollController.SetBodyPose(root.position + movement, root.rotation);
+            }
+
+            yield return null;
+        }
+
+        IsBeingPulled = false;
+        if (!IsBeingCarried && !TrainCargo.TryStoreBody(this))
+            ragdollController.SetPhysicsSuspended(false);
+        pullRoutine = null;
     }
 
     public void MarkPendingRespawn()
@@ -180,6 +258,10 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
         if (hidden)
         {
+            StopPull();
+            TrainCargo.ReleaseBody(this);
+            if (ragdollController != null)
+                ragdollController.SetPhysicsSuspended(true);
             hiddenRenderers.Clear();
             foreach (Renderer bodyRenderer in GetComponentsInChildren<Renderer>(true))
             {
@@ -229,6 +311,8 @@ public class PlayerBody : MonoBehaviour, IInteractable
             return;
 
         bool wasHidden = IsHidden;
+        StopPull();
+        TrainCargo.ReleaseBody(this);
         Vector3 standPosition = ragdollController != null ? ragdollController.GetStandPosition(~0) : transform.position;
         Quaternion standRotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
@@ -308,6 +392,10 @@ public class PlayerBody : MonoBehaviour, IInteractable
         if (!NetworkRole.IsClientOnly)
             return;
 
+        StopPull();
+        TrainCargo.ReleaseBody(this);
+        if (Carrier != null)
+            Carrier.ApplyReplicatedCarry(null);
         IsPendingRespawn = false;
         if (ragdollController != null)
             ragdollController.DisableRagdoll();

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(Collider))]
 // Tracks all temporary entities that can be affected by Town extraction.
@@ -7,17 +8,37 @@ public class InTownTrigger : MonoBehaviour
 {
     public static InTownTrigger Instance { get; private set; }
 
-    [SerializeField] private bool killPlayersOnDeparture = true;
-    [SerializeField] private float killDistanceThreshold = 2f;
+    [FormerlySerializedAs("killPlayersOnDeparture")]
+    [SerializeField] private bool dieWhenLeftBehind = true;
 
-    private readonly HashSet<PlayerController> playersInsideTown = new();
+    private Collider townCollider;
     private readonly HashSet<LootItem> lootInsideTown = new();
 
-    public bool AnyPlayerInside => playersInsideTown.Count > 0;
+    public bool AnyPlayerInside
+    {
+        get
+        {
+            foreach (PlayerController player in PlayerController.ActivePlayers)
+            {
+                if (IsPlayerInsideTown(player))
+                    return true;
+            }
+
+            return false;
+        }
+    }
 
     public bool IsPlayerInsideTown(PlayerController player)
     {
-        return player != null && playersInsideTown.Contains(player);
+        if (player == null || townCollider == null || !townCollider.enabled)
+            return false;
+
+        bool hasBody = player.TryGetComponent(out PlayerBody body);
+        if (hasBody && body.IsHidden)
+            return false;
+
+        Vector3 position = hasBody ? body.BodyPosition : player.transform.position;
+        return (townCollider.ClosestPoint(position) - position).sqrMagnitude < 0.0001f;
     }
 
     private void Awake()
@@ -30,9 +51,9 @@ public class InTownTrigger : MonoBehaviour
 
         Instance = this;
 
-        Collider collider = GetComponent<Collider>();
-        if (collider != null)
-            collider.isTrigger = true;
+        townCollider = GetComponent<Collider>();
+        if (townCollider != null)
+            townCollider.isTrigger = true;
     }
 
     private void OnDestroy()
@@ -45,10 +66,7 @@ public class InTownTrigger : MonoBehaviour
     {
         PlayerController player = other.GetComponentInParent<PlayerController>();
         if (player != null)
-        {
-            playersInsideTown.Add(player);
             return;
-        }
 
         LootItem lootItem = other.GetComponentInParent<LootItem>();
         if (lootItem != null)
@@ -59,10 +77,7 @@ public class InTownTrigger : MonoBehaviour
     {
         PlayerController player = other.GetComponentInParent<PlayerController>();
         if (player != null)
-        {
-            playersInsideTown.Remove(player);
             return;
-        }
 
         LootItem lootItem = other.GetComponentInParent<LootItem>();
         if (lootItem != null)
@@ -71,37 +86,25 @@ public class InTownTrigger : MonoBehaviour
 
     public void KillPlayersStillInsideTown()
     {
-        if (!killPlayersOnDeparture)
-            return;
-
-        foreach (PlayerController player in new List<PlayerController>(playersInsideTown))
-        {
-            if (player == null)
-            {
-                playersInsideTown.Remove(player);
-                continue;
-            }
-
-            if (Vector3.Distance(player.transform.position, transform.position) <= killDistanceThreshold)
-            {
-                Health health = player.GetComponent<Health>();
-                if (health != null)
-                    health.TakeDamage(health.MaxHealth);
-                else
-                    Destroy(player.gameObject);
-            }
-        }
+        AbandonPlayersStillInsideTown();
     }
 
     public void AbandonPlayersStillInsideTown()
     {
-        foreach (PlayerController player in new List<PlayerController>(playersInsideTown))
+        if (!dieWhenLeftBehind || NetworkRole.IsClientOnly)
+            return;
+
+        foreach (PlayerController player in new List<PlayerController>(PlayerController.ActivePlayers))
         {
-            if (player == null)
-            {
-                playersInsideTown.Remove(player);
+            if (!IsPlayerInsideTown(player) || !player.IsAlive)
                 continue;
-            }
+
+            if (player.TryGetComponent(out PlayerBody body) && TrainCargo.IsBodyAboard(body))
+                continue;
+
+            if (player.TryGetComponent(out TrainPassenger passenger) && passenger.CurrentCarriage != null &&
+                passenger.CurrentCarriage.IsNear(player.transform.position, 1.5f))
+                continue;
 
             Health health = player.GetComponent<Health>();
             if (health != null)

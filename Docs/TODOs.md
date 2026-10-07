@@ -27,3 +27,10 @@ NOTAS MACLARENS
 - A veces el cadaver de los jugadores se cae del mapa. Seguramente por el ragdoll
 - Al usar el lazo dentro del tren el cuerpo sale volando. Ragdoll?
 - El cuerpo muerto de los jugadores no se mantiene en el tren. Ragdoll?
+
+
+el lazo debería poder tirar de un jugador muerto
+
+REVISAR
+Los jugadores no están muriendo cuando se quedan en el pueblo, no sé si dejarlo así o cambiarlo. Podemos arreglarlo y añadir un SerializeField con dieWhenLeftBehind o algo similar?
+Si el ragdoll de los jugadores da muchos problemas podemos desactivarlo y dejar solo el modelo al cargar el cuerpo o dejarlo en el suelo después de 1 segundo o similar. Qué opinas?
