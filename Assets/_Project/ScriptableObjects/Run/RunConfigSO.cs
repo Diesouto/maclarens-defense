@@ -5,14 +5,10 @@ using UnityEngine;
 public class RunConfigSO : ScriptableObject
 {
     [Header("Quotas")]
-    [Tooltip("Quota amount for each round. Rounds past the end keep growing by infiniteGrowth.")]
-    [SerializeField] private int[] quotaAmounts = { 300, 600, 1000 };
-    [Tooltip("Multiplier applied per round once quotaAmounts runs out (infinite mode or long runs).")]
-    [SerializeField, Min(1f)] private float infiniteGrowth = 1.35f;
+    [Tooltip("Multiplier applied to the lobby quota for every round after the first.")]
+    [SerializeField, Min(1f)] private float quotaGrowthPerRound = 1.35f;
 
     [Header("Time")]
-    [Tooltip("Seconds available for each quota round. Rounds past the end reuse the last entry.")]
-    [SerializeField] private float[] quotaTimeLimits = { 600f, 720f, 840f };
     [Tooltip("Fraction of the time left when paying early that carries over to the next quota. 0 disables.")]
     [SerializeField, Range(0f, 1f)] private float timeCarryOverFraction = 0.5f;
 
@@ -21,7 +17,7 @@ public class RunConfigSO : ScriptableObject
     [SerializeField, Range(0, RunSettings.MaximumQuotasToWin)] private int defaultQuotasToWin = 3;
 
     [Header("Player count scaling")]
-    [Tooltip("One entry per team size (1-4); 1 player is the baseline.")]
+    [Tooltip("One entry per team size (1-4); 1 player is the baseline. quota only scales the loot cap, not the lobby quota.")]
     [SerializeField] private PlayerScaling[] playerScaling =
     {
         new PlayerScaling { playerCount = 1, quota = 1f, enemyCap = 1f, spawnInterval = 1f, threat = 1f },
@@ -58,43 +54,15 @@ public class RunConfigSO : ScriptableObject
         return new PlayerScaling { playerCount = count, quota = 1f, enemyCap = 1f, spawnInterval = 1f, threat = 1f };
     }
 
-    // round is 1-based.
-    public int GetQuota(int round, int players = 1)
+    // round is 1-based; the lobby quota is the exact first-round target.
+    public int GetQuota(int round)
     {
-        if (quotaAmounts == null || quotaAmounts.Length == 0)
-            return 0;
-
-        int index = Mathf.Max(round - 1, 0);
-        float baseQuota;
-        if (index < quotaAmounts.Length)
-        {
-            baseQuota = Mathf.Max(quotaAmounts[index], 0);
-        }
-        else
-        {
-            int lastQuota = Mathf.Max(quotaAmounts[quotaAmounts.Length - 1], 0);
-            int extraRounds = index - (quotaAmounts.Length - 1);
-            baseQuota = lastQuota * Mathf.Pow(infiniteGrowth, extraRounds);
-        }
-
-        // Lobby override replaces the first quota and keeps the configured growth ratio.
-        int overrideQuota = RunSettings.HasValue ? RunSettings.BaseQuota : 0;
-        if (overrideQuota > 0 && quotaAmounts[0] > 0)
-            baseQuota *= (float)overrideQuota / quotaAmounts[0];
-
-        return Mathf.RoundToInt(baseQuota * GetPlayerScaling(players).quota);
+        int extraRounds = Mathf.Max(round - 1, 0);
+        return Mathf.RoundToInt(RunSettings.BaseQuota * Mathf.Pow(quotaGrowthPerRound, extraRounds));
     }
 
-    public float GetTimeLimit(int round)
+    public float GetTimeLimit()
     {
-        int overrideMinutes = RunSettings.HasValue ? RunSettings.QuotaMinutes : 0;
-        if (overrideMinutes > 0)
-            return overrideMinutes * 60f;
-
-        if (quotaTimeLimits == null || quotaTimeLimits.Length == 0)
-            return 600f;
-
-        int index = Mathf.Clamp(round - 1, 0, quotaTimeLimits.Length - 1);
-        return Mathf.Max(quotaTimeLimits[index], 1f);
+        return RunSettings.QuotaMinutes * 60f;
     }
 }

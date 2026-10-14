@@ -76,6 +76,26 @@ public class BodyCarrier : MonoBehaviour
         return ApplyPickup(body);
     }
 
+    public void TryRevive(PlayerBody body)
+    {
+        if (body == null)
+            return;
+
+        if (networkAuthority != null && networkAuthority.IsSpawned && !networkAuthority.IsServer)
+        {
+            networkAuthority.RequestReviveServerRpc(body.GetComponent<NetworkObject>());
+            return;
+        }
+
+        ApplyRevive(body);
+    }
+
+    public void ApplyRevive(PlayerBody body)
+    {
+        if (body != null && body.CanBeRevivedBy(this))
+            body.ReviveByPlayer();
+    }
+
     public bool ApplyPickup(PlayerBody body)
     {
         if (body == null || !body.IsDead || body.IsHidden || IsCarryingBody || body.IsBeingCarried)

@@ -9741,7 +9741,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6700733432353073990, guid: 4039863cc781c4044b4425dcd878c7fb, type: 3}
       propertyPath: maxActiveLoot
-      value: 20
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 6700733432353073990, guid: 4039863cc781c4044b4425dcd878c7fb, type: 3}
       propertyPath: minSpawnDistance

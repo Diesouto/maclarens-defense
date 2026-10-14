@@ -12,6 +12,12 @@ public class PlayerBody : MonoBehaviour, IInteractable
     private static readonly List<PlayerBody> allBodies = new();
     public static IReadOnlyList<PlayerBody> AllBodies => allBodies;
 
+    public enum InteractionMode { Revive, Carry }
+
+    [Tooltip("Revive: holding interact revives in place. Carry: legacy corpse carrying.")]
+    [SerializeField] private InteractionMode interactionMode = InteractionMode.Revive;
+    [Tooltip("Health fraction on a hold-to-revive. 0 = 1 HP.")]
+    [SerializeField, Range(0f, 1f)] private float reviveHealthFraction;
     [SerializeField, Min(0f)] private float carryHoldDuration = 2f;
     [SerializeField] private LayerMask respawnGroundMask = ~0;
     [SerializeField, Min(0.1f)] private float groundSnapHeight = 3f;
@@ -123,20 +129,31 @@ public class PlayerBody : MonoBehaviour, IInteractable
 
     public bool CanInteract(PlayerInteractor interactor)
     {
-        if (!IsDead || IsHidden || IsBeingCarried || interactor == null)
-            return false;
-
-        Health interactorHealth = interactor.GetComponent<Health>();
-        if (interactorHealth != null && interactorHealth.IsDead)
+        if (interactor == null)
             return false;
 
         BodyCarrier carrier = interactor.GetComponent<BodyCarrier>();
-        return carrier != null && !carrier.IsCarryingBody;
+        if (carrier == null || !CanBeRevivedBy(carrier))
+            return false;
+
+        return interactionMode == InteractionMode.Revive || !carrier.IsCarryingBody;
+    }
+
+    // Shared by the local prompt and the host-side RPC validation.
+    public bool CanBeRevivedBy(Component reviver)
+    {
+        if (!IsDead || IsHidden || IsBeingCarried || reviver == null || reviver.transform == transform)
+            return false;
+
+        return !reviver.TryGetComponent(out Health reviverHealth) || !reviverHealth.IsDead;
     }
 
     public string GetPrompt(PlayerInteractor interactor)
     {
-        return IsDead && !IsHidden ? "Cargar Cuerpo" : string.Empty;
+        if (!IsDead || IsHidden)
+            return string.Empty;
+
+        return interactionMode == InteractionMode.Revive ? "Revivir" : "Cargar Cuerpo";
     }
 
     float IInteractable.HoldDuration => carryHoldDuration;
@@ -147,7 +164,15 @@ public class PlayerBody : MonoBehaviour, IInteractable
             return;
 
         BodyCarrier carrier = interactor.GetComponent<BodyCarrier>();
-        carrier?.TryPickUp(this);
+        if (interactionMode == InteractionMode.Revive)
+            carrier.TryRevive(this);
+        else
+            carrier.TryPickUp(this);
+    }
+
+    public void ReviveByPlayer()
+    {
+        Revive(null, reviveHealthFraction);
     }
 
     public void AttachTo(BodyCarrier carrier)

@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: TinCan
   displayName: Lata
   icon: {fileID: 21300000, guid: cd2feb23b92c34243bb3626c74b3061a, type: 3}
-  value: 50
+  value: 100
   price: 0
   spawnWeight: 100
   itemType: 0

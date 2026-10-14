@@ -10,7 +10,8 @@ public class LootSpawner : MonoBehaviour
     [Header("Spawn Settings")]
     [SerializeField] private int minActiveLoot = 12;
     [SerializeField] private int maxActiveLoot = 18;
-    [SerializeField] private float quotaToLootScale = 75f;
+    [Tooltip("Town visits a crew that loots everything needs to cover the current quota.")]
+    [SerializeField, Min(1f)] private float visitsPerQuota = 3f;
 
     [Header("Distribution")]
     [SerializeField, Min(0f)]
@@ -23,6 +24,7 @@ public class LootSpawner : MonoBehaviour
 
     // Spawn points selected during the current spawning operation.
     private readonly List<LootSpawnPoint> recentlyUsedPoints = new();
+    private float expectedTreasurePerSpawn;
 
     private void Awake()
     {
@@ -73,8 +75,21 @@ public class LootSpawner : MonoBehaviour
             )
         );
 
+        float totalExpected = 0f;
+        int pointsWithLoot = 0;
+        foreach (LootSpawnPoint point in spawnPoints)
+        {
+            if (!point.HasLootOptions())
+                continue;
+
+            totalExpected += point.GetExpectedTreasureValue();
+            pointsWithLoot++;
+        }
+
+        expectedTreasurePerSpawn = pointsWithLoot > 0 ? totalExpected / pointsWithLoot : 0f;
+
         Debug.Log(
-            $"[LootSpawner] Found {spawnPoints.Count} spawn points."
+            $"[LootSpawner] Found {spawnPoints.Count} spawn points, ~{expectedTreasurePerSpawn:0} treasure value per spawn."
         );
     }
 
@@ -330,11 +345,12 @@ public class LootSpawner : MonoBehaviour
             ? QuotaManager.Instance.CurrentQuota
             : 0;
 
-        int quotaDrivenTarget = currentQuota > 0
-            ? Mathf.CeilToInt(currentQuota / quotaToLootScale)
+        // Items still lying in town count toward this, so a full sweep is what restores the whole share.
+        int quotaDrivenTarget = currentQuota > 0 && expectedTreasurePerSpawn > 0f
+            ? Mathf.CeilToInt(currentQuota / visitsPerQuota / expectedTreasurePerSpawn)
             : minActiveLoot;
 
-        // The quota already scales with team size, so the loot ceiling must follow or high quotas become unreachable.
+        // Bigger crews loot faster, so the loot ceiling grows with team size.
         float teamScale = RunManager.Instance != null ? Mathf.Max(RunManager.Instance.Scaling.quota, 1f) : 1f;
         int scaledMin = Mathf.CeilToInt(minActiveLoot * teamScale);
         int scaledMax = Mathf.CeilToInt(maxActiveLoot * teamScale);

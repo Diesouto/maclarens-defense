@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: Fireplace
   displayName: Chimenea
   icon: {fileID: 0}
-  value: 500
+  value: 600
   price: 0
   spawnWeight: 5
   itemType: 0

@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: Suitcase
   displayName: "Malet\xEDn"
   icon: {fileID: 21300000, guid: 30a0eec7d940c0a46953bf9183328e19, type: 3}
-  value: 150
+  value: 200
   price: 0
   spawnWeight: 100
   itemType: 0

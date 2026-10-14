@@ -25,7 +25,7 @@ MonoBehaviour:
   weaponData: {fileID: 0}
   drinkHealPercent: 0.15
   drunkDuration: 12
-  useDuration: 3
+  useDuration: 1.5
   breakHealPercent: 0
   breakHealRadius: 3
   worldPrefab: {fileID: 8074069486069697404, guid: a065d2a2964810a41925c1817147d802, type: 3}

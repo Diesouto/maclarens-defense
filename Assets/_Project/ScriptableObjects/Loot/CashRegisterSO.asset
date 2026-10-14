@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: CashRegister
   displayName: Registradora
   icon: {fileID: 21300000, guid: 62da652ea964900459e13e49da83afbf, type: 3}
-  value: 300
+  value: 350
   price: 0
   spawnWeight: 100
   itemType: 0

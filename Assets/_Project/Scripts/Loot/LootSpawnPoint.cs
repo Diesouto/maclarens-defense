@@ -54,6 +54,25 @@ public class LootSpawnPoint : MonoBehaviour
         return null;
     }
 
+    // Weighted average quota value of one spawn here; weapons/consumables/tools count as 0.
+    public float GetExpectedTreasureValue()
+    {
+        float totalWeight = 0f;
+        float weightedValue = 0f;
+
+        foreach (LootDataSO lootData in lootOptions)
+        {
+            if (lootData == null || lootData.SpawnWeight <= 0f)
+                continue;
+
+            totalWeight += lootData.SpawnWeight;
+            if (lootData.ItemType == InventoryItemType.Loot)
+                weightedValue += lootData.SpawnWeight * lootData.Value;
+        }
+
+        return totalWeight > 0f ? weightedValue / totalWeight : 0f;
+    }
+
     public void SetOccupied(bool occupied)
     {
         IsOccupied = occupied;

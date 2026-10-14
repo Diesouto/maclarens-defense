@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: SilverBar
   displayName: Lingote plata
   icon: {fileID: 21300000, guid: cab5f782c28593f45ab98a7c33cb1431, type: 3}
-  value: 100
+  value: 150
   price: 0
   spawnWeight: 100
   itemType: 0

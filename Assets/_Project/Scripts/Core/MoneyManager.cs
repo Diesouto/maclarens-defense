@@ -27,8 +27,7 @@ public class MoneyManager : MonoBehaviour
 
     private int ResolveStartingMoney()
     {
-        int configured = RunSettings.HasValue ? RunSettings.StartingMoney : 0;
-        return configured > 0 ? configured : Mathf.Max(startingTeamMoney, 0);
+        return RunSettings.HasValue ? RunSettings.StartingMoney : Mathf.Max(startingTeamMoney, 0);
     }
 
     private void OnDestroy()

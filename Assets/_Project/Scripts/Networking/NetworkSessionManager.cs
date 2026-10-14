@@ -57,15 +57,15 @@ public class NetworkSessionManager : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
     public NetworkVariable<int> QuotaMinutes = new(
-        0,
+        RunSettings.DefaultQuotaMinutes,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
     public NetworkVariable<int> StartingMoney = new(
-        0,
+        RunSettings.DefaultStartingMoneyPerPlayer,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
     public NetworkVariable<int> BaseQuota = new(
-        0,
+        RunSettings.DefaultBaseQuota,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
     public NetworkList<LobbyPlayerEntry> Players = new();
@@ -78,6 +78,8 @@ public class NetworkSessionManager : NetworkBehaviour
     public event Action<MultiplayerSessionState, MultiplayerSessionState> OnSessionStateChanged;
 
     private readonly Dictionary<ulong, LobbyPlayerEntry> playerLookup = new();
+    // Until the host types a value, starting money follows the lobby player count.
+    private bool startingMoneyCustomized;
 
     private void Awake()
     {
@@ -121,7 +123,8 @@ public class NetworkSessionManager : NetworkBehaviour
         MaxPlayers.Value = maxPlayers;
         QuotasToWin.Value = RunSettings.SavedQuotasToWin;
         QuotaMinutes.Value = RunSettings.SavedQuotaMinutes;
-        StartingMoney.Value = RunSettings.SavedStartingMoney;
+        startingMoneyCustomized = false;
+        StartingMoney.Value = RunSettings.DefaultStartingMoney(1);
         BaseQuota.Value = RunSettings.SavedBaseQuota;
         SetSessionState(MultiplayerSessionState.Lobby);
         HostClientId.Value = NetworkManager.Singleton.LocalClientId;
@@ -173,8 +176,15 @@ public class NetworkSessionManager : NetworkBehaviour
 
     public void SetStartingMoney(int value)
     {
-        if (IsServer && SessionState.Value == MultiplayerSessionState.Lobby)
-            StartingMoney.Value = RunSettings.SanitizeMoney(value);
+        if (!IsServer || SessionState.Value != MultiplayerSessionState.Lobby)
+            return;
+
+        int sanitized = RunSettings.SanitizeMoney(value);
+        if (sanitized == StartingMoney.Value)
+            return;
+
+        startingMoneyCustomized = true;
+        StartingMoney.Value = sanitized;
     }
 
     public void SetBaseQuota(int value)
@@ -417,5 +427,8 @@ public class NetworkSessionManager : NetworkBehaviour
 
         foreach (LobbyPlayerEntry entry in playerLookup.Values)
             Players.Add(entry);
+
+        if (!startingMoneyCustomized && SessionState.Value == MultiplayerSessionState.Lobby)
+            StartingMoney.Value = RunSettings.DefaultStartingMoney(Players.Count);
     }
 }

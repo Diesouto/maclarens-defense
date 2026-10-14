@@ -8,7 +8,7 @@ public class ThreatManager : MonoBehaviour
     public static ThreatManager Instance { get; private set; }
 
     [SerializeField] private float threatPerSecond = 0.2f;
-    [SerializeField] private float lootPickupThreat = 5f;
+    [SerializeField] private float lootPickupThreat = 1f;
     [SerializeField] private float enemyKillThreat = 1f;
     [SerializeField] private float maxThreat = 100f;
 

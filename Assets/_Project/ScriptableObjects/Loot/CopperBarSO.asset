@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: CopperBar
   displayName: Lingote cobre
   icon: {fileID: 21300000, guid: 66c795ead8535684591f4ee4d9074845, type: 3}
-  value: 50
+  value: 100
   price: 0
   spawnWeight: 100
   itemType: 0

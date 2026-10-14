@@ -45,6 +45,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThreatManager
   threatPerSecond: 0.35
-  lootPickupThreat: 4
+  lootPickupThreat: 1
   enemyKillThreat: 0.5
   maxThreat: 100

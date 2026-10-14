@@ -4,6 +4,15 @@ Lista de tareas que requieren Unity Editor (prefabs, escena, referencias seriali
 se pueden completar solo con cambios de codigo. Añadir aqui cualquier tarea nueva mientras no haya
 acceso al editor; ir tachando/moviendo a "Hecho" segun se completen y validen en Play Mode.
 
+## Ajustes tras playtest (2026-10-14)
+
+- [ ] Abrir `Ghost.prefab` y confirmar que el `NetworkTransform` añadido por YAML se ve bien (autoridad servidor) y que `NetworkObject` ya no está marcado como in-scene placed.
+- [ ] Multiplayer: un cliente ve al fantasma moverse y atacar.
+- [ ] Revivir: mantener interactuar sobre un cadáver (host->cliente y cliente->host) revive en el sitio con 1 HP; prompt "Revivir". `PlayerBody.interactionMode = Carry` recupera el cargado antiguo.
+- [ ] Lobby: valores por defecto 20 min / 5000 cuota / 50 por jugador; el dinero se recalcula al entrar jugadores hasta que el host lo edita. Con 2 jugadores la ronda 1 = 5000 y la ronda 2 = 6750.
+- [ ] Licor se bebe en ~1.5 s; cada recogida suma ~1 de amenaza.
+- [ ] Botín por visita: `LootSpawner` reparte cuota / `visitsPerQuota` (3) según el valor medio de tesoro por spawn (ver log `[LootSpawner] ... treasure value per spawn`). Ronda 1 con 5000 ≈ 13 objetos; `maxActiveLoot` de MainScene subido a 40. Validar que 3-4 visitas bastan y caben en 20 min.
+
 ## Fixes multiplayer armas/pocion/cadaver (2026-10-07)
 
 - [ ] Abrir `Revolver`, `Rifle`, `SBShotgun` y `Shotgun` (Prefabs/Weapons): se les añadio

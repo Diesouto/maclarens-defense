@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: Cross
   displayName: Cruz
   icon: {fileID: 21300000, guid: b70eaf5d17e96a048b22036792335c41, type: 3}
-  value: 150
+  value: 200
   price: 0
   spawnWeight: 80
   itemType: 0

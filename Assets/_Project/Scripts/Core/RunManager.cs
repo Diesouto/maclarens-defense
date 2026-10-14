@@ -101,13 +101,13 @@ public class RunManager : MonoBehaviour
         if (IsNetworkClient())
             return;
 
-        QuotaManager.Instance?.SetQuota(runConfig.GetQuota(CurrentQuotaRound, PlayerCount));
+        QuotaManager.Instance?.SetQuota(runConfig.GetQuota(CurrentQuotaRound));
     }
 
     private void StartQuotaRound(float carriedOverSeconds)
     {
         ApplyCurrentQuota();
-        TimeRemaining = runConfig.GetTimeLimit(CurrentQuotaRound) + Mathf.Max(carriedOverSeconds, 0f);
+        TimeRemaining = runConfig.GetTimeLimit() + Mathf.Max(carriedOverSeconds, 0f);
         IsTimerRunning = false;
         HasTimerStarted = false;
         IsInitialized = true;

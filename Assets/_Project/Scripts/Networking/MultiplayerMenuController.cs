@@ -328,13 +328,12 @@ public class MultiplayerMenuController : MonoBehaviour
         // Commits a value still being typed when Play is clicked without leaving the field.
         if (lobbyQuotasInput != null && RunSettings.TryParse(lobbyQuotasInput.text, out int typedQuotas))
             RunSettings.SetQuotasToWin(typedQuotas);
-        else
-            RunSettings.SetQuotasToWin(RunSettings.SavedQuotasToWin);
 
         CommitTypedSetup(lobbyMinutesInput, RunSettings.SetQuotaMinutes);
         CommitTypedSetup(lobbyStartingMoneyInput, RunSettings.SetStartingMoney);
         CommitTypedSetup(lobbyBaseQuotaInput, RunSettings.SetBaseQuota);
-        RunSettings.SetQuotasToWin(RunSettings.SavedQuotasToWin);
+        RunSettings.SetMatchSetup(RunSettings.SavedQuotasToWin, RunSettings.SavedQuotaMinutes,
+            RunSettings.SavedStartingMoney, RunSettings.SavedBaseQuota);
 
         SceneManager.LoadScene("MainScene", LoadSceneMode.Single);
     }

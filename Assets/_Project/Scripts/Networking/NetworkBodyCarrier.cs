@@ -350,6 +350,22 @@ public class NetworkBodyCarrier : NetworkBehaviour
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    public void RequestReviveServerRpc(NetworkObjectReference bodyReference,
+        RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId ||
+            !bodyReference.TryGet(out NetworkObject bodyObject) || bodyObject == null)
+            return;
+
+        PlayerBody body = bodyObject.GetComponent<PlayerBody>();
+        if (body == null ||
+            Vector3.Distance(body.BodyPosition, transform.position) > carryDistance + 2f)
+            return;
+
+        carrier.ApplyRevive(body);
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
     public void RequestDropServerRpc(RpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId == OwnerClientId)
